@@ -684,7 +684,7 @@ export function MobileDashboard() {
                         setSelectedDate(now);
                         setCurrentMonth(startOfMonth(now));
                     }}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'today' ? 'text-primary-400 bg-primary-500/20' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all hover:scale-110 active:scale-95 ${activeTab === 'today' ? 'text-primary-400 bg-primary-500/20' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}
                 >
                     <List className="w-6 h-6" strokeWidth={activeTab === 'today' ? 2.5 : 2} />
                     <span className="text-[10px] font-bold">Today</span>
@@ -692,7 +692,7 @@ export function MobileDashboard() {
 
                 <button
                     onClick={() => setActiveTab('habits')}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'habits' ? 'text-primary-400 bg-primary-500/20' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all hover:scale-110 active:scale-95 ${activeTab === 'habits' ? 'text-primary-400 bg-primary-500/20' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}
                 >
                     <CheckSquare className="w-6 h-6" strokeWidth={activeTab === 'habits' ? 2.5 : 2} />
                     <span className="text-[10px] font-bold">Habits</span>
@@ -700,7 +700,7 @@ export function MobileDashboard() {
 
                 <button
                     onClick={() => setActiveTab('analytics')}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'analytics' ? 'text-purple-400 bg-purple-500/20' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all hover:scale-110 active:scale-95 ${activeTab === 'analytics' ? 'text-purple-400 bg-purple-500/20' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}
                 >
                     <BarChart2 className="w-6 h-6" strokeWidth={activeTab === 'analytics' ? 2.5 : 2} />
                     <span className="text-[10px] font-bold">Stats</span>
@@ -714,7 +714,7 @@ export function MobileDashboard() {
                         setEditingHabit(null);
                         setIsAddModalOpen(true);
                     }}
-                    className="fixed bottom-24 right-5 w-12 h-12 bg-gradient-to-br from-primary-500 to-purple-600 text-white rounded-xl shadow-xl shadow-primary-500/30 flex items-center justify-center hover:scale-105 transition-transform active:scale-95 z-40"
+                    className="fixed bottom-24 right-5 w-12 h-12 bg-gradient-to-br from-primary-500 to-purple-600 text-white rounded-xl shadow-xl shadow-primary-500/30 flex items-center justify-center hover:scale-110 hover:rotate-90 active:scale-90 transition-all duration-200 z-40"
                 >
                     <Plus className="w-6 h-6" />
                 </button>

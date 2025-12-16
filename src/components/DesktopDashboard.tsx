@@ -208,7 +208,7 @@ export function DesktopDashboard() {
                 </div>
                 <button
                     onClick={() => handleEditHabit(habit)}
-                    className="text-gray-600 hover:text-white p-1.5 rounded-md hover:bg-white/10 transition-all opacity-0 group-hover:opacity-100"
+                    className="text-gray-500 hover:text-white p-1.5 rounded-md hover:bg-white/10 transition-all"
                     title="Edit Habit"
                 >
                     <Settings className="w-4 h-4" />
@@ -280,7 +280,7 @@ export function DesktopDashboard() {
                 </div>
                 <button
                     onClick={() => handleEditHabit(habit)}
-                    className="text-gray-600 hover:text-white p-1.5 rounded-md hover:bg-white/10 transition-all opacity-0 group-hover:opacity-100"
+                    className="text-gray-500 hover:text-white p-1.5 rounded-md hover:bg-white/10 transition-all"
                     title="Edit Habit"
                 >
                     <Settings className="w-4 h-4" />
