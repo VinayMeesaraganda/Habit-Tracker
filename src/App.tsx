@@ -1,15 +1,12 @@
-/**
- * Main App component
- */
-
-import { useState } from 'react';
+import { useState, Suspense, lazy } from 'react';
 import { HabitProvider, useHabits } from './context/HabitContext';
 import { Auth } from './components/Auth';
 import { Layout } from './components/Layout';
-import { TodayView } from './components/TodayView';
 import { Loader2 } from 'lucide-react';
-
 import { ErrorBoundary } from './components/ErrorBoundary';
+
+// Lazy load the heavy chart/dashboard components
+const TodayView = lazy(() => import('./components/TodayView').then(module => ({ default: module.TodayView })));
 
 function AppContent() {
     const { user, loading } = useHabits();
@@ -33,26 +30,16 @@ function AppContent() {
     return (
         <ErrorBoundary>
             <Layout currentView={currentView} onViewChange={setCurrentView}>
-                {currentView === 'today' && <TodayView />}
-                {currentView === 'calendar' && (
-                    <div className="card text-center py-12">
-                        <h2 className="text-2xl font-bold text-slate-300 mb-2">Calendar View</h2>
-                        <p className="text-slate-400">Coming soon...</p>
+                <Suspense fallback={
+                    <div className="flex h-[50vh] items-center justify-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
                     </div>
-                )}
-                {/* ... other views ... */}
-                {currentView === 'analytics' && (
-                    <div className="card text-center py-12">
-                        <h2 className="text-2xl font-bold text-slate-300 mb-2">Analytics</h2>
-                        <p className="text-slate-400">Coming soon...</p>
-                    </div>
-                )}
-                {currentView === 'settings' && (
-                    <div className="card text-center py-12">
-                        <h2 className="text-2xl font-bold text-slate-300 mb-2">Settings</h2>
-                        <p className="text-slate-400">Coming soon...</p>
-                    </div>
-                )}
+                }>
+                    {currentView === 'today' && <TodayView />}
+                    {/* Placeholder views removed for production release. 
+                        Features are integrated into the main Dashboard. 
+                    */}
+                </Suspense>
             </Layout>
         </ErrorBoundary>
     );

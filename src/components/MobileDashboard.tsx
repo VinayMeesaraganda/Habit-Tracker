@@ -12,7 +12,7 @@ import { RadialProgress } from './RadialProgress';
 import { CATEGORY_COLORS } from '../utils/colors';
 
 export function MobileDashboard() {
-    const { habits, toggleHabit, getHabitLogs, currentMonth, setCurrentMonth, logs, user, signOut } = useHabits();
+    const { habits, toggleHabit, getHabitLogs, currentMonth, setCurrentMonth, logs, user } = useHabits();
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);

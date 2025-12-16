@@ -10,7 +10,7 @@ import {
     Bar,
     Cell
 } from 'recharts';
-import { CATEGORY_COLORS } from '../utils/colors';
+// CATEGORY_COLORS removed
 
 // Custom Minimal Tooltip
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -103,7 +103,7 @@ export const CategoryBreakdownChart = ({ data }: { data: any[] }) => {
                         }}
                     />
                     <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                        {data.map((entry, index) => {
+                        {data.map((_, index) => {
                             const colors = ['#F472B6', '#34D399', '#60A5FA', '#FBBF24', '#A78BFA'];
                             return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
                         })}

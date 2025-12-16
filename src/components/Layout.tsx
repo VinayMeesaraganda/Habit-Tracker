@@ -3,7 +3,7 @@
  */
 
 import { ReactNode } from 'react';
-import { Home, Calendar, BarChart3, Settings, LogOut } from 'lucide-react';
+import { Home, LogOut } from 'lucide-react';
 import { useHabits } from '../context/HabitContext';
 
 interface LayoutProps {
@@ -16,10 +16,8 @@ export function Layout({ children, currentView, onViewChange }: LayoutProps) {
     const { user, signOut } = useHabits();
 
     const navItems = [
-        { id: 'today' as const, label: 'Today', icon: Home },
-        { id: 'calendar' as const, label: 'Calendar', icon: Calendar },
-        { id: 'analytics' as const, label: 'Analytics', icon: BarChart3 },
-        { id: 'settings' as const, label: 'Settings', icon: Settings },
+        { id: 'today' as const, label: 'Dashboard', icon: Home },
+        // Future tabs can be added here
     ];
 
     return (

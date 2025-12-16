@@ -1,100 +1,113 @@
-# Habit Tracker - Project Documentation
+# Professional Habit Tracker
 
-## Overview
-A modern, mobile-first Progressive Web App (PWA) for tracking daily and weekly habits with comprehensive analytics.
+A modern, mobile-first habit tracking application built with **React**, **TypeScript**, **Vite**, and **Supabase**. This application is designed to be a complete replacement for Excel-based habit trackers, offering robust analytics, secure cloud sync, and a premium user experience.
 
-## Tech Stack
-- **Frontend**: React 18 + TypeScript
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS
-- **Backend**: Supabase (PostgreSQL + Auth)
-- **Charts**: Recharts
-- **Icons**: Lucide React
-- **PWA**: vite-plugin-pwa
+## ✨ Features
 
-## Project Structure
+-   **Mobile-First Design**: Fully responsive interface with a dense, app-like feel on mobile devices.
+-   **Cross-Platform**: Works seamlessly on Desktop (Matrix View) and Mobile (Card View).
+-   **Authentication**: Secure Sign-up, Sign-in, and Password Management via Supabase Auth.
+-   **Real-time Sync**: Habits and logs are synced instantly across all your devices.
+-   **Analytics**:
+    -   Combined Weekly/Monthly performance cards.
+    -   Interactive charts (Completion consistency, Category breakdown).
+    -   Visual progress rings.
+-   **Offline Capable**: (PWA ready architecture).
+
+---
+
+## 🛠 Tech Stack
+
+-   **Frontend**: React 18, TypeScript, Vite
+-   **Styling**: Tailwind CSS (Custom Design System, no external UI component libraries)
+-   **Icons**: Lucide React
+-   **Charts**: Recharts
+-   ** Backend**: Supabase (PostgreSQL, Auth, Realtime)
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+1.  **Node.js**: v16 or higher (`node -v` to check).
+2.  **Supabase Account**: Create a free project at [supabase.com](https://supabase.com).
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/VinayMeesaraganda/Habit-Tracker.git
+cd Habit-Tracker
 ```
-habit-tracker/
-├── src/
-│   ├── components/        # React components
-│   ├── context/          # State management (HabitContext)
-│   ├── lib/              # Supabase client & utilities
-│   ├── types/            # TypeScript interfaces
-│   ├── utils/            # Analytics & helper functions
-│   ├── App.tsx           # Main app component
-│   └── main.tsx          # Entry point
-├── public/               # Static assets
-├── .env                  # Environment variables (Supabase keys)
-└── index.html            # HTML entry point
-```
 
-## Environment Variables
-Create a `.env` file in the root directory:
-```env
-VITE_SUPABASE_URL=your_project_url
-VITE_SUPABASE_ANON_KEY=your_anon_key
-```
+### 2. Install Dependencies
 
-## Installation
 ```bash
 npm install
 ```
 
-## Development
+### 3. Environment Setup
+
+Create a `.env` file in the root directory. You can use the example file:
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and paste your Supabase keys (Found in Project Settings -> API):
+
+```env
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+```
+
+### 4. Database Setup
+
+1.  Go to your **Supabase Dashboard** -> **SQL Editor**.
+2.  Copy the content of [supabase_security_schema.sql](./supabase_security_schema.sql).
+3.  Run the query. This one-click script will:
+    -   Create the `habits` and `habit_logs` tables (if they don't exist).
+    -   Enable **Row Level Security (RLS)**.
+    -   Create policies ensuring users can only access their own data.
+
+### 5. Running Locally
+
+Start the development server:
+
 ```bash
 npm run dev
 ```
-Open [http://localhost:5173](http://localhost:5173)
 
-## Build for Production
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
+## 📦 Building for Production
+
+To create an optimized production build:
+
 ```bash
 npm run build
-npm run preview  # Preview production build
 ```
 
-## Database Setup
-See `supabase_setup.md` for complete Supabase configuration instructions.
+The output will be in the `dist/` directory, ready to be deployed to Vercel, Netlify, or any static host.
 
-## Features
-- ✅ Daily & Weekly habit tracking
-- ✅ Category-based organization
-- ✅ Monthly goal setting
-- ✅ Real-time analytics & charts
-- ✅ Calendar view with completion indicators
-- ✅ Cross-device sync via Supabase
-- ✅ Secure authentication
-- ✅ Mobile-first responsive design
-- ✅ PWA support (installable on mobile)
+### Deployment Checklist
 
-## Architecture
-- **Authentication**: Supabase Auth (email/password, OAuth)
-- **Database**: PostgreSQL with Row Level Security
-- **State Management**: React Context API
-- **Real-time Sync**: Supabase real-time subscriptions
-- **Analytics**: Client-side computation matching Excel formulas
+Refer to [PRODUCTION_checklist.md](./production_checklist.md) found in the docs (artifacts) for a detailed pre-flight check.
 
-## Security
-- Row Level Security (RLS) ensures users only access their own data
-- Environment variables for API keys
-- HTTPS enforced in production
-- SQL injection prevention via Supabase client
+---
 
-## Performance
-- Code splitting with React.lazy
-- Optimized re-renders with useMemo/useCallback
-- Database indexes on user_id, habit_id, date
-- PWA caching for offline support
+## 🤝 Contributing
 
-## Browser Support
-- Chrome/Edge (latest)
-- Firefox (latest)
-- Safari (latest)
-- Mobile browsers (iOS Safari, Chrome Mobile)
+1.  Fork the repo
+2.  Create your feature branch (`git checkout -b feature/amazing-feature`)
+3.  Commit your changes (`git commit -m 'Add some amazing feature'`)
+4.  Push to the branch (`git push origin feature/amazing-feature`)
+5.  Open a Pull Request
 
-## License
-Private project
+---
 
-## Maintenance
-- Update dependencies: `npm update`
-- Check for security issues: `npm audit`
-- Database backups: Automatic via Supabase
+## 📄 License
+
+Distributed under the MIT License.
