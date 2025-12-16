@@ -6,10 +6,11 @@
 
 import { memo } from 'react';
 import { Habit } from '../types';
-import { Check, Edit2, Flame, Target } from 'lucide-react';
+import { Check, Edit2, Target } from 'lucide-react';
 import { CATEGORY_COLORS } from '../utils/colors';
 import { calculateStreak } from '../utils/analytics';
 import { useHabits } from '../context/HabitContext';
+import { StreakBadge } from './StreakBadge';
 
 interface HabitCardProps {
     habit: Habit;
@@ -56,12 +57,7 @@ export const HabitCard = memo(function HabitCard({ habit, completed, onToggle, o
                             }`}>
                             {habit.name}
                         </h3>
-                        {streak > 0 && (
-                            <span className="badge badge-warning">
-                                <Flame className="w-3 h-3 fill-orange-400" />
-                                {streak}
-                            </span>
-                        )}
+                        <StreakBadge streak={streak} size="sm" />
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                         <span

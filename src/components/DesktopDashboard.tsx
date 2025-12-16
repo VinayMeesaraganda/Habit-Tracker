@@ -14,6 +14,7 @@ import { CATEGORY_COLORS } from '../utils/colors';
 import { Habit } from '../types';
 import { calculateStreak, getGoalPacing, getBestDay, getConsistencyScore, getProgressBadges, getLongestStreak } from '../utils/analytics';
 import { generateCSV, downloadCSV } from '../utils/export.ts';
+import { TopStreaksWidget } from './desktop/TopStreaksWidget';
 export function DesktopDashboard() {
     const { habits, logs, currentMonth, setCurrentMonth, toggleHabit, getHabitLogs } = useHabits();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -383,24 +384,36 @@ export function DesktopDashboard() {
                         </div>
                     </div>
                 </div>
-                <div className="w-[200px] flex flex-col items-center justify-center border-r border-gray-100 pr-8">
-                    <RadialProgress
-                        percentage={monthlyAverageProgress}
-                        label="Summary"
-                        color="#DC2626"
-                        size={140}
-                    />
-                </div>
-                <div className="flex-1 flex justify-between gap-4 items-center pl-4">
-                    {weeklyStats.map((week, idx) => (
+            </div>
+
+            {/* Performance & Streaks Section */}
+            <div className="grid grid-cols-3 gap-4">
+                {/* Weekly Performance */}
+                <div className="col-span-2 card-glass p-6 flex items-center gap-6">
+                    <div className="flex flex-col items-center justify-center border-r border-white/10 pr-8">
                         <RadialProgress
-                            key={idx}
-                            percentage={week.total > 0 ? (week.completed / week.total) * 100 : 0}
-                            label={`Week ${idx + 1} `}
-                            size={100}
-                            color={['#EF4444', '#F97316', '#F59E0B', '#10B981', '#3B82F6'][idx] || '#6C47FF'}
+                            percentage={monthlyAverageProgress}
+                            label="Summary"
+                            color="#DC2626"
+                            size={140}
                         />
-                    ))}
+                    </div>
+                    <div className="flex-1 flex justify-between gap-4 items-center">
+                        {weeklyStats.map((week, idx) => (
+                            <RadialProgress
+                                key={idx}
+                                percentage={week.total > 0 ? (week.completed / week.total) * 100 : 0}
+                                label={`Week ${idx + 1} `}
+                                size={100}
+                                color={['#EF4444', '#F97316', '#F59E0B', '#10B981', '#3B82F6'][idx] || '#6C47FF'}
+                            />
+                        ))}
+                    </div>
+                </div>
+
+                {/* Top Streaks Widget */}
+                <div className="col-span-1">
+                    <TopStreaksWidget habits={habits} logs={logs} maxDisplay={5} />
                 </div>
             </div>
 

@@ -294,3 +294,71 @@ export function getLongestStreak(habits: Habit[], logs: HabitLog[]): { streak: n
 
     return { streak: maxStreak, habitName };
 }
+
+/**
+ * Get color scheme for streak based on day count
+ * Returns Tailwind classes for text, background, and border
+ */
+export function getStreakColor(days: number): { text: string; bg: string; border: string; iconColor: string } {
+    if (days === 0) {
+        return {
+            text: 'text-gray-500',
+            bg: 'bg-gray-500/10',
+            border: 'border-gray-500/20',
+            iconColor: 'text-gray-500'
+        };
+    } else if (days <= 2) {
+        return {
+            text: 'text-gray-400',
+            bg: 'bg-gray-400/20',
+            border: 'border-gray-400/30',
+            iconColor: 'text-gray-400'
+        };
+    } else if (days <= 6) {
+        return {
+            text: 'text-orange-400',
+            bg: 'bg-orange-500/20',
+            border: 'border-orange-500/30',
+            iconColor: 'text-orange-400'
+        };
+    } else if (days <= 13) {
+        return {
+            text: 'text-red-400',
+            bg: 'bg-red-500/20',
+            border: 'border-red-500/30',
+            iconColor: 'text-red-400'
+        };
+    } else {
+        // 14+ days - Legendary!
+        return {
+            text: 'text-yellow-400',
+            bg: 'bg-yellow-500/20',
+            border: 'border-yellow-500/30',
+            iconColor: 'text-yellow-400'
+        };
+    }
+}
+
+/**
+ * Check if a streak day count is a milestone
+ */
+export function isStreakMilestone(days: number): boolean {
+    const milestones = [3, 7, 14, 30, 50, 100];
+    return milestones.includes(days);
+}
+
+/**
+ * Get active streaks (habits with streaks > 0)
+ * Returns sorted by streak count descending
+ */
+export function getActiveStreaks(habits: Habit[], logs: HabitLog[]): Array<{ habit: Habit; streak: number }> {
+    const streaks = habits
+        .map(habit => ({
+            habit,
+            streak: calculateStreak(habit, logs)
+        }))
+        .filter(item => item.streak > 0)
+        .sort((a, b) => b.streak - a.streak);
+
+    return streaks;
+}

@@ -12,6 +12,7 @@ import { DailyCompletionChart, CategoryBreakdownChart } from './DashboardCharts'
 import { RadialProgress } from './RadialProgress';
 import { CATEGORY_COLORS } from '../utils/colors';
 import { getBestDay, getConsistencyScore, getProgressBadges, getLongestStreak } from '../utils/analytics';
+import { CompactProgressWidget } from './mobile/CompactProgressWidget';
 
 export function MobileDashboard() {
     const { habits, toggleHabit, getHabitLogs, currentMonth, setCurrentMonth, logs, user } = useHabits();
@@ -307,28 +308,15 @@ export function MobileDashboard() {
                             />
                         </div>
 
-                        {/* Progress Card - Compact */}
+                        {/* Compact Progress + Streaks Widget */}
                         {activeHabits.length > 0 && (
-                            <div className="mx-4 mt-4 card-glass p-4 relative overflow-hidden">
-                                <div className="absolute inset-0 bg-gradient-to-r from-primary-500/20 to-purple-500/20 pointer-events-none" />
-                                <div className="relative z-10">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <div>
-                                            <h2 className="text-base font-bold text-white">Daily Goal</h2>
-                                            <p className="text-gray-400 text-xs">{completedCount} of {activeHabits.length} done</p>
-                                        </div>
-                                        <div className="bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
-                                            <span className="font-bold text-lg text-white">{progressPercent}%</span>
-                                        </div>
-                                    </div>
-                                    <div className="w-full bg-white/10 rounded-full h-2">
-                                        <div
-                                            className="bg-gradient-to-r from-primary-500 to-purple-500 rounded-full h-2 transition-all duration-500"
-                                            style={{ width: `${progressPercent}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                            <CompactProgressWidget
+                                completedCount={completedCount}
+                                totalHabits={activeHabits.length}
+                                progressPercent={progressPercent}
+                                habits={habits}
+                                logs={logs}
+                            />
                         )}
 
                         {/* Habits List - Compact Spacing */}
