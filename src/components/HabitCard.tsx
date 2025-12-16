@@ -1,7 +1,8 @@
-
 import { Check, Edit2 } from 'lucide-react';
 import { CATEGORY_COLORS } from '../utils/colors';
 import { Habit } from '../types';
+import { useHabits } from '../context/HabitContext';
+import { calculateStreak } from '../utils/analytics';
 
 interface HabitCardProps {
     habit: Habit;
@@ -11,6 +12,8 @@ interface HabitCardProps {
 }
 
 export function HabitCard({ habit, completed, onToggle, onEdit }: HabitCardProps) {
+    const { logs } = useHabits();
+    const streak = calculateStreak(habit, logs);
     const isArchived = !!habit.archived_at;
     const categoryColor = CATEGORY_COLORS[habit.category];
 
@@ -35,6 +38,11 @@ export function HabitCard({ habit, completed, onToggle, onEdit }: HabitCardProps
                     <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-px rounded-full border ${categoryColor.bg} ${categoryColor.border} ${categoryColor.text}`}>
                         {habit.category.split(' ')[0]}
                     </span>
+                    {streak >= 1 && (
+                        <span className="text-[10px] font-bold text-orange-600 bg-gradient-to-r from-orange-50 to-amber-50 px-2 py-0.5 rounded-full border border-orange-200 flex items-center gap-1 shadow-sm">
+                            🔥 {streak} day{streak > 1 ? 's' : ''}
+                        </span>
+                    )}
                     {isArchived && (
                         <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-px rounded-full border border-amber-200">
                             Stopped

@@ -3,13 +3,15 @@ import { useHabits } from '../context/HabitContext';
 import { AddHabitModal } from './AddHabitModal';
 import { ProfileModal } from './ProfileModal';
 import { format, startOfMonth, endOfMonth, endOfWeek, startOfWeek, isSameDay, eachDayOfInterval, setYear, isSameMonth } from 'date-fns';
-import { Calendar as CalendarIcon, List, BarChart2, CheckSquare, ChevronLeft, ChevronRight, Plus, Edit2 } from 'lucide-react';
+import { Calendar as CalendarIcon, List, BarChart2, CheckSquare, ChevronLeft, ChevronRight, Plus, Edit2, Search, Download } from 'lucide-react';
+import { generateCSV, downloadCSV } from '../utils/export';
 import { HorizontalCalendar } from './HorizontalCalendar';
 import { HabitCard } from './HabitCard';
 import { Habit } from '../types';
 import { DailyCompletionChart, CategoryBreakdownChart } from './DashboardCharts';
 import { RadialProgress } from './RadialProgress';
 import { CATEGORY_COLORS } from '../utils/colors';
+import { getBestDay, getConsistencyScore, getProgressBadges, getLongestStreak } from '../utils/analytics';
 
 export function MobileDashboard() {
     const { habits, toggleHabit, getHabitLogs, currentMonth, setCurrentMonth, logs, user } = useHabits();
@@ -19,7 +21,25 @@ export function MobileDashboard() {
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
     const [activeTab, setActiveTab] = useState<'today' | 'habits' | 'analytics'>('today');
     const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
     const contentRef = useRef<HTMLDivElement>(null);
+
+    // --- SEO: Dynamic Title ---
+    useEffect(() => {
+        const titles = {
+            today: 'Today',
+            habits: 'My Habits',
+            analytics: 'Analytics'
+        };
+        document.title = `${titles[activeTab]} | Habit Tracker`;
+    }, [activeTab]);
+
+    const handleExportCSV = () => {
+        // Prepare data for export
+        const exportHabits = habits; // Can be filtered if needed, but usually export all for context
+        const csvContent = generateCSV(exportHabits, logs, currentMonth);
+        downloadCSV(csvContent, `habit - tracker - mobile - ${format(currentMonth, 'yyyy-MM')}.csv`);
+    };
 
     // Scroll to top when switching tabs
     useEffect(() => {
@@ -213,10 +233,10 @@ export function MobileDashboard() {
                                         setSelectedDate(newMonth);
                                     }
                                 }}
-                                className={`py-3 rounded-xl text-sm font-bold transition-all ${idx === currentMonth.getMonth()
+                                className={`py - 3 rounded - xl text - sm font - bold transition - all ${idx === currentMonth.getMonth()
                                     ? 'bg-pink-600 text-white shadow-md shadow-pink-200'
                                     : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                                    }`}
+                                    } `}
                             >
                                 {m}
                             </button>
@@ -248,6 +268,7 @@ export function MobileDashboard() {
                         </span>
                     </button>
                     <div>
+                        <p className="text-[10px] uppercase font-bold text-pink-500 tracking-wider mb-0.5">Habit Tracker</p>
                         <h1 className="text-lg font-bold text-gray-900 leading-none">
                             {activeTab === 'today' ? 'Today' : activeTab === 'habits' ? 'My Habits' : 'Analytics'}
                         </h1>
@@ -259,9 +280,17 @@ export function MobileDashboard() {
                 <div className="flex items-center gap-2 text-gray-500">
                     <button
                         onClick={() => setIsMonthPickerOpen(true)}
-                        className={`p-2 rounded-lg active:bg-gray-100 transition-colors ${isMonthPickerOpen ? 'bg-pink-50 text-pink-600' : 'hover:bg-gray-50'}`}
+                        title="Select Month"
+                        className={`p - 2 rounded - lg active: bg - gray - 100 transition - colors ${isMonthPickerOpen ? 'bg-pink-50 text-pink-600' : 'hover:bg-gray-50'} `}
                     >
                         <CalendarIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                        onClick={() => setIsAddModalOpen(true)}
+                        title="Add New Habit"
+                        className="p-2 rounded-lg bg-pink-50 text-pink-600 hover:bg-pink-100 active:bg-pink-200"
+                    >
+                        <Plus className="w-5 h-5" />
                     </button>
                 </div>
             </div>
@@ -298,7 +327,7 @@ export function MobileDashboard() {
                                 <div className="w-full bg-black/10 rounded-full h-1.5">
                                     <div
                                         className="bg-white rounded-full h-1.5 transition-all duration-500"
-                                        style={{ width: `${progressPercent}%` }}
+                                        style={{ width: `${progressPercent}% ` }}
                                     />
                                 </div>
                             </div>
@@ -332,81 +361,136 @@ export function MobileDashboard() {
 
                 {activeTab === 'habits' && (
                     <div className="px-4 py-4 pb-24 space-y-3">
-                        {/* Month Context */}
-                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex items-start gap-3 mb-2">
-                            <div className="p-2 bg-white rounded-full text-blue-500 shadow-sm"><List className="w-4 h-4" /></div>
-                            <div>
-                                <h3 className="text-sm font-bold text-blue-900">Manage Habits</h3>
-                                <p className="text-xs text-blue-600/80">Viewing all habits for {format(currentMonth, 'MMMM')}</p>
+                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-2 space-y-3">
+                            <div className="flex items-start gap-3">
+                                <div className="p-2 bg-white rounded-full text-blue-500 shadow-sm"><List className="w-4 h-4" /></div>
+                                <div>
+                                    <h3 className="text-sm font-bold text-blue-900">Manage Habits</h3>
+                                    <p className="text-xs text-blue-600/80">Viewing all habits for {format(currentMonth, 'MMMM')}</p>
+                                </div>
+                            </div>
+
+                            {/* Mobile Controls */}
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search habits..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-blue-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 text-gray-700 placeholder-gray-400"
+                                    />
+                                </div>
+                                <button
+                                    onClick={handleExportCSV}
+                                    className="p-2 bg-white border border-blue-100 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                                    title="Export CSV"
+                                >
+                                    <Download className="w-5 h-5" />
+                                </button>
                             </div>
                         </div>
 
-                        {habits.filter(habit => {
-                            // Filter logic: Show if created before/during this month AND (not archived OR archived after/during this month)
-                            const monthStart = startOfMonth(currentMonth);
-                            const monthEnd = endOfMonth(currentMonth);
-                            const createdAt = new Date(habit.created_at);
+                        {(() => {
+                            const filteredHabits = habits.filter(habit => {
+                                // Filter logic: Show if created before/during this month AND (not archived OR archived after/during this month)
+                                const monthStart = startOfMonth(currentMonth);
+                                const monthEnd = endOfMonth(currentMonth);
+                                const createdAt = new Date(habit.created_at);
 
-                            // 1. Must be created by the end of this month
-                            if (createdAt > monthEnd) return false;
+                                // 1. Must be created by the end of this month
+                                if (createdAt > monthEnd) return false;
 
-                            // 2. If archived, must be archived AFTER the start of this month
-                            if (habit.archived_at) {
-                                const archivedAt = new Date(habit.archived_at);
-                                if (archivedAt < monthStart) return false;
-                            }
+                                // 2. If archived, must be archived AFTER the start of this month
+                                if (habit.archived_at) {
+                                    const archivedAt = new Date(habit.archived_at);
+                                    if (archivedAt < monthStart) return false;
+                                }
 
-                            return true;
-                        }).map(habit => {
-                            const progress = getHabitProgress(habit);
-                            const catColor = CATEGORY_COLORS[habit.category];
 
-                            return (
-                                <div key={habit.id} className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm flex items-center justify-between">
-                                    <div className="flex items-center gap-3 overflow-hidden flex-1">
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border bg-gray-50 text-xl border-gray-100`}>
-                                            {habit.category.split(' ')[1] || '📌'}
+                                // 3. Search Filter
+                                if (searchTerm && !habit.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+                                    return false;
+                                }
+
+                                return true;
+                            });
+
+                            if (filteredHabits.length === 0) {
+                                return (
+                                    <div className="flex flex-col items-center justify-center py-12 text-center text-gray-400">
+                                        <div className="bg-gray-50 p-4 rounded-full mb-3">
+                                            <List className="w-6 h-6 text-gray-300" />
                                         </div>
-                                        <div className="min-w-0">
-                                            <h4 className="font-semibold text-sm text-gray-900 truncate">{habit.name}</h4>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                <span className={`text-[9px] font-bold px-1.5 py-px rounded-full border ${catColor.bg} ${catColor.text} border-transparent`}>
-                                                    {habit.category.split(' ')[0]}
-                                                </span>
-                                                <span className="text-[10px] text-gray-400">
-                                                    {habit.type === 'daily' ? 'Daily' : 'Weekly'} • {habit.month_goal || 'No'} Goal
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 pl-2">
-                                        <div className="flex flex-col items-end">
-                                            <span className={`text-sm font-bold ${progress.count >= progress.goal ? 'text-emerald-600' : 'text-gray-500'}`}>
-                                                {progress.count}/{progress.goal}
-                                            </span>
-                                            <div className="w-14 h-1 mt-1 bg-gray-100 rounded-full overflow-hidden">
-                                                <div
-                                                    className={`h-full rounded-full ${progress.count >= progress.goal ? 'bg-emerald-500' : 'bg-gray-300'}`}
-                                                    style={{ width: `${progress.percent}%` }}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Edit Button */}
+                                        <p className="text-sm font-medium mb-1">No habits found</p>
+                                        <p className="text-xs text-gray-400 mb-4 max-w-[200px]">
+                                            You haven't tracked any habits for {format(currentMonth, 'MMMM')} yet.
+                                        </p>
                                         <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleEditHabit(habit);
+                                            onClick={() => {
+                                                setEditingHabit(null);
+                                                setIsAddModalOpen(true);
                                             }}
-                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            className="text-pink-600 font-bold text-sm flex items-center gap-1 hover:bg-pink-50 px-3 py-1.5 rounded-lg transition-colors"
                                         >
-                                            <Edit2 className="w-4 h-4" />
+                                            <Plus className="w-4 h-4" /> Create New Habit
                                         </button>
                                     </div>
-                                </div>
-                            )
-                        })}
+                                );
+                            }
+
+                            return filteredHabits.map(habit => {
+                                const progress = getHabitProgress(habit);
+                                const catColor = CATEGORY_COLORS[habit.category];
+
+                                return (
+                                    <div key={habit.id} className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm flex items-center justify-between">
+                                        <div className="flex items-center gap-3 overflow-hidden flex-1">
+                                            <div className={`w - 10 h - 10 rounded - xl flex items - center justify - center border bg - gray - 50 text - xl border - gray - 100`}>
+                                                {habit.category.split(' ')[1] || '📌'}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h4 className="font-semibold text-sm text-gray-900 truncate">{habit.name}</h4>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    <span className={`text - [9px] font - bold px - 1.5 py - px rounded - full border ${catColor.bg} ${catColor.text} border - transparent`}>
+                                                        {habit.category.split(' ')[0]}
+                                                    </span>
+                                                    <span className="text-[10px] text-gray-400">
+                                                        {habit.type === 'daily' ? 'Daily' : 'Weekly'} • {habit.month_goal || 'No'} Goal
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 pl-2">
+                                            <div className="flex flex-col items-end">
+                                                <span className={`text - sm font - bold ${progress.count >= progress.goal ? 'text-emerald-600' : 'text-gray-500'} `}>
+                                                    {progress.count}/{progress.goal}
+                                                </span>
+                                                <div className="w-14 h-1 mt-1 bg-gray-100 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h - full rounded - full ${progress.count >= progress.goal ? 'bg-emerald-500' : 'bg-gray-300'} `}
+                                                        style={{ width: `${progress.percent}% ` }}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Edit Button */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEditHabit(habit);
+                                                }}
+                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            });
+                        })()}
                     </div>
                 )}
 
@@ -482,6 +566,112 @@ export function MobileDashboard() {
                             <CategoryBreakdownChart data={categoryData} />
                         </div>
 
+                        {/* New: Insights Section */}
+                        {(() => {
+                            const bestDay = getBestDay(logs, currentMonth);
+                            const consistencyScore = getConsistencyScore(habits, logs, currentMonth);
+                            const longestStreak = getLongestStreak(habits, logs);
+                            const badges = getProgressBadges(habits, logs);
+                            const earnedBadges = badges.filter(b => b.earned);
+                            const inProgressBadges = badges.filter(b => !b.earned);
+
+                            return (
+                                <>
+                                    {/* Insights Card */}
+                                    <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-4 shadow-lg text-white">
+                                        <h3 className="text-xs font-bold uppercase tracking-widest mb-3 text-purple-200">✨ Insights</h3>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {/* Best Day */}
+                                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3">
+                                                <p className="text-[10px] text-purple-200 font-bold uppercase mb-1">Best Day</p>
+                                                <p className="text-lg font-bold">
+                                                    {bestDay.date ? format(new Date(bestDay.date), 'MMM d') : '-'}
+                                                </p>
+                                                <p className="text-xs text-purple-200">
+                                                    {bestDay.count > 0 ? `${bestDay.count} habits completed` : 'No data yet'}
+                                                </p>
+                                            </div>
+
+                                            {/* Consistency Score */}
+                                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3">
+                                                <p className="text-[10px] text-purple-200 font-bold uppercase mb-1">Consistency</p>
+                                                <p className="text-lg font-bold">{consistencyScore}%</p>
+                                                <p className="text-xs text-purple-200">
+                                                    {consistencyScore >= 80 ? 'Excellent!' : consistencyScore >= 50 ? 'Good progress' : 'Keep going!'}
+                                                </p>
+                                            </div>
+
+                                            {/* Longest Streak */}
+                                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 col-span-2">
+                                                <p className="text-[10px] text-purple-200 font-bold uppercase mb-1">🔥 Longest Streak</p>
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-2xl font-bold">{longestStreak.streak} days</p>
+                                                    {longestStreak.habitName && (
+                                                        <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
+                                                            {longestStreak.habitName}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Badges Section */}
+                                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">🏆 Progress Badges</h3>
+
+                                        {/* Earned Badges */}
+                                        {earnedBadges.length > 0 && (
+                                            <div className="mb-4">
+                                                <p className="text-[10px] font-bold text-emerald-500 uppercase mb-2">Earned</p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {earnedBadges.map(badge => (
+                                                        <div key={badge.id} className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl">
+                                                            <span className="text-xl">{badge.icon}</span>
+                                                            <div>
+                                                                <p className="text-xs font-bold text-emerald-700">{badge.name}</p>
+                                                                <p className="text-[9px] text-emerald-500">{badge.description}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* In Progress Badges */}
+                                        {inProgressBadges.length > 0 && (
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">In Progress</p>
+                                                <div className="space-y-2">
+                                                    {inProgressBadges.map(badge => (
+                                                        <div key={badge.id} className="flex items-center gap-3 bg-gray-50 border border-gray-100 px-3 py-2 rounded-xl">
+                                                            <span className="text-xl opacity-50">{badge.icon}</span>
+                                                            <div className="flex-1">
+                                                                <div className="flex justify-between items-center mb-1">
+                                                                    <p className="text-xs font-bold text-gray-600">{badge.name}</p>
+                                                                    <span className="text-[10px] text-gray-400">{badge.progress}%</span>
+                                                                </div>
+                                                                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                                                    <div
+                                                                        className="bg-purple-400 h-1.5 rounded-full transition-all"
+                                                                        style={{ width: `${badge.progress}% ` }}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {earnedBadges.length === 0 && inProgressBadges.length === 0 && (
+                                            <p className="text-center text-gray-400 text-sm py-4">Start tracking to earn badges!</p>
+                                        )}
+                                    </div>
+                                </>
+                            );
+                        })()}
+
                         <div className="h-4" /> {/* Bottom spacer */}
                     </div>
                 )}
@@ -497,7 +687,7 @@ export function MobileDashboard() {
                         setSelectedDate(now);
                         setCurrentMonth(startOfMonth(now)); // Ensure calendar shows correct month
                     }}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'today' ? 'text-pink-600 bg-pink-50' : 'text-gray-400 hover:bg-gray-50'}`}
+                    className={`flex flex - col items - center gap - 1 p - 2 rounded - xl transition - all ${activeTab === 'today' ? 'text-pink-600 bg-pink-50' : 'text-gray-400 hover:bg-gray-50'} `}
                 >
                     <List className="w-6 h-6" strokeWidth={activeTab === 'today' ? 2.5 : 2} />
                     <span className="text-[10px] font-bold">Today</span>
@@ -505,7 +695,7 @@ export function MobileDashboard() {
 
                 <button
                     onClick={() => setActiveTab('habits')}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'habits' ? 'text-blue-600 bg-blue-50' : 'text-gray-400 hover:bg-gray-50'}`}
+                    className={`flex flex - col items - center gap - 1 p - 2 rounded - xl transition - all ${activeTab === 'habits' ? 'text-blue-600 bg-blue-50' : 'text-gray-400 hover:bg-gray-50'} `}
                 >
                     <CheckSquare className="w-6 h-6" strokeWidth={activeTab === 'habits' ? 2.5 : 2} />
                     <span className="text-[10px] font-bold">Habits</span>
@@ -513,7 +703,7 @@ export function MobileDashboard() {
 
                 <button
                     onClick={() => setActiveTab('analytics')}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'analytics' ? 'text-purple-600 bg-purple-50' : 'text-gray-400 hover:bg-gray-50'}`}
+                    className={`flex flex - col items - center gap - 1 p - 2 rounded - xl transition - all ${activeTab === 'analytics' ? 'text-purple-600 bg-purple-50' : 'text-gray-400 hover:bg-gray-50'} `}
                 >
                     <BarChart2 className="w-6 h-6" strokeWidth={activeTab === 'analytics' ? 2.5 : 2} />
                     <span className="text-[10px] font-bold">Stats</span>

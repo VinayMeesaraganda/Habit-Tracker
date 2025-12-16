@@ -10,6 +10,7 @@ import {
     Bar,
     Cell
 } from 'recharts';
+// Re-adding CATEGORY_COLORS for Legend
 // CATEGORY_COLORS removed
 
 // Custom Minimal Tooltip
@@ -86,7 +87,7 @@ export const CategoryBreakdownChart = ({ data }: { data: any[] }) => {
                         type="category"
                         tickLine={false}
                         axisLine={false}
-                        width={80}
+                        width={100}
                         tick={{ fontSize: 11, fill: '#4B5563', fontWeight: 500 }}
                     />
                     <Tooltip
@@ -110,6 +111,22 @@ export const CategoryBreakdownChart = ({ data }: { data: any[] }) => {
                     </Bar>
                 </BarChart>
             </ResponsiveContainer>
+
+            {/* Legend */}
+            <div className="flex flex-wrap gap-2 mt-2 justify-center">
+                {data.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5 text-[10px] text-gray-500 bg-gray-50 px-2 py-1 rounded-full border border-gray-100">
+                        <div
+                            className="w-2 h-2 rounded-full"
+                            style={{
+                                backgroundColor: ['#F472B6', '#34D399', '#60A5FA', '#FBBF24', '#A78BFA'][idx % 5]
+                            }}
+                        />
+                        <span>{item.name}</span>
+                        <span className="font-bold text-gray-900">({item.value})</span>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 };

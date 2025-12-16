@@ -28,6 +28,22 @@
     @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
   }
 
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+
+    body {
+      background: white;
+    }
+
+    /* Ensure background colors (charts) print */
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+  }
+
   .btn-primary {
     @apply bg-primary-600 hover:bg-primary-700 text-white shadow-sm;
   }

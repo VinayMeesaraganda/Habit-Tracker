@@ -1,241 +1,296 @@
-/**
- * Analytics utility functions
- * Replicates Excel formulas for habit tracking metrics
- */
-
-import { Habit, HabitLog, HabitMetrics, DailyAggregate, WeeklyMetrics, CategoryMetrics, ChartDataRow } from '../types';
-import {
-
-    endOfMonth,
-    eachDayOfInterval,
-    format,
-    isSameDay,
-    addDays,
-    getDay
-} from 'date-fns';
+import { Habit, HabitLog } from '../types';
+import { isSameDay, subDays, startOfDay, parseISO, startOfWeek, endOfWeek, subWeeks, getDaysInMonth, startOfMonth, endOfMonth, format } from 'date-fns';
 
 /**
- * Get completed count for a habit in a given month
- * Excel equivalent: =COUNTIF(L30:AP30, TRUE)
+ * Calculates the current streak for a habit.
+ * Streak = consecutive days/weeks ending today or yesterday.
  */
-export function getHabitCompleted(
-    habitId: string,
-    logs: HabitLog[],
-    monthStart: Date
-): number {
-    const monthEnd = endOfMonth(monthStart);
+export function calculateStreak(habit: Habit, logs: HabitLog[]): number {
+    if (habit.type === 'daily') {
+        let streak = 0;
+        const today = startOfDay(new Date());
+        let checkDate = today;
 
-    return logs.filter(log => {
-        const logDate = new Date(log.date);
-        return (
-            log.habit_id === habitId &&
-            log.completed &&
-            logDate >= monthStart &&
-            logDate <= monthEnd
-        );
-    }).length;
+        // Check if completed today, if not, check yesterday to start streak
+        const completedToday = logs.some(l => l.habit_id === habit.id && l.completed && isSameDay(parseISO(l.date), today));
+
+        if (!completedToday) {
+            checkDate = subDays(today, 1);
+            const completedYesterday = logs.some(l => l.habit_id === habit.id && l.completed && isSameDay(parseISO(l.date), checkDate));
+            if (!completedYesterday) return 0; // No streak
+        }
+
+        // Count backwards
+        while (true) {
+            const isCompleted = logs.some(l => l.habit_id === habit.id && l.completed && isSameDay(parseISO(l.date), checkDate));
+            if (isCompleted) {
+                streak++;
+                checkDate = subDays(checkDate, 1);
+            } else {
+                break;
+            }
+        }
+        return streak;
+    } else {
+        // Weekly Streak Logic
+        // For simplicity: Consecutive weeks where goal was met? 
+        // Or simpler: Consecutive weeks with AT LEAST ONE entry? 
+        // Let's go with: Consecutive weeks with at least 1 log.
+        let streak = 0;
+        const currentWeekStart = startOfWeek(new Date());
+        let checkWeekStart = currentWeekStart;
+
+        // Similar lookback logic... (Simplified for now to " Weeks Active")
+        // Just counting consecutive weeks with activity
+        while (true) {
+            const weekEnd = endOfWeek(checkWeekStart);
+            const hasLog = logs.some(l => {
+                const d = parseISO(l.date);
+                return l.habit_id === habit.id && l.completed && d >= checkWeekStart && d <= weekEnd;
+            });
+
+            if (hasLog) {
+                streak++;
+                checkWeekStart = subWeeks(checkWeekStart, 1);
+            } else {
+                // Allow missing *this* week if it just started? No, simpler is better.
+                // If no log this week, streak is 0? Or 0 for this week but saved previous?
+                // Let's be lenient: if no log THIS week, check LAST week.
+                if (isSameDay(checkWeekStart, currentWeekStart)) {
+                    checkWeekStart = subWeeks(checkWeekStart, 1);
+                    continue;
+                }
+                break;
+            }
+        }
+        return streak;
+    }
 }
 
 /**
- * Get habit metrics (completed, goal, percentage)
- * Excel equivalent: =COUNTIF(L31:AP31,TRUE)/J31
+ * Calculates if the user is On Track, Behind, or Ahead for a monthly goal.
  */
-export function getHabitMetrics(
-    habit: Habit,
-    logs: HabitLog[],
-    monthStart: Date
-): HabitMetrics {
-    const completed = getHabitCompleted(habit.id, logs, monthStart);
-    const goal = habit.month_goal;
-    const percentage = goal > 0 ? completed / goal : 0;
+export function getGoalPacing(habit: Habit, count: number, currentDayOfMonth: number): { status: 'ahead' | 'on_track' | 'behind'; color: string; message: string } {
+    if (!habit.month_goal || habit.month_goal <= 0) return { status: 'on_track', color: 'text-gray-400', message: '' };
+
+    const totalDays = getDaysInMonth(new Date());
+    const daysPassed = currentDayOfMonth;
+
+    // Expected completion rate per day
+    const expectedRate = habit.month_goal / totalDays;
+    const expectedCount = Math.floor(expectedRate * daysPassed);
+
+    if (count >= habit.month_goal) return { status: 'ahead', color: 'text-emerald-500', message: 'Goal Met! 🎉' };
+
+    if (count >= expectedCount + 2) return { status: 'ahead', color: 'text-emerald-500', message: 'Ahead of schedule' };
+    if (count >= expectedCount) return { status: 'on_track', color: 'text-blue-500', message: 'On track' };
+
+    // Behind
+    const deficit = expectedCount - count;
+    if (deficit > 5) return { status: 'behind', color: 'text-red-500', message: 'Far behind' };
+    return { status: 'behind', color: 'text-orange-500', message: 'Slightly behind' };
+}
+
+/**
+ * Calculates completion metrics for a habit in a given month.
+ */
+export function getHabitMetrics(habit: Habit, logs: HabitLog[], currentMonth: Date) {
+    const start = startOfMonth(currentMonth);
+    const end = endOfMonth(currentMonth);
+
+    // Filter logs for this habit in current month
+    const monthlyLogs = logs.filter(l =>
+        l.habit_id === habit.id &&
+        l.completed &&
+        l.date >= format(start, 'yyyy-MM-dd') &&
+        l.date <= format(end, 'yyyy-MM-dd')
+    );
+
+    const count = monthlyLogs.length;
+    const goal = habit.month_goal || 1;
+    const percentage = Math.min(count / goal, 1);
 
     return {
-        habitId: habit.id,
-        completed,
+        count,
         goal,
         percentage,
-        completedText: `${completed} / ${goal}`,
+        completedText: `${count}/${goal}`
     };
 }
 
 /**
- * Check if a day has any completed habits
- * Excel equivalent: =IF(COUNTA($B30:$B49)<COUNTIF(L30:L49,TRUE), ...)
+ * Finds the "Best Day" in the current month (day with most habits completed).
  */
-export function getDailyCompleted(
-    date: Date,
-    logs: HabitLog[]
-): boolean {
-    return logs.some(log =>
-        isSameDay(new Date(log.date), date) && log.completed
+export function getBestDay(logs: HabitLog[], currentMonth: Date): { date: string | null; count: number } {
+    const start = startOfMonth(currentMonth);
+    const end = endOfMonth(currentMonth);
+
+    const monthlyLogs = logs.filter(l =>
+        l.completed &&
+        l.date >= format(start, 'yyyy-MM-dd') &&
+        l.date <= format(end, 'yyyy-MM-dd')
     );
-}
 
-/**
- * Get daily aggregate metrics for all days in a month
- */
-export function getDailyAggregates(
-    monthStart: Date,
-    logs: HabitLog[],
-    totalHabits: number
-): DailyAggregate[] {
-    const days = eachDayOfInterval({
-        start: monthStart,
-        end: endOfMonth(monthStart),
+    // Group by date
+    const dayCounts: Record<string, number> = {};
+    monthlyLogs.forEach(log => {
+        dayCounts[log.date] = (dayCounts[log.date] || 0) + 1;
     });
 
-    return days.map(date => {
-        const dayLogs = logs.filter(log => isSameDay(new Date(log.date), date));
-        const completedCount = dayLogs.filter(log => log.completed).length;
-        const completed = completedCount > 0;
+    let bestDate: string | null = null;
+    let bestCount = 0;
 
-        return {
-            date: format(date, 'yyyy-MM-dd'),
-            completed,
-            notCompleted: !completed,
-            habitsCount: completedCount,
-            percentage: totalHabits > 0 ? completedCount / totalHabits : 0,
-        };
-    });
-}
-
-
-
-/**
- * Get dates for a specific week in a month
- */
-function getWeekDates(weekNumber: number, monthStart: Date): Date[] {
-    const startDay = (weekNumber - 1) * 7;
-    const dates: Date[] = [];
-
-    for (let i = 0; i < 7; i++) {
-        const date = addDays(monthStart, startDay + i);
-        if (date <= endOfMonth(monthStart)) {
-            dates.push(date);
+    Object.entries(dayCounts).forEach(([date, count]) => {
+        if (count > bestCount) {
+            bestCount = count;
+            bestDate = date;
         }
-    }
-
-    return dates;
-}
-
-/**
- * Get weekly metrics (Week 1-5)
- * Excel equivalent: Weekly aggregation formulas
- */
-export function getWeeklyMetrics(
-    weekNumber: number,
-    monthStart: Date,
-    habits: Habit[],
-    logs: HabitLog[]
-): WeeklyMetrics {
-    const weekDates = getWeekDates(weekNumber, monthStart);
-    const weekDateStrings = weekDates.map(d => format(d, 'yyyy-MM-dd'));
-
-    const weekLogs = logs.filter(log => weekDateStrings.includes(log.date));
-    const completed = weekLogs.filter(log => log.completed).length;
-    const totalPossible = habits.filter(h => h.type === 'daily').length * weekDates.length;
-    const goal = totalPossible;
-
-    return {
-        weekNumber,
-        completed,
-        notCompleted: goal - completed,
-        habitsCount: completed,
-        goal,
-        percentage: goal > 0 ? completed / goal : 0,
-    };
-}
-
-/**
- * Get overall monthly metrics (all 5 weeks combined)
- */
-export function getOverallMetrics(
-    monthStart: Date,
-    habits: Habit[],
-    logs: HabitLog[]
-): WeeklyMetrics {
-    const allWeeks = [1, 2, 3, 4, 5].map(week =>
-        getWeeklyMetrics(week, monthStart, habits, logs)
-    );
-
-    const totalCompleted = allWeeks.reduce((sum, week) => sum + week.completed, 0);
-    const totalGoal = allWeeks.reduce((sum, week) => sum + week.goal, 0);
-
-    return {
-        weekNumber: 0, // 0 indicates "overall"
-        completed: totalCompleted,
-        notCompleted: totalGoal - totalCompleted,
-        habitsCount: totalCompleted,
-        goal: totalGoal,
-        percentage: totalGoal > 0 ? totalCompleted / totalGoal : 0,
-    };
-}
-
-/**
- * Get category-based analytics
- * Excel equivalent: Category grouping and aggregation
- */
-export function getCategoryMetrics(
-    category: string,
-    monthStart: Date,
-    habits: Habit[],
-    logs: HabitLog[]
-): CategoryMetrics {
-    const categoryHabits = habits.filter(h => h.category === category);
-    const goal = categoryHabits.reduce((sum, h) => sum + h.month_goal, 0);
-    const progress = categoryHabits.reduce((sum, h) =>
-        sum + getHabitCompleted(h.id, logs, monthStart), 0
-    );
-
-    return {
-        category,
-        goal,
-        progress,
-        remaining: goal - progress,
-        percentage: goal > 0 ? progress / goal : 0,
-    };
-}
-
-/**
- * Get all unique categories from habits
- */
-export function getUniqueCategories(habits: Habit[]): string[] {
-    return Array.from(new Set(habits.map(h => h.category)));
-}
-
-/**
- * Generate chart data table (day-level rows)
- * Excel equivalent: Chart-data table generation
- */
-export function generateChartData(
-    monthStart: Date,
-    habits: Habit[],
-    logs: HabitLog[]
-): ChartDataRow[] {
-    const days = eachDayOfInterval({
-        start: monthStart,
-        end: endOfMonth(monthStart),
     });
 
-    return days.map((date, index) => {
-        const dayLogs = logs.filter(log => isSameDay(new Date(log.date), date));
-        const completedCount = dayLogs.filter(log => log.completed).length;
-        const totalHabits = habits.filter(h => h.type === 'daily').length;
-
-        return {
-            date: format(date, 'yyyy-MM-dd'),
-            dayIndex: index + 1,
-            habitsCompleted: completedCount,
-            percentage: totalHabits > 0 ? (completedCount / totalHabits) * 100 : 0,
-        };
-    });
+    return { date: bestDate, count: bestCount };
 }
 
 /**
- * Get weekday symbol (M, T, W, T, F, S, S)
- * Excel equivalent: Weekday mapping table
+ * Calculates overall Consistency Score (percentage of possible completions achieved).
  */
-export function getWeekdaySymbol(date: Date): string {
-    const symbols = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-    return symbols[getDay(date)];
+export function getConsistencyScore(habits: Habit[], logs: HabitLog[], currentMonth: Date): number {
+    const start = startOfMonth(currentMonth);
+    const end = endOfMonth(currentMonth);
+    const today = new Date();
+    const effectiveEnd = today < end ? today : end;
+
+    // Calculate days passed in month (up to today)
+    const daysPassed = Math.max(1, Math.floor((effectiveEnd.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+
+    let totalPossible = 0;
+    let totalCompleted = 0;
+
+    habits.forEach(habit => {
+        if (habit.type === 'daily') {
+            // Daily habits: possible = days passed
+            totalPossible += daysPassed;
+        } else {
+            // Weekly habits: possible = weeks passed (roughly)
+            totalPossible += Math.ceil(daysPassed / 7);
+        }
+
+        // Count completions
+        const completions = logs.filter(l =>
+            l.habit_id === habit.id &&
+            l.completed &&
+            l.date >= format(start, 'yyyy-MM-dd') &&
+            l.date <= format(effectiveEnd, 'yyyy-MM-dd')
+        ).length;
+
+        totalCompleted += completions;
+    });
+
+    if (totalPossible === 0) return 0;
+    return Math.round((totalCompleted / totalPossible) * 100);
+}
+
+/**
+ * Progress Badges - Milestone achievements
+ */
+export interface Badge {
+    id: string;
+    name: string;
+    description: string;
+    icon: string;
+    earned: boolean;
+    progress?: number; // 0-100
+}
+
+export function getProgressBadges(habits: Habit[], logs: HabitLog[]): Badge[] {
+    const badges: Badge[] = [];
+
+    // Calculate total streak days across all habits
+    let maxStreak = 0;
+    habits.forEach(habit => {
+        const streak = calculateStreak(habit, logs);
+        if (streak > maxStreak) maxStreak = streak;
+    });
+
+    // Total completions ever
+    const totalCompletions = logs.filter(l => l.completed).length;
+
+    // 7-Day Streak Badge
+    badges.push({
+        id: 'streak_7',
+        name: 'Week Warrior',
+        description: 'Maintain a 7-day streak on any habit',
+        icon: '🔥',
+        earned: maxStreak >= 7,
+        progress: Math.min(100, Math.round((maxStreak / 7) * 100))
+    });
+
+    // 30-Day Streak Badge
+    badges.push({
+        id: 'streak_30',
+        name: 'Monthly Master',
+        description: 'Maintain a 30-day streak on any habit',
+        icon: '💪',
+        earned: maxStreak >= 30,
+        progress: Math.min(100, Math.round((maxStreak / 30) * 100))
+    });
+
+    // 100-Day Streak Badge
+    badges.push({
+        id: 'streak_100',
+        name: 'Century Champion',
+        description: 'Maintain a 100-day streak on any habit',
+        icon: '🏆',
+        earned: maxStreak >= 100,
+        progress: Math.min(100, Math.round((maxStreak / 100) * 100))
+    });
+
+    // First Habit Badge
+    badges.push({
+        id: 'first_habit',
+        name: 'Getting Started',
+        description: 'Create your first habit',
+        icon: '🌱',
+        earned: habits.length >= 1,
+        progress: habits.length >= 1 ? 100 : 0
+    });
+
+    // 50 Completions Badge
+    badges.push({
+        id: 'completions_50',
+        name: 'Dedicated',
+        description: 'Complete 50 habit check-ins',
+        icon: '✨',
+        earned: totalCompletions >= 50,
+        progress: Math.min(100, Math.round((totalCompletions / 50) * 100))
+    });
+
+    // 5 Habits Badge
+    badges.push({
+        id: 'habits_5',
+        name: 'Habit Builder',
+        description: 'Track 5 different habits',
+        icon: '📋',
+        earned: habits.length >= 5,
+        progress: Math.min(100, Math.round((habits.length / 5) * 100))
+    });
+
+    return badges;
+}
+
+/**
+ * Get the longest streak for display
+ */
+export function getLongestStreak(habits: Habit[], logs: HabitLog[]): { streak: number; habitName: string } {
+    let maxStreak = 0;
+    let habitName = '';
+
+    habits.forEach(habit => {
+        const streak = calculateStreak(habit, logs);
+        if (streak > maxStreak) {
+            maxStreak = streak;
+            habitName = habit.name;
+        }
+    });
+
+    return { streak: maxStreak, habitName };
 }
