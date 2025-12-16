@@ -1,0 +1,78 @@
+# Excel Feature Parity Checklist
+
+## ✅ Core Sheet Structure
+- [x] **Month selector** → `MonthSelector.tsx` (B2 cell equivalent)
+- [x] **Week headers** (WEEK 1-5) → `DateHeader.tsx`
+- [x] **Day labels** (M,T,W,T,F,S,S) → `DateHeader.tsx` with symbol mapping
+- [x] **Numeric day indices** (1-31) → `DateHeader.tsx`
+- [x] **Date engine** → `analytics.ts` (EOMONTH formulas)
+
+## ✅ Daily Habits Input & Metrics
+- [x] **Habit name** → `HabitRow.tsx` (with emoji support)
+- [x] **Category dropdown** → `AddHabitModal.tsx` (Health ❤️‍🩹, etc.)
+- [x] **Month Goal** → `Habit` interface, displayed in `HabitRow.tsx`
+- [x] **Boolean checkboxes** (35 per habit) → `HabitRow.tsx`
+- [x] **Completed count** → `analytics.ts::getHabitCompleted()`
+- [x] **"Completed / Goal" text** → `HabitRow.tsx` progress column
+- [x] **Percentage** → `analytics.ts::getHabitCompletionRate()`
+
+## ✅ Daily Aggregates
+- [x] **Daily Completed** (TRUE if ≥1 habit) → `DailyAggregates.tsx` + `analytics.ts::getDailyCompleted()`
+- [x] **Daily Not Completed** → Computed inverse
+- [x] **"%" row** → For chart data
+
+## ✅ Summary Metrics
+- [x] **Overall completion %** → `SummaryMetrics.tsx`
+- [x] **Weekly completion** (Week 1-5) → `analytics.ts::getWeeklyMetrics()`
+- [x] **COMPLETED totals** → Aggregated across all habits
+- [x] **GOAL totals** → Sum of all month goals
+
+## ✅ Category Analytics
+- [x] **"HABIT COUNT BY CATEGORY"** → `CategoryAnalytics.tsx`
+- [x] **Unique category list** → Derived from `habits[]`
+- [x] **Per-category Goal** → Sum of monthGoal for category
+- [x] **Per-category Progress** → Sum of completed for category
+- [x] **Per-category Remaining** → Goal - Progress
+- [x] **Line/Category/True flags** → For chart filtering
+
+## ✅ Chart Data Engine
+- [x] **Day-level rows** → `analytics.ts::generateChartData()`
+  - Date, Day index, Habits completed, %
+  - Category fields (Goal, Progress, Remaining)
+- [x] **Week-level rows** → Week, Completed, Not Completed, Habits
+- [x] **OVERALL summary** → Aggregates all weeks
+
+## ✅ Weekly Habits
+- [x] **Weekly habits tracking** → `WeeklyHabitsSection.tsx`
+- [x] **5 checkboxes** (Week 1-5) → Separate from daily
+- [x] **Weekly COMPLETED/GOAL** → Weekly summary rows
+- [x] **OVERALL weekly summary** → Total across 5 weeks
+
+## ✅ Implicit Logic
+- [x] **Date generation** → `date-fns` for month/week calculations
+- [x] **Weekly grouping** → 7-day windows from start date
+- [x] **Category aggregation** → Group by category, sum metrics
+- [x] **Checkbox-driven metrics** → All formulas based on TRUE count
+- [x] **Current day highlight** → Compare date to today
+
+## ✅ Visualizations
+- [x] **Daily completion line chart** → `ChartsSection.tsx` (Recharts)
+- [x] **Weekly stacked bar chart** → Completed vs Not Completed
+- [x] **Category progress chart** → Bar chart by category
+
+## ✅ Mobile & PWA
+- [x] **Responsive design** → Mobile-first Tailwind
+- [x] **Bottom navigation** → `Layout.tsx`
+- [x] **Horizontal scroll** → For day columns in `HabitRow.tsx`
+- [x] **Touch targets** → Min 44px for checkboxes
+- [x] **PWA support** → `vite-plugin-pwa`
+- [x] **Add to Home Screen** → Manifest + service worker
+
+## ✅ Data Persistence
+- [x] **LocalStorage** → `HabitContext.tsx` auto-sync
+- [x] **Upgrade path** → Architecture supports backend integration
+
+---
+
+## Summary
+**All 50+ Excel features mapped to implementation plan components.**
