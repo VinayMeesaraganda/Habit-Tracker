@@ -252,8 +252,8 @@ export function DesktopDashboard() {
                         <button
                             onClick={() => handleToggle(habit.id, day)}
                             className={`w - 6 h - 6 rounded - md flex items - center justify - center transition - all duration - 200 border ${completed
-                                    ? 'bg-primary-500 border-primary-500 text-white shadow-sm scale-100'
-                                    : 'bg-white border-gray-200 text-transparent hover:border-primary-300 hover:shadow-sm scale-90'
+                                ? 'bg-primary-500 border-primary-500 text-white shadow-sm scale-100'
+                                : 'bg-white border-gray-200 text-transparent hover:border-primary-300 hover:shadow-sm scale-90'
                                 } `}
                         >
                             <Check className="w-4 h-4" strokeWidth={3} />
@@ -302,8 +302,8 @@ export function DesktopDashboard() {
                             <button
                                 onClick={() => handleToggle(habit.id, week.end)}
                                 className={`w - full py - 2.5 rounded - xl border flex items - center justify - center gap - 2 transition - all shadow - sm ${isDone
-                                        ? 'bg-gradient-to-br from-green-500 to-emerald-600 border-emerald-600 text-white shadow-emerald-200'
-                                        : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300 hover:bg-gray-50'
+                                    ? 'bg-gradient-to-br from-green-500 to-emerald-600 border-emerald-600 text-white shadow-emerald-200'
+                                    : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300 hover:bg-gray-50'
                                     } `}
                             >
                                 {isDone ? <Check className="w-4 h-4" strokeWidth={3} /> : <div className="w-4 h-4 rounded-full border-2 border-gray-200" />}
@@ -627,10 +627,10 @@ export function DesktopDashboard() {
                                                 setIsMonthPickerOpen(false);
                                             }}
                                             className={`py - 2 px - 3 rounded - lg text - sm font - medium transition - colors ${isSelected
-                                                    ? 'bg-primary-600 text-white'
-                                                    : isCurrentMonth
-                                                        ? 'bg-primary-50 text-primary-700 border border-primary-200'
-                                                        : 'hover:bg-gray-100 text-gray-700'
+                                                ? 'bg-primary-600 text-white'
+                                                : isCurrentMonth
+                                                    ? 'bg-primary-50 text-primary-700 border border-primary-200'
+                                                    : 'hover:bg-gray-100 text-gray-700'
                                                 } `}
                                         >
                                             {month}
