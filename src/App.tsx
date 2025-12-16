@@ -1,46 +1,47 @@
-import { useState, Suspense, lazy } from 'react';
+import { useState, Suspense, lazy, useEffect } from 'react';
 import { HabitProvider, useHabits } from './context/HabitContext';
 import { Auth } from './components/Auth';
-import { Layout } from './components/Layout';
-import { Loader2 } from 'lucide-react';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { FullPageLoader } from './components/ui/LoadingSpinner';
+import { MobileDashboardSkeleton, DesktopDashboardSkeleton } from './components/skeletons/DashboardSkeleton';
 
-// Lazy load the heavy chart/dashboard components
-const TodayView = lazy(() => import('./components/TodayView').then(module => ({ default: module.TodayView })));
+// Lazy load the heavy dashboard components for code splitting
+const MobileDashboard = lazy(() => import('./components/MobileDashboard').then(module => ({ default: module.MobileDashboard })));
+const DesktopDashboard = lazy(() => import('./components/DesktopDashboard').then(module => ({ default: module.DesktopDashboard })));
+
+// Hook to detect mobile viewport
+function useIsMobile() {
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    return isMobile;
+}
 
 function AppContent() {
     const { user, loading } = useHabits();
-    const [currentView, setCurrentView] = useState<'today' | 'calendar' | 'analytics' | 'settings'>('today');
+    const isMobile = useIsMobile();
 
     if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-                <div className="text-center">
-                    <Loader2 className="w-12 h-12 animate-spin text-primary-500 mx-auto mb-4" />
-                    <p className="text-slate-400">Loading...</p>
-                </div>
-            </div>
-        );
+        return <FullPageLoader text="Loading your habits..." />;
     }
 
     if (!user) {
         return <Auth />;
     }
 
+    // Determine which skeleton to show based on viewport
+    const DashboardSkeleton = isMobile ? MobileDashboardSkeleton : DesktopDashboardSkeleton;
+
     return (
         <ErrorBoundary>
-            <Layout currentView={currentView} onViewChange={setCurrentView}>
-                <Suspense fallback={
-                    <div className="flex h-[50vh] items-center justify-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-                    </div>
-                }>
-                    {currentView === 'today' && <TodayView />}
-                    {/* Placeholder views removed for production release. 
-                        Features are integrated into the main Dashboard. 
-                    */}
-                </Suspense>
-            </Layout>
+            <Suspense fallback={<DashboardSkeleton />}>
+                {isMobile ? <MobileDashboard /> : <DesktopDashboard />}
+            </Suspense>
         </ErrorBoundary>
     );
 }

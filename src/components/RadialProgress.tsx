@@ -1,4 +1,8 @@
-
+/**
+ * RadialProgress - Circular progress indicator
+ * Optimized with React.memo
+ */
+import { memo } from 'react';
 
 interface RadialProgressProps {
     percentage: number;
@@ -8,11 +12,11 @@ interface RadialProgressProps {
     size?: number;
 }
 
-export function RadialProgress({
+export const RadialProgress = memo(function RadialProgress({
     percentage,
     label,
     sublabel,
-    color = '#6C47FF', // Default to primary purple
+    color = '#6C47FF',
     size = 120
 }: RadialProgressProps) {
     const strokeWidth = size < 60 ? 4 : 8; // Thinner stroke for small rings
@@ -34,7 +38,7 @@ export function RadialProgress({
                         cx={size / 2}
                         cy={size / 2}
                         r={radius}
-                        stroke="#E5E7EB" // gray-200
+                        stroke="rgba(255,255,255,0.1)"
                         strokeWidth={strokeWidth}
                         fill="transparent"
                     />
@@ -54,16 +58,16 @@ export function RadialProgress({
                 </svg>
                 {/* Center Text */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <span className={`${textSizeClass} font-bold text-gray-900`}>{Math.round(percentage)}%</span>
+                    <span className={`${textSizeClass} font-bold text-white`}>{Math.round(percentage)}%</span>
                 </div>
             </div>
             {/* Labels */}
             {label && (
                 <div className="mt-2 text-center">
-                    <div className="text-sm font-bold text-gray-700 uppercase tracking-wide">{label}</div>
+                    <div className="text-sm font-bold text-gray-300 uppercase tracking-wide">{label}</div>
                     {sublabel && <div className="text-xs text-gray-500 font-medium">{sublabel}</div>}
                 </div>
             )}
         </div>
     );
-}
+});

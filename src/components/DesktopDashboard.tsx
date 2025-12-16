@@ -192,11 +192,11 @@ export function DesktopDashboard() {
     }, [activeHabits]);
 
     const renderDailyHabitRow = (habit: Habit) => (
-        <div key={habit.id} className="flex hover:bg-gray-50 transition-colors group">
+        <div key={habit.id} className="flex hover:bg-white/[0.03] transition-colors group">
             {/* Habit Name (Sticky) */}
-            <div className="sticky left-0 z-10 w-[240px] bg-white group-hover:bg-gray-50 transition-colors p-3 border-r border-gray-100 flex items-center justify-between shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+            <div className="sticky left-0 z-10 w-[240px] bg-[#111113] group-hover:bg-[#151517] transition-colors p-3 border-r border-white/5 flex items-center justify-between shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">
                 <div className="flex-1 min-w-0 pr-2 flex items-center gap-2">
-                    <div className="text-sm font-semibold text-gray-900 truncate">{habit.name}</div>
+                    <div className="text-sm font-semibold text-white truncate">{habit.name}</div>
                     {(() => {
                         const s = calculateStreak(habit, logs);
                         return s > 1 && (
@@ -208,7 +208,7 @@ export function DesktopDashboard() {
                 </div>
                 <button
                     onClick={() => handleEditHabit(habit)}
-                    className="text-gray-300 hover:text-gray-600 p-1.5 rounded-md hover:bg-gray-200 transition-all opacity-0 group-hover:opacity-100"
+                    className="text-gray-600 hover:text-white p-1.5 rounded-md hover:bg-white/10 transition-all opacity-0 group-hover:opacity-100"
                     title="Edit Habit"
                 >
                     <Settings className="w-4 h-4" />
@@ -216,14 +216,14 @@ export function DesktopDashboard() {
             </div>
 
             {/* Category (Sticky) */}
-            <div className="sticky left-[240px] z-10 w-[120px] bg-white group-hover:bg-gray-50 transition-colors p-2 flex items-center justify-center border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                <div className={`px - 2 py - 0.5 rounded - full text - [10px] font - bold border ${CATEGORY_COLORS[habit.category]?.bg} ${CATEGORY_COLORS[habit.category]?.text} ${CATEGORY_COLORS[habit.category]?.border} `}>
+            <div className="sticky left-[240px] z-10 w-[120px] bg-[#111113] group-hover:bg-[#151517] transition-colors p-2 flex items-center justify-center border-r border-white/5 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">
+                <div className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ backgroundColor: `${CATEGORY_COLORS[habit.category]?.hex || '#6B7280'}20`, color: CATEGORY_COLORS[habit.category]?.hex || '#9CA3AF' }}>
                     {habit.category}
                 </div>
             </div>
 
             {/* Goal (Sticky) */}
-            <div className="sticky left-[360px] z-10 w-[80px] bg-white group-hover:bg-gray-50 transition-colors flex items-center justify-center text-xs font-medium text-gray-500 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+            <div className="sticky left-[360px] z-10 w-[80px] bg-[#111113] group-hover:bg-[#151517] transition-colors flex items-center justify-center text-xs font-medium text-gray-400 border-r border-white/5 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">
                 {(() => {
                     const { count, goal } = getHabitProgress(habit);
                     const currentDayOfMonth = getDate(new Date());
@@ -231,11 +231,11 @@ export function DesktopDashboard() {
 
                     return (
                         <div className="flex flex-col items-center">
-                            <span className={count >= goal ? "text-emerald-600 font-bold" : ""}>
+                            <span className={count >= goal ? "text-green-400 font-bold" : "text-gray-300"}>
                                 {count}/{goal}
                             </span>
                             {goal > 0 && count < goal && (
-                                <span className={`text - [9px] font - bold ${pacing.color} `}>
+                                <span className={`text-[9px] font-bold ${pacing.color}`}>
                                     {pacing.message === 'Ahead of schedule' ? 'Ahead' : pacing.message}
                                 </span>
                             )}
@@ -248,13 +248,13 @@ export function DesktopDashboard() {
             {monthDays.map(day => {
                 const completed = isCompleted(habit.id, day);
                 return (
-                    <div key={day.toISOString()} className="w-[36px] border-r border-gray-100/50 flex items-center justify-center relative">
+                    <div key={day.toISOString()} className="w-[36px] border-r border-white/5 flex items-center justify-center relative">
                         <button
                             onClick={() => handleToggle(habit.id, day)}
-                            className={`w - 6 h - 6 rounded - md flex items - center justify - center transition - all duration - 200 border ${completed
-                                ? 'bg-primary-500 border-primary-500 text-white shadow-sm scale-100'
-                                : 'bg-white border-gray-200 text-transparent hover:border-primary-300 hover:shadow-sm scale-90'
-                                } `}
+                            className={`w-6 h-6 rounded-md flex items-center justify-center transition-all duration-200 border ${completed
+                                ? 'bg-primary-500 border-primary-500 text-white shadow-sm shadow-primary-500/30 scale-100'
+                                : 'bg-white/5 border-white/10 text-transparent hover:border-primary-400 hover:bg-white/10 scale-90'
+                                }`}
                         >
                             <Check className="w-4 h-4" strokeWidth={3} />
                         </button>
@@ -265,29 +265,39 @@ export function DesktopDashboard() {
     );
 
     const renderWeeklyHabitRow = (habit: Habit) => (
-        <div key={habit.id} className="flex hover:bg-gray-50 transition-colors group">
-            <div className="sticky left-0 z-10 w-[240px] bg-white group-hover:bg-gray-50 transition-colors p-3 border-r border-gray-100 flex items-center justify-between shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                <span className="text-sm font-semibold text-gray-900 truncate flex-1">{habit.name}</span>
+        <div key={habit.id} className="flex hover:bg-white/[0.03] transition-colors group">
+            <div className="sticky left-0 z-10 w-[240px] bg-[#111113] group-hover:bg-[#151517] transition-colors p-3 border-r border-white/5 flex items-center gap-3 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">
+                <div className="flex-1 min-w-0 pr-2 flex items-center gap-2">
+                    <div className="text-sm font-semibold text-white truncate">{habit.name}</div>
+                    {(() => {
+                        const s = calculateStreak(habit, logs);
+                        return s > 1 && (
+                            <span className="text-[10px] bg-orange-500/20 text-orange-400 px-1.5 rounded-full border border-orange-500/30 flex items-center gap-0.5" title="Current Streak">
+                                🔥 {s}
+                            </span>
+                        );
+                    })()}
+                </div>
                 <button
                     onClick={() => handleEditHabit(habit)}
-                    className="text-gray-300 hover:text-gray-600 p-1.5 rounded-md hover:bg-gray-200 transition-all opacity-0 group-hover:opacity-100"
+                    className="text-gray-600 hover:text-white p-1.5 rounded-md hover:bg-white/10 transition-all opacity-0 group-hover:opacity-100"
                     title="Edit Habit"
                 >
                     <Settings className="w-4 h-4" />
                 </button>
             </div>
 
-            <div className="sticky left-[240px] z-10 w-[120px] bg-white group-hover:bg-gray-50 transition-colors p-2 flex items-center justify-center border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                <div className={`px - 2 py - 0.5 rounded - full text - [10px] font - bold border ${CATEGORY_COLORS[habit.category]?.bg} ${CATEGORY_COLORS[habit.category]?.text} ${CATEGORY_COLORS[habit.category]?.border} `}>
+            <div className="sticky left-[240px] z-10 w-[120px] bg-[#111113] group-hover:bg-[#151517] transition-colors p-2 flex items-center justify-center border-r border-white/5 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">
+                <div className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ backgroundColor: `${CATEGORY_COLORS[habit.category]?.hex || '#6B7280'}20`, color: CATEGORY_COLORS[habit.category]?.hex || '#9CA3AF' }}>
                     {habit.category}
                 </div>
             </div>
 
-            <div className="sticky left-[360px] z-10 w-[80px] bg-white group-hover:bg-gray-50 transition-colors flex items-center justify-center text-xs font-medium text-gray-500 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+            <div className="sticky left-[360px] z-10 w-[80px] bg-[#111113] group-hover:bg-[#151517] transition-colors flex items-center justify-center text-xs font-medium text-gray-400 border-r border-white/5 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">
                 {(() => {
                     const { count, goal } = getHabitProgress(habit);
                     return (
-                        <span className={count >= goal ? "text-emerald-600 font-bold" : ""}>
+                        <span className={count >= goal ? "text-green-400 font-bold" : "text-gray-300"}>
                             {count}/{goal}
                         </span>
                     );
@@ -301,13 +311,13 @@ export function DesktopDashboard() {
                         <div key={idx} className="flex-1 flex flex-col items-center">
                             <button
                                 onClick={() => handleToggle(habit.id, week.end)}
-                                className={`w - full py - 2.5 rounded - xl border flex items - center justify - center gap - 2 transition - all shadow - sm ${isDone
-                                    ? 'bg-gradient-to-br from-green-500 to-emerald-600 border-emerald-600 text-white shadow-emerald-200'
-                                    : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300 hover:bg-gray-50'
-                                    } `}
+                                className={`w-full py-2.5 rounded-xl border flex items-center justify-center gap-2 transition-all ${isDone
+                                    ? 'bg-gradient-to-br from-green-500 to-emerald-600 border-emerald-600 text-white shadow-lg shadow-green-500/20'
+                                    : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20 hover:bg-white/10'
+                                    }`}
                             >
-                                {isDone ? <Check className="w-4 h-4" strokeWidth={3} /> : <div className="w-4 h-4 rounded-full border-2 border-gray-200" />}
-                                <span className={`text - xs font - bold ${isDone ? 'text-white' : 'text-gray-500'} `}>Week {idx + 1}</span>
+                                {isDone ? <Check className="w-4 h-4" strokeWidth={3} /> : <div className="w-4 h-4 rounded-full border-2 border-white/20" />}
+                                <span className={`text-xs font-bold ${isDone ? 'text-white' : 'text-gray-400'}`}>Week {idx + 1}</span>
                             </button>
                         </div>
                     );
@@ -319,17 +329,17 @@ export function DesktopDashboard() {
     return (
         <div className="space-y-8 max-w-[1400px] mx-auto pb-20 pt-6 px-6">
             {/* Header */}
-            <div className="flex flex-col md:flex-row gap-8 bg-white p-8 rounded-2xl shadow-sm border border-gray-100 items-stretch">
-                <div className="flex-1 flex flex-col justify-center border-r border-gray-100 pr-8">
-                    <h1 className="text-sm font-bold tracking-[0.2em] text-gray-400 uppercase mb-2">
+            <div className="flex flex-col md:flex-row gap-8 card-glass p-8 items-stretch">
+                <div className="flex-1 flex flex-col justify-center border-r border-white/10 pr-8">
+                    <h1 className="text-sm font-bold tracking-[0.2em] text-gray-500 uppercase mb-2">
                         Habit Tracker
                     </h1>
-                    <h2 className="text-5xl font-serif font-medium text-gray-900 mb-2 tracking-tight">
+                    <h2 className="text-5xl font-serif font-medium text-white mb-2 tracking-tight">
                         {format(currentMonth, 'MMMM')}
                     </h2>
 
                     <div className="flex items-center justify-between">
-                        <div className="text-xs text-gray-400 font-medium">
+                        <div className="text-xs text-gray-500 font-medium">
                             Manage your daily routines
                         </div>
 
@@ -337,14 +347,14 @@ export function DesktopDashboard() {
                         <div className="flex items-center gap-2 no-print">
                             {/* Search */}
                             <div className="relative group">
-                                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-primary-500" />
+                                <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-primary-400" />
                                 <input
                                     type="text"
                                     placeholder="Search..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     title="Search habits"
-                                    className="pl-9 pr-4 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400 w-[140px] transition-all"
+                                    className="input-dark pl-9 pr-4 py-1.5 text-sm w-[140px]"
                                 />
                             </div>
 
@@ -395,24 +405,24 @@ export function DesktopDashboard() {
             </div>
 
             {/* ===== MATRIX (Primary Action Area) ===== */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                <div className="overflow-x-auto custom-scrollbar">
+            <div className="card-glass overflow-hidden flex flex-col">
+                <div className="overflow-x-auto custom-scrollbar scrollbar-dark">
                     <div className="min-w-max">
                         {/* Matrix Header */}
-                        <div className="flex bg-blue-50/50 border-b border-gray-200">
-                            <div className="sticky left-0 z-20 w-[240px] bg-blue-50/90 backdrop-blur-sm p-3 font-bold text-xs text-blue-900 uppercase tracking-wider border-r border-gray-200/50 flex items-center shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                        <div className="flex bg-white/5 border-b border-white/10">
+                            <div className="sticky left-0 z-20 w-[240px] bg-[#111113]/90 backdrop-blur-sm p-3 font-bold text-xs text-gray-400 uppercase tracking-wider border-r border-white/5 flex items-center shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">
                                 Habit
                             </div>
-                            <div className="sticky left-[240px] z-20 w-[120px] bg-blue-50/90 backdrop-blur-sm p-3 font-bold text-xs text-blue-900 uppercase tracking-wider border-r border-gray-200/50 flex items-center justify-center shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                            <div className="sticky left-[240px] z-20 w-[120px] bg-[#111113]/90 backdrop-blur-sm p-3 font-bold text-xs text-gray-400 uppercase tracking-wider border-r border-white/5 flex items-center justify-center shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">
                                 Category
                             </div>
-                            <div className="sticky left-[360px] z-20 w-[80px] bg-blue-50/90 backdrop-blur-sm p-3 font-bold text-xs text-blue-900 uppercase tracking-wider border-r border-gray-200/50 flex items-center justify-center shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                            <div className="sticky left-[360px] z-20 w-[80px] bg-[#111113]/90 backdrop-blur-sm p-3 font-bold text-xs text-gray-400 uppercase tracking-wider border-r border-white/5 flex items-center justify-center shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">
                                 Goal
                             </div>
                             {monthDays.map(day => (
-                                <div key={day.toISOString()} className="w-[36px] flex flex-col items-center justify-center p-2 border-r border-gray-100 min-w-[36px]">
-                                    <span className="text-[10px] font-bold text-gray-400 mb-0.5">{format(day, 'EEEEE')}</span>
-                                    <span className={`text - xs font - bold ${isSameDay(day, new Date()) ? 'text-primary-600' : 'text-gray-700'} `}>
+                                <div key={day.toISOString()} className="w-[36px] flex flex-col items-center justify-center p-2 border-r border-white/5 min-w-[36px]">
+                                    <span className="text-[10px] font-bold text-gray-500 mb-0.5">{format(day, 'EEEEE')}</span>
+                                    <span className={`text-xs font-bold ${isSameDay(day, new Date()) ? 'text-primary-400' : 'text-gray-300'}`}>
                                         {format(day, 'd')}
                                     </span>
                                 </div>
@@ -420,41 +430,41 @@ export function DesktopDashboard() {
                         </div>
 
                         {/* Matrix Rows */}
-                        <div className="divide-y divide-gray-100">
-                            <div className="bg-gray-50/50 p-2 text-xs font-bold text-gray-400 uppercase tracking-wider sticky left-0 z-10 px-4">
+                        <div className="divide-y divide-white/5">
+                            <div className="bg-white/5 p-2 text-xs font-bold text-gray-500 uppercase tracking-wider sticky left-0 z-10 px-4">
                                 Daily Habits
                             </div>
                             {dailyHabits.length > 0 ? (
                                 dailyHabits.map(renderDailyHabitRow)
                             ) : (
-                                <div className="p-8 text-center text-gray-400 text-sm flex flex-col items-center gap-2">
+                                <div className="p-8 text-center text-gray-500 text-sm flex flex-col items-center gap-2">
                                     <p>No daily habits yet.</p>
                                     <button
                                         onClick={() => {
                                             setEditingHabit(null);
                                             setIsAddModalOpen(true);
                                         }}
-                                        className="text-primary-600 font-bold hover:text-primary-700 flex items-center gap-1 text-xs uppercase tracking-wide"
+                                        className="text-primary-400 font-bold hover:text-primary-300 flex items-center gap-1 text-xs uppercase tracking-wide"
                                     >
                                         <Plus className="w-3 h-3" /> Create One
                                     </button>
                                 </div>
                             )}
 
-                            <div className="bg-gray-50/50 p-2 text-xs font-bold text-gray-400 uppercase tracking-wider sticky left-0 z-10 px-4 border-t border-gray-200 mt-2">
+                            <div className="bg-white/5 p-2 text-xs font-bold text-gray-500 uppercase tracking-wider sticky left-0 z-10 px-4 border-t border-white/10 mt-2">
                                 Weekly Habits
                             </div>
                             {weeklyHabits.length > 0 ? (
                                 weeklyHabits.map(renderWeeklyHabitRow)
                             ) : (
-                                <div className="p-8 text-center text-gray-400 text-sm flex flex-col items-center gap-2">
+                                <div className="p-8 text-center text-gray-500 text-sm flex flex-col items-center gap-2">
                                     <p>No weekly habits yet.</p>
                                     <button
                                         onClick={() => {
                                             setEditingHabit(null);
                                             setIsAddModalOpen(true);
                                         }}
-                                        className="text-primary-600 font-bold hover:text-primary-700 flex items-center gap-1 text-xs uppercase tracking-wide"
+                                        className="text-primary-400 font-bold hover:text-primary-300 flex items-center gap-1 text-xs uppercase tracking-wide"
                                     >
                                         <Plus className="w-3 h-3" /> Create One
                                     </button>
@@ -466,20 +476,20 @@ export function DesktopDashboard() {
             </div>
 
             {/* ===== ANALYTICS SECTION (Collapsible) ===== */}
-            <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+            <div className="card-glass p-6">
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
                         📊 Analytics & Insights
                     </h2>
-                    <span className="text-xs text-gray-400 uppercase tracking-wider">Performance Overview</span>
+                    <span className="text-xs text-gray-500 uppercase tracking-wider">Performance Overview</span>
                 </div>
 
                 {/* Charts Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                         <DailyCompletionChart data={chartData} />
                     </div>
-                    <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                         <CategoryBreakdownChart data={categoryData} />
                     </div>
                 </div>
@@ -524,24 +534,24 @@ export function DesktopDashboard() {
                             </div>
 
                             {/* Earned Badges */}
-                            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                            <div className="bg-white/5 rounded-xl p-5 border border-white/10">
                                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">🏆 Earned</h3>
                                 {earnedBadges.length > 0 ? (
                                     <div className="space-y-2">
                                         {earnedBadges.map(badge => (
-                                            <div key={badge.id} className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-2 py-1.5 rounded-lg">
+                                            <div key={badge.id} className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 px-2 py-1.5 rounded-lg">
                                                 <span className="text-lg">{badge.icon}</span>
-                                                <span className="text-xs font-bold text-emerald-700">{badge.name}</span>
+                                                <span className="text-xs font-bold text-green-400">{badge.name}</span>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-center text-gray-400 text-xs py-4">Keep tracking! 🎯</p>
+                                    <p className="text-center text-gray-500 text-xs py-4">Keep tracking! 🎯</p>
                                 )}
                             </div>
 
                             {/* In Progress */}
-                            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                            <div className="bg-white/5 rounded-xl p-5 border border-white/10">
                                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">🚀 Next Goals</h3>
                                 <div className="space-y-2">
                                     {inProgressBadges.map(badge => (
@@ -549,13 +559,13 @@ export function DesktopDashboard() {
                                             <span className="text-sm opacity-50">{badge.icon}</span>
                                             <div className="flex-1">
                                                 <div className="flex justify-between text-[10px] mb-0.5">
-                                                    <span className="font-bold text-gray-600">{badge.name}</span>
-                                                    <span className="text-gray-400">{badge.progress}%</span>
+                                                    <span className="font-bold text-gray-300">{badge.name}</span>
+                                                    <span className="text-gray-500">{badge.progress}%</span>
                                                 </div>
-                                                <div className="w-full bg-gray-200 rounded-full h-1">
+                                                <div className="w-full bg-white/10 rounded-full h-1">
                                                     <div
-                                                        className="bg-purple-400 h-1 rounded-full"
-                                                        style={{ width: `${badge.progress}% ` }}
+                                                        className="bg-purple-500 h-1 rounded-full"
+                                                        style={{ width: `${badge.progress}%` }}
                                                     />
                                                 </div>
                                             </div>

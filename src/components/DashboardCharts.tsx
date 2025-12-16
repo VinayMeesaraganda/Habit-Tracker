@@ -41,7 +41,7 @@ export const DailyCompletionChart = ({ data }: { data: any[] }) => {
                             <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
                         </linearGradient>
                     </defs>
-                    <CartesianGrid vertical={false} stroke="#F3F4F6" strokeDasharray="3 3" />
+                    <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" />
                     <XAxis
                         dataKey="day"
                         tickLine={false}
@@ -76,46 +76,48 @@ export const DailyCompletionChart = ({ data }: { data: any[] }) => {
 
 export const CategoryBreakdownChart = ({ data }: { data: any[] }) => {
     return (
-        <div className="h-64 w-full">
+        <div className="w-full">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Habits by Category</h3>
-            <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }} barSize={12}>
-                    <CartesianGrid horizontal={true} vertical={false} stroke="#F3F4F6" />
-                    <XAxis type="number" hide />
-                    <YAxis
-                        dataKey="name"
-                        type="category"
-                        tickLine={false}
-                        axisLine={false}
-                        width={100}
-                        tick={{ fontSize: 11, fill: '#4B5563', fontWeight: 500 }}
-                    />
-                    <Tooltip
-                        cursor={{ fill: 'transparent' }}
-                        content={({ active, payload }) => {
-                            if (active && payload && payload.length) {
-                                return (
-                                    <div className="bg-gray-900/90 text-white text-xs py-1 px-2 rounded-lg shadow-xl backdrop-blur-sm border border-gray-700">
-                                        <span className="font-bold">{payload[0].payload.name}:</span> <span className="text-emerald-400">{payload[0].value}</span>
-                                    </div>
-                                );
-                            }
-                            return null;
-                        }}
-                    />
-                    <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                        {data.map((_, index) => {
-                            const colors = ['#F472B6', '#34D399', '#60A5FA', '#FBBF24', '#A78BFA'];
-                            return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
-                        })}
-                    </Bar>
-                </BarChart>
-            </ResponsiveContainer>
+            <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }} barSize={12}>
+                        <CartesianGrid horizontal={true} vertical={false} stroke="rgba(255,255,255,0.05)" />
+                        <XAxis type="number" hide />
+                        <YAxis
+                            dataKey="name"
+                            type="category"
+                            tickLine={false}
+                            axisLine={false}
+                            width={100}
+                            tick={{ fontSize: 11, fill: '#9CA3AF', fontWeight: 500 }}
+                        />
+                        <Tooltip
+                            cursor={{ fill: 'transparent' }}
+                            content={({ active, payload }) => {
+                                if (active && payload && payload.length) {
+                                    return (
+                                        <div className="bg-gray-900/90 text-white text-xs py-1 px-2 rounded-lg shadow-xl backdrop-blur-sm border border-gray-700">
+                                            <span className="font-bold">{payload[0].payload.name}:</span> <span className="text-emerald-400">{payload[0].value}</span>
+                                        </div>
+                                    );
+                                }
+                                return null;
+                            }}
+                        />
+                        <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                            {data.map((_, index) => {
+                                const colors = ['#F472B6', '#34D399', '#60A5FA', '#FBBF24', '#A78BFA'];
+                                return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                            })}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
 
-            {/* Legend */}
-            <div className="flex flex-wrap gap-2 mt-2 justify-center">
+            {/* Legend - Dark Theme */}
+            <div className="flex flex-wrap gap-2 mt-3 justify-center">
                 {data.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-1.5 text-[10px] text-gray-500 bg-gray-50 px-2 py-1 rounded-full border border-gray-100">
+                    <div key={idx} className="flex items-center gap-1.5 text-[10px] text-gray-400 bg-white/5 px-2 py-1 rounded-full border border-white/10">
                         <div
                             className="w-2 h-2 rounded-full"
                             style={{
@@ -123,7 +125,7 @@ export const CategoryBreakdownChart = ({ data }: { data: any[] }) => {
                             }}
                         />
                         <span>{item.name}</span>
-                        <span className="font-bold text-gray-900">({item.value})</span>
+                        <span className="font-bold text-white">({item.value})</span>
                     </div>
                 ))}
             </div>

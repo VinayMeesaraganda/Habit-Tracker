@@ -201,17 +201,17 @@ export function MobileDashboard() {
         const year = currentMonth.getFullYear();
 
         return (
-            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center pt-20" onClick={() => setIsMonthPickerOpen(false)}>
-                <div className="bg-white rounded-2xl w-[90%] max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
-                    <div className="bg-gray-50 p-4 flex items-center justify-between border-b border-gray-100">
-                        <h3 className="font-bold text-gray-900">Select Month</h3>
-                        <div className="flex items-center gap-2 bg-white rounded-lg p-1 border border-gray-200">
-                            <button onClick={() => setCurrentMonth(setYear(currentMonth, year - 1))} className="p-1 hover:bg-gray-100 rounded-md">
-                                <ChevronLeft className="w-4 h-4 text-gray-500" />
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center pt-20" onClick={() => setIsMonthPickerOpen(false)}>
+                <div className="card-glass w-[90%] max-w-sm overflow-hidden shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white/5 p-4 flex items-center justify-between border-b border-white/10">
+                        <h3 className="font-bold text-white">Select Month</h3>
+                        <div className="flex items-center gap-2 bg-white/5 rounded-lg p-1 border border-white/10">
+                            <button onClick={() => setCurrentMonth(setYear(currentMonth, year - 1))} className="p-1 hover:bg-white/10 rounded-md transition-colors">
+                                <ChevronLeft className="w-4 h-4 text-gray-400" />
                             </button>
-                            <span className="text-sm font-bold w-12 text-center">{year}</span>
-                            <button onClick={() => setCurrentMonth(setYear(currentMonth, year + 1))} className="p-1 hover:bg-gray-100 rounded-md">
-                                <ChevronRight className="w-4 h-4 text-gray-500" />
+                            <span className="text-sm font-bold w-12 text-center text-white">{year}</span>
+                            <button onClick={() => setCurrentMonth(setYear(currentMonth, year + 1))} className="p-1 hover:bg-white/10 rounded-md transition-colors">
+                                <ChevronRight className="w-4 h-4 text-gray-400" />
                             </button>
                         </div>
                     </div>
@@ -223,9 +223,6 @@ export function MobileDashboard() {
                                     const newMonth = new Date(year, idx, 1);
                                     setCurrentMonth(newMonth);
                                     setIsMonthPickerOpen(false);
-
-                                    // Logic: If the selected month is the current real-time month, select Today. 
-                                    // Otherwise select the 1st.
                                     const now = new Date();
                                     if (isSameDay(newMonth, startOfMonth(now))) {
                                         setSelectedDate(now);
@@ -233,10 +230,10 @@ export function MobileDashboard() {
                                         setSelectedDate(newMonth);
                                     }
                                 }}
-                                className={`py - 3 rounded - xl text - sm font - bold transition - all ${idx === currentMonth.getMonth()
-                                    ? 'bg-pink-600 text-white shadow-md shadow-pink-200'
-                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                                    } `}
+                                className={`py-3 rounded-xl text-sm font-bold transition-all ${idx === currentMonth.getMonth()
+                                    ? 'bg-primary-500 text-white glow-primary'
+                                    : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                                    }`}
                             >
                                 {m}
                             </button>
@@ -248,7 +245,7 @@ export function MobileDashboard() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20 flex flex-col font-sans">
+        <div className="min-h-screen bg-[#0A0A0B] pb-20 flex flex-col font-sans text-white">
             {isMonthPickerOpen && <MonthPicker />}
 
             <ProfileModal
@@ -256,20 +253,20 @@ export function MobileDashboard() {
                 onClose={() => setIsProfileModalOpen(false)}
             />
 
-            {/* Header: Dense & Functional */}
-            <div className="bg-white px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-sm border-b border-gray-100">
+            {/* Header: Premium Dark */}
+            <div className="bg-[#0A0A0B]/80 backdrop-blur-lg px-4 py-3 flex items-center justify-between sticky top-0 z-20 border-b border-white/5">
                 <div className="flex items-center gap-2.5">
                     <button
                         onClick={() => setIsProfileModalOpen(true)}
-                        className="w-8 h-8 bg-pink-100 rounded-xl flex items-center justify-center text-pink-600 hover:scale-105 transition-transform active:scale-95"
+                        className="w-9 h-9 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl flex items-center justify-center text-white hover:scale-105 transition-transform active:scale-95"
                     >
                         <span className="font-bold text-sm">
                             {user?.email?.charAt(0).toUpperCase() || 'U'}
                         </span>
                     </button>
                     <div>
-                        <p className="text-[10px] uppercase font-bold text-pink-500 tracking-wider mb-0.5">Habit Tracker</p>
-                        <h1 className="text-lg font-bold text-gray-900 leading-none">
+                        <p className="text-[10px] uppercase font-bold text-primary-400 tracking-wider mb-0.5">Habit Tracker</p>
+                        <h1 className="text-lg font-bold text-white leading-none">
                             {activeTab === 'today' ? 'Today' : activeTab === 'habits' ? 'My Habits' : 'Analytics'}
                         </h1>
                         <p className="text-[10px] text-gray-500 font-medium leading-tight mt-0.5">
@@ -277,18 +274,18 @@ export function MobileDashboard() {
                         </p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 text-gray-500">
+                <div className="flex items-center gap-2">
                     <button
                         onClick={() => setIsMonthPickerOpen(true)}
                         title="Select Month"
-                        className={`p - 2 rounded - lg active: bg - gray - 100 transition - colors ${isMonthPickerOpen ? 'bg-pink-50 text-pink-600' : 'hover:bg-gray-50'} `}
+                        className={`p-2 rounded-lg transition-colors ${isMonthPickerOpen ? 'bg-primary-500/20 text-primary-400' : 'text-gray-500 hover:bg-white/5 hover:text-white'}`}
                     >
                         <CalendarIcon className="w-5 h-5" />
                     </button>
                     <button
                         onClick={() => setIsAddModalOpen(true)}
                         title="Add New Habit"
-                        className="p-2 rounded-lg bg-pink-50 text-pink-600 hover:bg-pink-100 active:bg-pink-200"
+                        className="p-2 rounded-lg bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 transition-colors"
                     >
                         <Plus className="w-5 h-5" />
                     </button>
@@ -300,35 +297,36 @@ export function MobileDashboard() {
                 {activeTab === 'today' && (
                     <>
                         {/* Calendar Strip (Synced with currentMonth) */}
-                        <div className="sticky top-0 z-10 bg-white shadow-sm border-t border-gray-50 pb-2 pt-1">
+                        <div className="sticky top-0 z-10 bg-[#0A0A0B]/90 backdrop-blur-lg border-b border-white/5 pb-2 pt-1">
                             <HorizontalCalendar
                                 currentMonth={currentMonth}
                                 selectedDate={selectedDate}
                                 onSelectDate={(date) => {
                                     setSelectedDate(date);
-                                    // If user selects a date in a different month (via edge swipe or logic), sync month?
-                                    // Assuming HorizontalCalendar only shows currentMonth days, so this is safe.
                                 }}
                             />
                         </div>
 
                         {/* Progress Card - Compact */}
                         {activeHabits.length > 0 && (
-                            <div className="mx-4 mt-4 bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl p-4 text-white shadow-lg shadow-pink-200">
-                                <div className="flex justify-between items-center mb-3">
-                                    <div>
-                                        <h2 className="text-base font-bold">Daily Goal</h2>
-                                        <p className="text-pink-100 text-xs">{completedCount} of {activeHabits.length} done</p>
+                            <div className="mx-4 mt-4 card-glass p-4 relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-r from-primary-500/20 to-purple-500/20 pointer-events-none" />
+                                <div className="relative z-10">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <div>
+                                            <h2 className="text-base font-bold text-white">Daily Goal</h2>
+                                            <p className="text-gray-400 text-xs">{completedCount} of {activeHabits.length} done</p>
+                                        </div>
+                                        <div className="bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+                                            <span className="font-bold text-lg text-white">{progressPercent}%</span>
+                                        </div>
                                     </div>
-                                    <div className="bg-white/20 px-2 py-1 rounded-lg backdrop-blur-sm">
-                                        <span className="font-bold text-base">{progressPercent}%</span>
+                                    <div className="w-full bg-white/10 rounded-full h-2">
+                                        <div
+                                            className="bg-gradient-to-r from-primary-500 to-purple-500 rounded-full h-2 transition-all duration-500"
+                                            style={{ width: `${progressPercent}%` }}
+                                        />
                                     </div>
-                                </div>
-                                <div className="w-full bg-black/10 rounded-full h-1.5">
-                                    <div
-                                        className="bg-white rounded-full h-1.5 transition-all duration-500"
-                                        style={{ width: `${progressPercent}% ` }}
-                                    />
                                 </div>
                             </div>
                         )}
@@ -345,11 +343,11 @@ export function MobileDashboard() {
                                 />
                             ))}
                             {activeHabits.length === 0 && (
-                                <div className="text-center py-10 text-gray-400 text-sm">
+                                <div className="text-center py-10 text-gray-500 text-sm">
                                     <p>No habits for {format(selectedDate, 'MMM d')}.</p>
                                     <button
                                         onClick={() => setIsAddModalOpen(true)}
-                                        className="text-pink-500 font-bold mt-2"
+                                        className="text-primary-400 font-bold mt-2 hover:text-primary-300 transition-colors"
                                     >
                                         + Add a habit
                                     </button>
@@ -361,30 +359,30 @@ export function MobileDashboard() {
 
                 {activeTab === 'habits' && (
                     <div className="px-4 py-4 pb-24 space-y-3">
-                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-2 space-y-3">
+                        <div className="card-glass p-3 mb-2 space-y-3">
                             <div className="flex items-start gap-3">
-                                <div className="p-2 bg-white rounded-full text-blue-500 shadow-sm"><List className="w-4 h-4" /></div>
+                                <div className="p-2 bg-primary-500/20 rounded-full text-primary-400"><List className="w-4 h-4" /></div>
                                 <div>
-                                    <h3 className="text-sm font-bold text-blue-900">Manage Habits</h3>
-                                    <p className="text-xs text-blue-600/80">Viewing all habits for {format(currentMonth, 'MMMM')}</p>
+                                    <h3 className="text-sm font-bold text-white">Manage Habits</h3>
+                                    <p className="text-xs text-gray-500">Viewing all habits for {format(currentMonth, 'MMMM')}</p>
                                 </div>
                             </div>
 
                             {/* Mobile Controls */}
                             <div className="flex gap-2">
                                 <div className="relative flex-1">
-                                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                    <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
                                     <input
                                         type="text"
                                         placeholder="Search habits..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-blue-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 text-gray-700 placeholder-gray-400"
+                                        className="input-dark pl-9 pr-3 py-2 text-sm"
                                     />
                                 </div>
                                 <button
                                     onClick={handleExportCSV}
-                                    className="p-2 bg-white border border-blue-100 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                                    className="p-2 bg-white/5 border border-white/10 rounded-lg text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
                                     title="Export CSV"
                                 >
                                     <Download className="w-5 h-5" />
@@ -419,12 +417,12 @@ export function MobileDashboard() {
 
                             if (filteredHabits.length === 0) {
                                 return (
-                                    <div className="flex flex-col items-center justify-center py-12 text-center text-gray-400">
-                                        <div className="bg-gray-50 p-4 rounded-full mb-3">
-                                            <List className="w-6 h-6 text-gray-300" />
+                                    <div className="flex flex-col items-center justify-center py-12 text-center text-gray-500">
+                                        <div className="bg-white/5 p-4 rounded-full mb-3">
+                                            <List className="w-6 h-6 text-gray-600" />
                                         </div>
-                                        <p className="text-sm font-medium mb-1">No habits found</p>
-                                        <p className="text-xs text-gray-400 mb-4 max-w-[200px]">
+                                        <p className="text-sm font-medium mb-1 text-gray-400">No habits found</p>
+                                        <p className="text-xs text-gray-500 mb-4 max-w-[200px]">
                                             You haven't tracked any habits for {format(currentMonth, 'MMMM')} yet.
                                         </p>
                                         <button
@@ -432,7 +430,7 @@ export function MobileDashboard() {
                                                 setEditingHabit(null);
                                                 setIsAddModalOpen(true);
                                             }}
-                                            className="text-pink-600 font-bold text-sm flex items-center gap-1 hover:bg-pink-50 px-3 py-1.5 rounded-lg transition-colors"
+                                            className="text-primary-400 font-bold text-sm flex items-center gap-1 hover:bg-primary-500/10 px-3 py-1.5 rounded-lg transition-colors"
                                         >
                                             <Plus className="w-4 h-4" /> Create New Habit
                                         </button>
@@ -445,18 +443,18 @@ export function MobileDashboard() {
                                 const catColor = CATEGORY_COLORS[habit.category];
 
                                 return (
-                                    <div key={habit.id} className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm flex items-center justify-between">
+                                    <div key={habit.id} className="card-glass p-3 flex items-center justify-between">
                                         <div className="flex items-center gap-3 overflow-hidden flex-1">
-                                            <div className={`w - 10 h - 10 rounded - xl flex items - center justify - center border bg - gray - 50 text - xl border - gray - 100`}>
+                                            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5 text-xl border border-white/10">
                                                 {habit.category.split(' ')[1] || '📌'}
                                             </div>
                                             <div className="min-w-0">
-                                                <h4 className="font-semibold text-sm text-gray-900 truncate">{habit.name}</h4>
+                                                <h4 className="font-semibold text-sm text-white truncate">{habit.name}</h4>
                                                 <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className={`text - [9px] font - bold px - 1.5 py - px rounded - full border ${catColor.bg} ${catColor.text} border - transparent`}>
+                                                    <span className="text-[9px] font-bold px-1.5 py-px rounded-full" style={{ backgroundColor: `${catColor?.hex || '#6B7280'}20`, color: catColor?.hex || '#9CA3AF' }}>
                                                         {habit.category.split(' ')[0]}
                                                     </span>
-                                                    <span className="text-[10px] text-gray-400">
+                                                    <span className="text-[10px] text-gray-500">
                                                         {habit.type === 'daily' ? 'Daily' : 'Weekly'} • {habit.month_goal || 'No'} Goal
                                                     </span>
                                                 </div>
@@ -465,13 +463,13 @@ export function MobileDashboard() {
 
                                         <div className="flex items-center gap-3 pl-2">
                                             <div className="flex flex-col items-end">
-                                                <span className={`text - sm font - bold ${progress.count >= progress.goal ? 'text-emerald-600' : 'text-gray-500'} `}>
+                                                <span className={`text-sm font-bold ${progress.count >= progress.goal ? 'text-green-400' : 'text-gray-400'}`}>
                                                     {progress.count}/{progress.goal}
                                                 </span>
-                                                <div className="w-14 h-1 mt-1 bg-gray-100 rounded-full overflow-hidden">
+                                                <div className="w-14 h-1 mt-1 bg-white/10 rounded-full overflow-hidden">
                                                     <div
-                                                        className={`h - full rounded - full ${progress.count >= progress.goal ? 'bg-emerald-500' : 'bg-gray-300'} `}
-                                                        style={{ width: `${progress.percent}% ` }}
+                                                        className={`h-full rounded-full ${progress.count >= progress.goal ? 'bg-green-500' : 'bg-gray-500'}`}
+                                                        style={{ width: `${progress.percent}%` }}
                                                     />
                                                 </div>
                                             </div>
@@ -482,7 +480,7 @@ export function MobileDashboard() {
                                                     e.stopPropagation();
                                                     handleEditHabit(habit);
                                                 }}
-                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                                             >
                                                 <Edit2 className="w-4 h-4" />
                                             </button>
@@ -497,8 +495,8 @@ export function MobileDashboard() {
                 {activeTab === 'analytics' && (
                     <div className="p-4 space-y-4 pb-24">
                         {/* Unified Performance Card */}
-                        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-500/10 to-purple-500/10 blur-2xl rounded-full -mr-10 -mt-10" />
+                        <div className="card-glass p-4 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary-500/10 to-purple-500/10 blur-2xl rounded-full -mr-10 -mt-10" />
 
                             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Performance Overview</h3>
 
@@ -521,13 +519,13 @@ export function MobileDashboard() {
 
                                 {/* Right: Stats Column */}
                                 <div className="flex-1 ml-6 space-y-3">
-                                    <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase">Total Habits</p>
-                                        <p className="text-xl font-bold text-gray-900">{habits.length}</p>
+                                    <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                                        <p className="text-[10px] text-gray-500 font-bold uppercase">Total Habits</p>
+                                        <p className="text-xl font-bold text-white">{habits.length}</p>
                                     </div>
-                                    <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase">Completion</p>
-                                        <p className="text-xl font-bold text-gray-900">{monthlyAverageProgress}%</p>
+                                    <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                                        <p className="text-[10px] text-gray-500 font-bold uppercase">Completion</p>
+                                        <p className="text-xl font-bold text-white">{monthlyAverageProgress}%</p>
                                     </div>
                                 </div>
                             </div>
@@ -535,10 +533,10 @@ export function MobileDashboard() {
                             {/* Divider with label */}
                             <div className="relative py-2">
                                 <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                                    <div className="w-full border-t border-gray-100"></div>
+                                    <div className="w-full border-t border-white/10"></div>
                                 </div>
                                 <div className="relative flex justify-center">
-                                    <span className="bg-white px-2 text-xs text-gray-400 font-medium">Weekly Strength</span>
+                                    <span className="bg-[#111113] px-2 text-xs text-gray-500 font-medium">Weekly Strength</span>
                                 </div>
                             </div>
 
@@ -559,10 +557,10 @@ export function MobileDashboard() {
                         </div>
 
                         {/* Charts Section */}
-                        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <div className="card-glass p-4">
                             <DailyCompletionChart data={chartData} />
                         </div>
-                        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <div className="card-glass p-4">
                             <CategoryBreakdownChart data={categoryData} />
                         </div>
 
@@ -617,20 +615,20 @@ export function MobileDashboard() {
                                     </div>
 
                                     {/* Badges Section */}
-                                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                                    <div className="card-glass p-4">
                                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">🏆 Progress Badges</h3>
 
                                         {/* Earned Badges */}
                                         {earnedBadges.length > 0 && (
                                             <div className="mb-4">
-                                                <p className="text-[10px] font-bold text-emerald-500 uppercase mb-2">Earned</p>
+                                                <p className="text-[10px] font-bold text-green-400 uppercase mb-2">Earned</p>
                                                 <div className="flex flex-wrap gap-2">
                                                     {earnedBadges.map(badge => (
-                                                        <div key={badge.id} className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl">
+                                                        <div key={badge.id} className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 px-3 py-2 rounded-xl">
                                                             <span className="text-xl">{badge.icon}</span>
                                                             <div>
-                                                                <p className="text-xs font-bold text-emerald-700">{badge.name}</p>
-                                                                <p className="text-[9px] text-emerald-500">{badge.description}</p>
+                                                                <p className="text-xs font-bold text-green-400">{badge.name}</p>
+                                                                <p className="text-[9px] text-green-500/70">{badge.description}</p>
                                                             </div>
                                                         </div>
                                                     ))}
@@ -641,20 +639,20 @@ export function MobileDashboard() {
                                         {/* In Progress Badges */}
                                         {inProgressBadges.length > 0 && (
                                             <div>
-                                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">In Progress</p>
+                                                <p className="text-[10px] font-bold text-gray-500 uppercase mb-2">In Progress</p>
                                                 <div className="space-y-2">
                                                     {inProgressBadges.map(badge => (
-                                                        <div key={badge.id} className="flex items-center gap-3 bg-gray-50 border border-gray-100 px-3 py-2 rounded-xl">
+                                                        <div key={badge.id} className="flex items-center gap-3 bg-white/5 border border-white/10 px-3 py-2 rounded-xl">
                                                             <span className="text-xl opacity-50">{badge.icon}</span>
                                                             <div className="flex-1">
                                                                 <div className="flex justify-between items-center mb-1">
-                                                                    <p className="text-xs font-bold text-gray-600">{badge.name}</p>
-                                                                    <span className="text-[10px] text-gray-400">{badge.progress}%</span>
+                                                                    <p className="text-xs font-bold text-gray-400">{badge.name}</p>
+                                                                    <span className="text-[10px] text-gray-500">{badge.progress}%</span>
                                                                 </div>
-                                                                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                                                <div className="w-full bg-white/10 rounded-full h-1.5">
                                                                     <div
-                                                                        className="bg-purple-400 h-1.5 rounded-full transition-all"
-                                                                        style={{ width: `${badge.progress}% ` }}
+                                                                        className="bg-purple-500 h-1.5 rounded-full transition-all"
+                                                                        style={{ width: `${badge.progress}%` }}
                                                                     />
                                                                 </div>
                                                             </div>
@@ -665,7 +663,7 @@ export function MobileDashboard() {
                                         )}
 
                                         {earnedBadges.length === 0 && inProgressBadges.length === 0 && (
-                                            <p className="text-center text-gray-400 text-sm py-4">Start tracking to earn badges!</p>
+                                            <p className="text-center text-gray-500 text-sm py-4">Start tracking to earn badges!</p>
                                         )}
                                     </div>
                                 </>
@@ -677,17 +675,16 @@ export function MobileDashboard() {
                 )}
             </div>
 
-            {/* Bottom Navigation: 3 Tabs */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 py-2 flex justify-around items-center z-30 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            {/* Bottom Navigation: Premium Dark */}
+            <div className="fixed bottom-0 left-0 right-0 bg-[#0A0A0B]/90 backdrop-blur-lg border-t border-white/10 px-6 py-2 flex justify-around items-center z-30 pb-safe">
                 <button
                     onClick={() => {
                         setActiveTab('today');
-                        // Reset to actual Today when clicking the 'Today' tab
                         const now = new Date();
                         setSelectedDate(now);
-                        setCurrentMonth(startOfMonth(now)); // Ensure calendar shows correct month
+                        setCurrentMonth(startOfMonth(now));
                     }}
-                    className={`flex flex - col items - center gap - 1 p - 2 rounded - xl transition - all ${activeTab === 'today' ? 'text-pink-600 bg-pink-50' : 'text-gray-400 hover:bg-gray-50'} `}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'today' ? 'text-primary-400 bg-primary-500/20' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}
                 >
                     <List className="w-6 h-6" strokeWidth={activeTab === 'today' ? 2.5 : 2} />
                     <span className="text-[10px] font-bold">Today</span>
@@ -695,7 +692,7 @@ export function MobileDashboard() {
 
                 <button
                     onClick={() => setActiveTab('habits')}
-                    className={`flex flex - col items - center gap - 1 p - 2 rounded - xl transition - all ${activeTab === 'habits' ? 'text-blue-600 bg-blue-50' : 'text-gray-400 hover:bg-gray-50'} `}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'habits' ? 'text-primary-400 bg-primary-500/20' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}
                 >
                     <CheckSquare className="w-6 h-6" strokeWidth={activeTab === 'habits' ? 2.5 : 2} />
                     <span className="text-[10px] font-bold">Habits</span>
@@ -703,7 +700,7 @@ export function MobileDashboard() {
 
                 <button
                     onClick={() => setActiveTab('analytics')}
-                    className={`flex flex - col items - center gap - 1 p - 2 rounded - xl transition - all ${activeTab === 'analytics' ? 'text-purple-600 bg-purple-50' : 'text-gray-400 hover:bg-gray-50'} `}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === 'analytics' ? 'text-purple-400 bg-purple-500/20' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}
                 >
                     <BarChart2 className="w-6 h-6" strokeWidth={activeTab === 'analytics' ? 2.5 : 2} />
                     <span className="text-[10px] font-bold">Stats</span>
@@ -717,7 +714,7 @@ export function MobileDashboard() {
                         setEditingHabit(null);
                         setIsAddModalOpen(true);
                     }}
-                    className="fixed bottom-24 right-5 w-12 h-12 bg-gray-900 text-white rounded-xl shadow-xl shadow-gray-400 flex items-center justify-center hover:bg-gray-800 transition-transform active:scale-95 z-40"
+                    className="fixed bottom-24 right-5 w-12 h-12 bg-gradient-to-br from-primary-500 to-purple-600 text-white rounded-xl shadow-xl shadow-primary-500/30 flex items-center justify-center hover:scale-105 transition-transform active:scale-95 z-40"
                 >
                     <Plus className="w-6 h-6" />
                 </button>

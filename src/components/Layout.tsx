@@ -1,9 +1,9 @@
 /**
- * Layout component - Responsive container with mobile navigation
+ * Layout component - Premium dark responsive container
  */
 
 import { ReactNode } from 'react';
-import { Home, LogOut } from 'lucide-react';
+import { Home, LogOut, Target } from 'lucide-react';
 import { useHabits } from '../context/HabitContext';
 
 interface LayoutProps {
@@ -17,30 +17,39 @@ export function Layout({ children, currentView, onViewChange }: LayoutProps) {
 
     const navItems = [
         { id: 'today' as const, label: 'Dashboard', icon: Home },
-        // Future tabs can be added here
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
-            {/* Desktop Header */}
-            <header className="hidden md:block bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-                <div className="container mx-auto px-4 py-4">
-                    <div className="flex items-center justify-between">
-                        <h1 className="text-2xl font-bold gradient-text">
-                            Habit Tracker
-                        </h1>
+        <div className="min-h-screen bg-[#0A0A0B] text-white pb-20 md:pb-0 relative overflow-hidden">
+            {/* Background gradient orbs */}
+            <div className="fixed inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-primary-600/5 rounded-full blur-[120px]" />
+                <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-purple-600/5 rounded-full blur-[100px]" />
+            </div>
 
-                        <nav className="flex gap-2">
+            {/* Desktop Header */}
+            <header className="hidden md:block bg-[#0A0A0B]/80 backdrop-blur-lg border-b border-white/5 sticky top-0 z-50">
+                <div className="container mx-auto px-6 py-4">
+                    <div className="flex items-center justify-between">
+                        {/* Logo */}
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center">
+                                <Target className="w-5 h-5 text-white" />
+                            </div>
+                            <h1 className="text-xl font-bold tracking-tight">
+                                Habit Tracker
+                            </h1>
+                        </div>
+
+                        {/* Navigation */}
+                        <nav className="flex gap-1">
                             {navItems.map((item) => {
                                 const Icon = item.icon;
                                 return (
                                     <button
                                         key={item.id}
                                         onClick={() => onViewChange(item.id)}
-                                        className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${currentView === item.id
-                                            ? 'bg-primary-600 text-white'
-                                            : 'text-gray-600 hover:bg-gray-100'
-                                            }`}
+                                        className={`nav-item ${currentView === item.id ? 'active' : ''}`}
                                     >
                                         <Icon className="w-4 h-4" />
                                         {item.label}
@@ -49,11 +58,12 @@ export function Layout({ children, currentView, onViewChange }: LayoutProps) {
                             })}
                         </nav>
 
+                        {/* User section */}
                         <div className="flex items-center gap-4">
-                            <span className="text-sm text-gray-600">{user?.email}</span>
+                            <span className="text-sm text-gray-400">{user?.email}</span>
                             <button
                                 onClick={signOut}
-                                className="btn btn-secondary flex items-center gap-2"
+                                className="btn-secondary px-4 py-2 rounded-lg text-sm flex items-center gap-2"
                             >
                                 <LogOut className="w-4 h-4" />
                                 Sign Out
@@ -64,31 +74,9 @@ export function Layout({ children, currentView, onViewChange }: LayoutProps) {
             </header>
 
             {/* Main Content */}
-            <main className="container mx-auto px-4 py-6 md:py-8">
+            <main className="relative z-10 container mx-auto px-4 py-6 md:px-6 md:py-8">
                 {children}
             </main>
-
-            {/* Mobile Bottom Navigation - REMOVED (Handled by MobileDashboard) */}
-            {/* <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg">
-                <div className="flex justify-around items-center py-2">
-                    {navItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                            <button
-                                key={item.id}
-                                onClick={() => onViewChange(item.id)}
-                                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all ${currentView === item.id
-                                    ? 'text-primary-600'
-                                    : 'text-gray-400'
-                                    }`}
-                            >
-                                <Icon className="w-6 h-6" />
-                                <span className="text-xs font-medium">{item.label}</span>
-                            </button>
-                        );
-                    })}
-                </div>
-            </nav> */}
         </div>
     );
 }
