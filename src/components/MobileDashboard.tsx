@@ -3,7 +3,7 @@ import { useHabits } from '../context/HabitContext';
 import { AddHabitModal } from './AddHabitModal';
 import { ProfileModal } from './ProfileModal';
 import { format, startOfMonth, endOfMonth, endOfWeek, startOfWeek, isSameDay, eachDayOfInterval, setYear, isSameMonth } from 'date-fns';
-import { Search, Calendar as CalendarIcon, MoreVertical, List, BarChart2, CheckSquare, ChevronLeft, ChevronRight, Plus, Edit2 } from 'lucide-react';
+import { Calendar as CalendarIcon, List, BarChart2, CheckSquare, ChevronLeft, ChevronRight, Plus, Edit2 } from 'lucide-react';
 import { HorizontalCalendar } from './HorizontalCalendar';
 import { HabitCard } from './HabitCard';
 import { Habit } from '../types';
@@ -257,14 +257,12 @@ export function MobileDashboard() {
                     </div>
                 </div>
                 <div className="flex items-center gap-2 text-gray-500">
-                    <button className="p-2 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors"><Search className="w-5 h-5" /></button>
                     <button
                         onClick={() => setIsMonthPickerOpen(true)}
                         className={`p-2 rounded-lg active:bg-gray-100 transition-colors ${isMonthPickerOpen ? 'bg-pink-50 text-pink-600' : 'hover:bg-gray-50'}`}
                     >
                         <CalendarIcon className="w-5 h-5" />
                     </button>
-                    <button className="p-2 hover:bg-gray-50 rounded-lg active:bg-gray-100 transition-colors"><MoreVertical className="w-5 h-5" /></button>
                 </div>
             </div>
 
