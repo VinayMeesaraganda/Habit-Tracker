@@ -314,8 +314,6 @@ export function MobileDashboard() {
                                 completedCount={completedCount}
                                 totalHabits={activeHabits.length}
                                 progressPercent={progressPercent}
-                                habits={habits}
-                                logs={logs}
                             />
                         )}
 
