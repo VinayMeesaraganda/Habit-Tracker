@@ -6,7 +6,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Habit, HabitLog, User } from '../types';
-import { startOfMonth, format } from 'date-fns';
+import { startOfMonth, format, subMonths } from 'date-fns';
 
 interface HabitContextType {
     // Auth state
@@ -31,7 +31,7 @@ interface HabitContextType {
     updatePassword: (password: string) => Promise<void>;
 
     // Data actions
-    addHabit: (habit: Omit<Habit, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>;
+    addHabit: (habit: Omit<Habit, 'id' | 'user_id' | 'updated_at'> & { created_at?: string }) => Promise<void>;
     updateHabit: (id: string, updates: Partial<Habit>) => Promise<void>;
     deleteHabit: (id: string) => Promise<void>;
 
@@ -130,24 +130,24 @@ export function HabitProvider({ children }: { children: ReactNode }) {
         if (!user) return;
 
         try {
-            // Fetch habits
-            const { data: habitsData, error: habitsError } = await supabase
-                .from('habits')
-                .select('*')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: true });
+            const [habitsResponse, logsResponse] = await Promise.all([
+                supabase
+                    .from('habits')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('priority', { ascending: true }), // Sort by priority
+                supabase
+                    .from('habit_logs')
+                    .select('*')
+                    .gte('date', format(startOfMonth(subMonths(currentMonth, 1)), 'yyyy-MM-dd'))
+                    .eq('user_id', user.id)
+            ]);
 
-            if (habitsError) throw habitsError;
-            setHabits(habitsData || []);
+            if (habitsResponse.error) throw habitsResponse.error;
+            if (logsResponse.error) throw logsResponse.error;
 
-            // Fetch logs
-            const { data: logsData, error: logsError } = await supabase
-                .from('habit_logs')
-                .select('*')
-                .eq('user_id', user.id);
-
-            if (logsError) throw logsError;
-            setLogs(logsData || []);
+            setHabits(habitsResponse.data || []);
+            setLogs(logsResponse.data || []);
         } catch (error) {
             console.error('Error refreshing data:', error);
         }
@@ -212,12 +212,51 @@ export function HabitProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
     };
 
-    const addHabit = async (habit: Omit<Habit, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    const shiftPriorities = async (targetPriority: number, excludeId?: string) => {
+        if (!user) return; // Ensure user is authenticated for this operation
+
+        // Fetch overlapping habits
+        const { data: colliding } = await supabase
+            .from('habits')
+            .select('*')
+            .gte('priority', targetPriority)
+            .eq('user_id', user.id);
+
+        if (!colliding || colliding.length === 0) return;
+
+        // Filter out the one we are editing if needed
+        const toShift = excludeId
+            ? colliding.filter(h => h.id !== excludeId)
+            : colliding;
+
+        if (toShift.length === 0) return;
+
+        // Shift them down by 1
+        const updates = toShift.map(h => ({
+            ...h,
+            priority: h.priority + 1
+        }));
+
+        // Batch update
+        const { error } = await supabase
+            .from('habits')
+            .upsert(updates);
+
+        if (error) console.error('Error shifting priorities:', error);
+    };
+
+    const addHabit = async (habit: Omit<Habit, 'id' | 'user_id' | 'updated_at'> & { created_at?: string }) => {
         if (!user) throw new Error('User not authenticated');
+
+        // Handle priority conflict if a priority is provided
+        if (habit.priority !== undefined && habit.priority !== null) {
+            await shiftPriorities(habit.priority);
+        }
 
         const { error } = await supabase.from('habits').insert({
             ...habit,
             user_id: user.id,
+            created_at: habit.created_at || new Date().toISOString(), // Use provided date or now
         });
 
         if (error) throw error;
@@ -225,6 +264,10 @@ export function HabitProvider({ children }: { children: ReactNode }) {
     };
 
     const updateHabit = async (id: string, updates: Partial<Habit>) => {
+        if (updates.priority !== undefined && updates.priority !== null) {
+            await shiftPriorities(updates.priority, id);
+        }
+
         const { error } = await supabase
             .from('habits')
             .update(updates)

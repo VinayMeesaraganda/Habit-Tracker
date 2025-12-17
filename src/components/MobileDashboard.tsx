@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useHabits } from '../context/HabitContext';
 import { AddHabitModal } from './AddHabitModal';
 import { ProfileModal } from './ProfileModal';
-import { format, startOfMonth, endOfMonth, endOfWeek, startOfWeek, isSameDay, eachDayOfInterval, setYear, isSameMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, endOfWeek, startOfWeek, isSameDay, eachDayOfInterval, setYear, isSameMonth, subWeeks, areIntervalsOverlapping, isBefore, startOfDay, parseISO } from 'date-fns';
 import { Calendar as CalendarIcon, List, BarChart2, CheckSquare, ChevronLeft, ChevronRight, Plus, Edit2, Search, Download } from 'lucide-react';
 import { generateCSV, downloadCSV } from '../utils/export';
 import { HorizontalCalendar } from './HorizontalCalendar';
@@ -11,7 +11,7 @@ import { Habit } from '../types';
 import { DailyCompletionChart, CategoryBreakdownChart } from './DashboardCharts';
 import { RadialProgress } from './RadialProgress';
 import { CATEGORY_COLORS } from '../utils/colors';
-import { getBestDay, getConsistencyScore, getProgressBadges, getLongestStreak } from '../utils/analytics';
+import { getBestDay, getConsistencyScore, getProgressBadges, getLongestStreak, getHabitMetrics, getDynamicGoal } from '../utils/analytics';
 import { CompactProgressWidget } from './mobile/CompactProgressWidget';
 
 export function MobileDashboard() {
@@ -63,6 +63,14 @@ export function MobileDashboard() {
     };
 
     const handleToggle = (habitId: string, date: Date) => {
+        // Check if date is before creation
+        const habit = habits.find(h => h.id === habitId);
+        if (habit?.created_at) {
+            if (isBefore(date, startOfDay(parseISO(habit.created_at)))) {
+                alert(`Can't create log. Task was created on ${format(parseISO(habit.created_at), 'MMM d, yyyy')}`);
+                return;
+            }
+        }
         toggleHabit(habitId, date);
     };
 
@@ -146,9 +154,6 @@ export function MobileDashboard() {
     }, [currentMonth, dailyHabits, weeklyHabits, getHabitLogs, logs]);
 
     const getHabitProgress = (habit: Habit) => {
-        const start = startOfMonth(currentMonth);
-        const end = endOfMonth(currentMonth);
-
         if (habit.type === 'weekly') {
             const goal = weeklyStats.length || 1;
             const count = weeklyStats.filter(week => isCompleted(habit.id, week.end)).length;
@@ -157,18 +162,8 @@ export function MobileDashboard() {
             return { count, goal, percent };
         }
 
-        const habitLogs = logs.filter(log => {
-            return log.habit_id === habit.id &&
-                log.completed &&
-                log.date >= format(start, 'yyyy-MM-dd') &&
-                log.date <= format(end, 'yyyy-MM-dd');
-        });
-
-        const count = habitLogs.length;
-        const goal = habit.month_goal || 1;
-        const rawPercent = (count / goal) * 100;
-        const percent = isNaN(rawPercent) ? 0 : Math.min(Math.round(rawPercent), 100);
-        return { count, goal, percent };
+        const { count, goal, percentage } = getHabitMetrics(habit, logs, currentMonth);
+        return { count, goal, percent: Math.round(percentage * 100) };
     };
 
     const monthlyAverageProgress = useMemo(() => {
@@ -326,6 +321,7 @@ export function MobileDashboard() {
                                     completed={isCompleted(habit.id, selectedDate)}
                                     onToggle={() => handleToggle(habit.id, selectedDate)}
                                     onEdit={() => handleEditHabit(habit)}
+                                    disabled={habit.created_at ? isBefore(selectedDate, startOfDay(parseISO(habit.created_at))) : false}
                                 />
                             ))}
                             {activeHabits.length === 0 && (
@@ -441,7 +437,7 @@ export function MobileDashboard() {
                                                         {habit.category.split(' ')[0]}
                                                     </span>
                                                     <span className="text-[10px] text-gray-500">
-                                                        {habit.type === 'daily' ? 'Daily' : 'Weekly'} • {habit.month_goal || 'No'} Goal
+                                                        {habit.type === 'daily' ? 'Daily' : 'Weekly'} • {getDynamicGoal(habit, currentMonth) || 'No'} Goal
                                                     </span>
                                                 </div>
                                             </div>

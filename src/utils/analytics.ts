@@ -1,5 +1,5 @@
 import { Habit, HabitLog } from '../types';
-import { isSameDay, subDays, startOfDay, parseISO, startOfWeek, endOfWeek, subWeeks, getDaysInMonth, startOfMonth, endOfMonth, format } from 'date-fns';
+import { isSameDay, subDays, startOfDay, parseISO, startOfWeek, endOfWeek, subWeeks, getDaysInMonth, startOfMonth, endOfMonth, format, isSameMonth, getDate } from 'date-fns';
 
 /**
  * Calculates the current streak for a habit.
@@ -70,17 +70,70 @@ export function calculateStreak(habit: Habit, logs: HabitLog[]): number {
 /**
  * Calculates if the user is On Track, Behind, or Ahead for a monthly goal.
  */
-export function getGoalPacing(habit: Habit, count: number, currentDayOfMonth: number): { status: 'ahead' | 'on_track' | 'behind'; color: string; message: string } {
-    if (!habit.month_goal || habit.month_goal <= 0) return { status: 'on_track', color: 'text-gray-400', message: '' };
+/**
+ * Calculate the proportional goal for a habit based on when it was created.
+ * If viewing the creation month: Goal = (Active Days / Total Days) * Original Goal.
+ */
+export function getDynamicGoal(habit: Habit, currentMonth: Date | string): number {
+    const originalGoal = habit.month_goal || 1;
+    if (!habit.created_at) return originalGoal;
 
-    const totalDays = getDaysInMonth(new Date());
-    const daysPassed = currentDayOfMonth;
+    const creationDate = parseISO(habit.created_at);
+    // Be careful with string/date conversions.
+    const viewMonth = typeof currentMonth === 'string' ? parseISO(currentMonth) : currentMonth;
 
-    // Expected completion rate per day
-    const expectedRate = habit.month_goal / totalDays;
-    const expectedCount = Math.floor(expectedRate * daysPassed);
+    // Strict comparison of month and year
+    if (!isSameMonth(viewMonth, creationDate)) return originalGoal;
 
-    if (count >= habit.month_goal) return { status: 'ahead', color: 'text-emerald-500', message: 'Goal Met! 🎉' };
+    // If viewing creation month
+    const totalDaysInMonth = getDaysInMonth(viewMonth);
+    const creationDay = getDate(creationDate);
+    // Active days = days remaining from creation day (inclusive)
+    const activeDays = Math.max(0, totalDaysInMonth - creationDay + 1);
+
+    if (activeDays <= 0) return 0;
+    if (activeDays >= totalDaysInMonth) return originalGoal;
+
+    // Proportional goal
+    const ratio = originalGoal / totalDaysInMonth;
+    // Rounding up ensures ambitious but achievable goal (e.g. 12.5 -> 13)
+    return Math.max(1, Math.ceil(activeDays * ratio));
+}
+
+/**
+ * Calculates if the user is On Track, Behind, or Ahead for a monthly goal.
+ */
+export function getGoalPacing(habit: Habit, count: number, currentDayOfMonth: number, currentMonth: Date = new Date()): { status: 'ahead' | 'on_track' | 'behind'; color: string; message: string } {
+    const goal = getDynamicGoal(habit, currentMonth);
+    if (!goal || goal <= 0) return { status: 'on_track', color: 'text-gray-400', message: '' };
+
+    const totalDays = getDaysInMonth(currentMonth);
+
+    // For expected rate, should we base it on "Available Days" if dynamic?
+    // If goal is 14 (out of 16 active days), rate = 14/16 ≈ 0.87.
+    // If goal is 25 (out of 30 days), rate = 25/30 ≈ 0.83.
+    // Rate is roughly similar. But "Expected Count" needs to be consistent with "Days Passed SINCE CREATION".
+    // If we simply use `goal / totalDays` (14/30 = 0.46), we are setting the bar too low for the active period.
+    // If current day is 20th, created 15th. Days active = 6. 
+    // We expect 6 * 0.87 completions?
+    // Let's refine pacing logic for creation month.
+
+    let expectedCount = 0;
+    const creationDate = habit.created_at ? parseISO(habit.created_at) : null;
+
+    if (creationDate && isSameMonth(currentMonth, creationDate)) {
+        const creationDay = getDate(creationDate);
+        const daysActiveSoFar = Math.max(0, currentDayOfMonth - creationDay + 1);
+        const totalActiveDaysTotal = getDaysInMonth(currentMonth) - creationDay + 1;
+
+        const rate = goal / totalActiveDaysTotal;
+        expectedCount = Math.floor(rate * daysActiveSoFar);
+    } else {
+        const expectedRate = goal / totalDays;
+        expectedCount = Math.floor(expectedRate * currentDayOfMonth);
+    }
+
+    if (count >= goal) return { status: 'ahead', color: 'text-emerald-500', message: 'Goal Met! 🎉' };
 
     if (count >= expectedCount + 2) return { status: 'ahead', color: 'text-emerald-500', message: 'Ahead of schedule' };
     if (count >= expectedCount) return { status: 'on_track', color: 'text-blue-500', message: 'On track' };
@@ -107,8 +160,8 @@ export function getHabitMetrics(habit: Habit, logs: HabitLog[], currentMonth: Da
     );
 
     const count = monthlyLogs.length;
-    const goal = habit.month_goal || 1;
-    const percentage = Math.min(count / goal, 1);
+    const goal = getDynamicGoal(habit, currentMonth);
+    const percentage = goal > 0 ? Math.min(count / goal, 1) : 0;
 
     return {
         count,

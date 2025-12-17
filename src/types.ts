@@ -8,10 +8,11 @@ export interface Habit {
     name: string;
     category: string;
     month_goal: number;
+    priority: number;
     type: 'daily' | 'weekly';
     created_at: string;
     updated_at: string;
-    archived_at?: string | null; // ISO Date string for when the habit was stopped
+    archived_at?: string | null; // ISO Date string for when the habit was created
 }
 
 export interface HabitLog {

@@ -8,11 +8,19 @@ import { useHabits } from '../context/HabitContext';
 import { AddHabitModal } from './AddHabitModal';
 import { RadialProgress } from './RadialProgress';
 import { DailyCompletionChart, CategoryBreakdownChart } from './DashboardCharts';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, endOfWeek, startOfWeek, subMonths, getDate } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, endOfWeek, startOfWeek, subMonths, getDate, isBefore, startOfDay, parseISO } from 'date-fns';
 import { Plus, ChevronLeft, ChevronRight, Check, Settings, Search, Download, Printer, Calendar } from 'lucide-react';
 import { CATEGORY_COLORS } from '../utils/colors';
 import { Habit } from '../types';
-import { calculateStreak, getGoalPacing, getBestDay, getConsistencyScore, getProgressBadges, getLongestStreak } from '../utils/analytics';
+import {
+    calculateStreak,
+    getGoalPacing,
+    getHabitMetrics,
+    getBestDay,
+    getConsistencyScore,
+    getProgressBadges,
+    getLongestStreak
+} from '../utils/analytics';
 import { generateCSV, downloadCSV } from '../utils/export.ts';
 import { TopStreaksWidget } from './desktop/TopStreaksWidget';
 export function DesktopDashboard() {
@@ -144,9 +152,6 @@ export function DesktopDashboard() {
     }, [currentMonth, dailyHabits, weeklyHabits, getHabitLogs, logs]);
 
     const getHabitProgress = (habit: Habit) => {
-        const start = startOfMonth(currentMonth);
-        const end = endOfMonth(currentMonth);
-
         if (habit.type === 'weekly') {
             const goal = weeklyStats.length || 1;
             const count = weeklyStats.filter(week => isCompleted(habit.id, week.end)).length;
@@ -155,18 +160,8 @@ export function DesktopDashboard() {
             return { count, goal, percent };
         }
 
-        const habitLogs = logs.filter(log => {
-            return log.habit_id === habit.id &&
-                log.completed &&
-                log.date >= format(start, 'yyyy-MM-dd') &&
-                log.date <= format(end, 'yyyy-MM-dd');
-        });
-
-        const count = habitLogs.length;
-        const goal = habit.month_goal || 1;
-        const rawPercent = (count / goal) * 100;
-        const percent = isNaN(rawPercent) ? 0 : Math.min(Math.round(rawPercent), 100);
-        return { count, goal, percent };
+        const { count, goal, percentage } = getHabitMetrics(habit, logs, currentMonth);
+        return { count, goal, percent: Math.round(percentage * 100) };
     };
 
     const monthlyAverageProgress = useMemo(() => {
@@ -197,6 +192,9 @@ export function DesktopDashboard() {
             {/* Habit Name (Sticky) */}
             <div className="sticky left-0 z-10 w-[240px] bg-[#111113] group-hover:bg-[#151517] transition-colors p-3 border-r border-white/5 flex items-center justify-between shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">
                 <div className="flex-1 min-w-0 pr-2 flex items-center gap-2">
+                    {habit.priority && (
+                        <span className="text-xs font-mono font-bold text-gray-500">#{habit.priority}</span>
+                    )}
                     <div className="text-sm font-semibold text-white truncate">{habit.name}</div>
                     {(() => {
                         const s = calculateStreak(habit, logs);
@@ -228,7 +226,7 @@ export function DesktopDashboard() {
                 {(() => {
                     const { count, goal } = getHabitProgress(habit);
                     const currentDayOfMonth = getDate(new Date());
-                    const pacing = getGoalPacing(habit, count, currentDayOfMonth);
+                    const pacing = getGoalPacing(habit, count, currentDayOfMonth, currentMonth);
 
                     return (
                         <div className="flex flex-col items-center">
@@ -248,16 +246,26 @@ export function DesktopDashboard() {
             {/* Checkboxes */}
             {monthDays.map(day => {
                 const completed = isCompleted(habit.id, day);
+                const isBeforeCreation = habit.created_at && isBefore(day, startOfDay(parseISO(habit.created_at)));
+
                 return (
                     <div key={day.toISOString()} className="w-[36px] border-r border-white/5 flex items-center justify-center relative">
                         <button
-                            onClick={() => handleToggle(habit.id, day)}
+                            onClick={() => {
+                                if (isBeforeCreation) {
+                                    alert(`Can't create log. Task was created on ${format(parseISO(habit.created_at), 'PPP')}`);
+                                    return;
+                                }
+                                handleToggle(habit.id, day);
+                            }}
                             className={`w-6 h-6 rounded-md flex items-center justify-center transition-all duration-200 border ${completed
                                 ? 'bg-primary-500 border-primary-500 text-white shadow-sm shadow-primary-500/30 scale-100'
-                                : 'bg-white/5 border-white/10 text-transparent hover:border-primary-400 hover:bg-white/10 scale-90'
+                                : isBeforeCreation
+                                    ? 'bg-white/5 border-white/5 text-transparent opacity-50 cursor-not-allowed'
+                                    : 'bg-white/5 border-white/10 text-transparent hover:border-primary-400 hover:bg-white/10 scale-90'
                                 }`}
                         >
-                            <Check className="w-4 h-4" strokeWidth={3} />
+                            {completed && <Check className="w-4 h-4" strokeWidth={3} />}
                         </button>
                     </div>
                 );

@@ -17,9 +17,10 @@ interface HabitCardProps {
     completed: boolean;
     onToggle: () => void;
     onEdit: () => void;
+    disabled?: boolean;
 }
 
-export const HabitCard = memo(function HabitCard({ habit, completed, onToggle, onEdit }: HabitCardProps) {
+export const HabitCard = memo(function HabitCard({ habit, completed, onToggle, onEdit, disabled }: HabitCardProps) {
     const { logs } = useHabits();
     const streak = calculateStreak(habit, logs);
     const categoryColor = CATEGORY_COLORS[habit.category as keyof typeof CATEGORY_COLORS]?.hex || CATEGORY_COLORS.default.hex;
@@ -29,7 +30,7 @@ export const HabitCard = memo(function HabitCard({ habit, completed, onToggle, o
             className={`relative card-glass p-4 transition-all duration-300 ${completed
                 ? 'bg-green-500/10 border-green-500/20'
                 : 'hover:bg-white/[0.08]'
-                }`}
+                } ${disabled ? 'opacity-50 grayscale' : ''}`}
         >
             <div className="flex items-center gap-4">
                 {/* Checkbox */}
@@ -37,7 +38,7 @@ export const HabitCard = memo(function HabitCard({ habit, completed, onToggle, o
                     onClick={onToggle}
                     className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${completed
                         ? 'bg-green-500 glow-success'
-                        : 'border-2 border-white/20 hover:border-white/40'
+                        : disabled ? 'border-2 border-dashed border-gray-600 cursor-not-allowed' : 'border-2 border-white/20 hover:border-white/40'
                         }`}
                 >
                     {completed && (
@@ -51,6 +52,9 @@ export const HabitCard = memo(function HabitCard({ habit, completed, onToggle, o
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
+                        {habit.priority && (
+                            <span className="text-xs font-mono font-bold text-gray-500 mr-1">#{habit.priority}</span>
+                        )}
                         <h3 className={`font-semibold truncate transition-all duration-300 ${completed
                             ? 'text-green-400 line-through opacity-70'
                             : 'text-white'
