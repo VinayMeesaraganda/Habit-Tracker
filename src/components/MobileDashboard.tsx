@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useHabits } from '../context/HabitContext';
 import { AddHabitModal } from './AddHabitModal';
 import { ProfileModal } from './ProfileModal';
-import { format, startOfMonth, endOfMonth, endOfWeek, startOfWeek, isSameDay, eachDayOfInterval, setYear, isSameMonth, subWeeks, areIntervalsOverlapping, isBefore, startOfDay, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, endOfWeek, startOfWeek, isSameDay, eachDayOfInterval, setYear, isSameMonth, isBefore, startOfDay, parseISO } from 'date-fns';
 import { Calendar as CalendarIcon, List, BarChart2, CheckSquare, ChevronLeft, ChevronRight, Plus, Edit2, Search, Download } from 'lucide-react';
 import { generateCSV, downloadCSV } from '../utils/export';
 import { HorizontalCalendar } from './HorizontalCalendar';
