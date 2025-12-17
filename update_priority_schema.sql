@@ -2,6 +2,10 @@
 ALTER TABLE public.habits 
 ADD COLUMN priority INTEGER DEFAULT 999;
 
+-- 2. Add habits and habit_logs to the publication for realtime
+ALTER PUBLICATION supabase_realtime ADD TABLE habits;
+ALTER PUBLICATION supabase_realtime ADD TABLE habit_logs;
+
 -- 2. Backfill existing priorities based on creation date
 -- Using a CTE to calculate the rank for each user's habits
 WITH ranked_habits AS (
