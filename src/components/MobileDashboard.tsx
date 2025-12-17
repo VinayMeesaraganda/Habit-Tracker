@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useHabits } from '../context/HabitContext';
 import { AddHabitModal } from './AddHabitModal';
 import { ProfileModal } from './ProfileModal';
-import { format, startOfMonth, endOfMonth, endOfWeek, startOfWeek, isSameDay, eachDayOfInterval, setYear, isSameMonth, isBefore, startOfDay, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, endOfWeek, startOfWeek, isSameDay, eachDayOfInterval, setYear, isSameMonth, isBefore, startOfDay, parseISO, isAfter } from 'date-fns';
 import { Calendar as CalendarIcon, List, BarChart2, CheckSquare, ChevronLeft, ChevronRight, Plus, Edit2, Search, Download } from 'lucide-react';
 import { generateCSV, downloadCSV } from '../utils/export';
 import { HorizontalCalendar } from './HorizontalCalendar';
@@ -81,17 +81,24 @@ export function MobileDashboard() {
 
     // --- Data Preparation (Today View) ---
     const activeHabits = useMemo(() => {
-        const viewDate = selectedDate;
-
-        return habits.filter(habit => {
-            const createdAt = new Date(habit.created_at);
-            if (createdAt.setHours(0, 0, 0, 0) > viewDate.getTime()) return false;
-            if (habit.archived_at) {
-                const archivedAt = new Date(habit.archived_at);
-                if (archivedAt < viewDate) return false;
-            }
-            return true;
-        });
+        return habits
+            .filter(h => {
+                // Creation date check
+                if (h.created_at && isBefore(selectedDate, startOfDay(parseISO(h.created_at)))) {
+                    return false;
+                }
+                // Discontinue check (Archive)
+                // If selectedDate is AFTER the archive day, hide it.
+                if (h.archived_at) {
+                    const selectedDay = startOfDay(selectedDate);
+                    const archiveDay = startOfDay(parseISO(h.archived_at));
+                    if (isAfter(selectedDay, archiveDay)) {
+                        return false;
+                    }
+                }
+                return true;
+            })
+            .sort((a, b) => (a.priority || 999) - (b.priority || 999));
     }, [habits, selectedDate]);
 
     const completedCount = activeHabits.filter(h => isCompleted(h.id, selectedDate)).length;

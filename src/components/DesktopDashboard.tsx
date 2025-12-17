@@ -8,7 +8,21 @@ import { useHabits } from '../context/HabitContext';
 import { AddHabitModal } from './AddHabitModal';
 import { RadialProgress } from './RadialProgress';
 import { DailyCompletionChart, CategoryBreakdownChart } from './DashboardCharts';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, endOfWeek, startOfWeek, subMonths, getDate, isBefore, startOfDay, parseISO } from 'date-fns';
+import {
+    format,
+    startOfMonth,
+    endOfMonth,
+    eachDayOfInterval,
+    isSameDay,
+    subMonths,
+    startOfDay,
+    parseISO,
+    isBefore,
+    isAfter,
+    endOfWeek,
+    startOfWeek,
+    getDate
+} from 'date-fns';
 import { Plus, ChevronLeft, ChevronRight, Check, Settings, Search, Download, Printer, Calendar } from 'lucide-react';
 import { CATEGORY_COLORS } from '../utils/colors';
 import { Habit } from '../types';
@@ -75,27 +89,39 @@ export function DesktopDashboard() {
 
     // Filter habits based on Lifecycle AND Search/Category
     const activeHabits = useMemo(() => {
-        const monthStart = startOfMonth(currentMonth);
         const monthEnd = endOfMonth(currentMonth);
 
         return habits.filter(habit => {
             // 1. Lifecycle Check
             const createdAt = new Date(habit.created_at);
             if (createdAt > monthEnd) return false;
-            if (habit.archived_at) {
-                const archivedAt = new Date(habit.archived_at);
-                if (archivedAt < monthStart) return false;
-            }
 
-            // 2. Search Check
-            if (searchTerm && !habit.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-                return false;
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                if (!habit.name.toLowerCase().includes(term) && !habit.category.toLowerCase().includes(term)) {
+                    return false;
+                }
             }
-
-            // 3. Category Check
             if (selectedCategory !== 'All' && habit.category !== selectedCategory) {
                 return false;
             }
+
+            // Show if it was active AT ANY POINT in the current month
+            // If archived BEFORE this month started, hide it.
+            // i.e. Archive Month < Current Month.
+            if (habit.archived_at) {
+                const archiveMonthStart = startOfMonth(parseISO(habit.archived_at));
+                const currentMonthStart = startOfMonth(currentMonth);
+
+                // If Archive Month is strictly before Current Month, hide.
+                // e.g. Archived Nov. Current Month Dec. Nov < Dec -> Hide.
+                // e.g. Archived Dec. Current Month Dec. Dec < Dec (False) -> Show.
+                if (isBefore(archiveMonthStart, currentMonthStart)) {
+                    return false;
+                }
+            }
+            // Note: If created AFTER this month ended? Already handled by creation logic usually, 
+            // but effectively we show everything that overlaps the month.
 
             return true;
         });
@@ -246,24 +272,35 @@ export function DesktopDashboard() {
             {/* Checkboxes */}
             {monthDays.map(day => {
                 const completed = isCompleted(habit.id, day);
-                const isBeforeCreation = habit.created_at && isBefore(day, startOfDay(parseISO(habit.created_at)));
+                const creationDate = parseISO(habit.created_at);
+                const isBeforeCreation = isBefore(day, startOfDay(creationDate));
+
+                // Discontinue check: if day is AFTER the archive day, disable it
+                // isAfter(day, archiveDay) means day > archiveDay
+                const isAfterDiscontinue = habit.archived_at && isAfter(startOfDay(day), startOfDay(parseISO(habit.archived_at)));
+                const isDisabled = isBeforeCreation || isAfterDiscontinue;
 
                 return (
                     <div key={day.toISOString()} className="w-[36px] border-r border-white/5 flex items-center justify-center relative">
                         <button
                             onClick={() => {
-                                if (isBeforeCreation) {
-                                    alert(`Can't create log. Task was created on ${format(parseISO(habit.created_at), 'PPP')}`);
+                                if (isDisabled) {
+                                    if (isBeforeCreation) {
+                                        alert(`Can't log progress before the habit was started on ${format(creationDate, 'MMM d, yyyy')}`);
+                                    } else if (isAfterDiscontinue) {
+                                        alert(`This habit was discontinued on ${format(parseISO(habit.archived_at!), 'MMMM d, yyyy')}`);
+                                    }
                                     return;
                                 }
                                 handleToggle(habit.id, day);
                             }}
                             className={`w-6 h-6 rounded-md flex items-center justify-center transition-all duration-200 border ${completed
                                 ? 'bg-primary-500 border-primary-500 text-white shadow-sm shadow-primary-500/30 scale-100'
-                                : isBeforeCreation
-                                    ? 'bg-white/5 border-white/5 text-transparent opacity-50 cursor-not-allowed'
+                                : isDisabled
+                                    ? 'bg-white/5 border-white/5 text-transparent opacity-30 cursor-not-allowed'
                                     : 'bg-white/5 border-white/10 text-transparent hover:border-primary-400 hover:bg-white/10 scale-90'
                                 }`}
+                            title={isBeforeCreation ? `Habit created on ${format(creationDate, 'MMM d, yyyy')}` : (isAfterDiscontinue ? `Discontinued on ${format(parseISO(habit.archived_at!), 'MMM d, yyyy')}` : format(day, 'MMM d'))}
                         >
                             {completed && <Check className="w-4 h-4" strokeWidth={3} />}
                         </button>

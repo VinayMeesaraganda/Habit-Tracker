@@ -212,47 +212,50 @@ export function HabitProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
     };
 
-    const shiftPriorities = async (targetPriority: number, excludeId?: string) => {
-        if (!user) return; // Ensure user is authenticated for this operation
+    const normalizePriorities = async () => {
+        if (!user) return;
 
-        // Fetch overlapping habits
-        const { data: colliding } = await supabase
+        // Fetch all habits to re-sequence them
+        // Sort by Priority ASC.
+        // Secondary Sort: Created_at DESC (Newest first).
+        // If two habits have Priority 1, the NEW one (Latest created) stays at 1, the OLD one moves to 2.
+        const { data: allHabits, error } = await supabase
             .from('habits')
             .select('*')
-            .gte('priority', targetPriority)
-            .eq('user_id', user.id);
+            .eq('user_id', user.id)
+            .order('priority', { ascending: true })
+            .order('created_at', { ascending: false });
 
-        if (!colliding || colliding.length === 0) return;
+        if (error || !allHabits) {
+            console.error('Error normalizing priorities:', error);
+            return;
+        }
 
-        // Filter out the one we are editing if needed
-        const toShift = excludeId
-            ? colliding.filter(h => h.id !== excludeId)
-            : colliding;
+        const updates: Habit[] = [];
+        allHabits.forEach((h, index) => {
+            const expectedPriority = index + 1;
+            if (h.priority !== expectedPriority) {
+                updates.push({ ...h, priority: expectedPriority });
+            }
+        });
 
-        if (toShift.length === 0) return;
+        if (updates.length > 0) {
+            const { error: upsertError } = await supabase
+                .from('habits')
+                .upsert(updates);
 
-        // Shift them down by 1
-        const updates = toShift.map(h => ({
-            ...h,
-            priority: h.priority + 1
-        }));
-
-        // Batch update
-        const { error } = await supabase
-            .from('habits')
-            .upsert(updates);
-
-        if (error) console.error('Error shifting priorities:', error);
+            if (upsertError) console.error('Error updating priorities:', upsertError);
+            // No need to call refreshData() here if we call it in the parent actions, 
+            // but satisfying the safety check, we might want to ensure state is consistent.
+            // However, the parent actions calls refreshData(). I'll let them handle it or do it here.
+            // If we update here, local state is stale until refresh.
+        }
     };
 
     const addHabit = async (habit: Omit<Habit, 'id' | 'user_id' | 'updated_at'> & { created_at?: string }) => {
         if (!user) throw new Error('User not authenticated');
 
         // Handle priority conflict if a priority is provided
-        if (habit.priority !== undefined && habit.priority !== null) {
-            await shiftPriorities(habit.priority);
-        }
-
         const { error } = await supabase.from('habits').insert({
             ...habit,
             user_id: user.id,
@@ -260,20 +263,25 @@ export function HabitProvider({ children }: { children: ReactNode }) {
         });
 
         if (error) throw error;
+        await normalizePriorities();
         await refreshData();
     };
 
     const updateHabit = async (id: string, updates: Partial<Habit>) => {
-        if (updates.priority !== undefined && updates.priority !== null) {
-            await shiftPriorities(updates.priority, id);
-        }
-
         const { error } = await supabase
             .from('habits')
             .update(updates)
             .eq('id', id);
 
         if (error) throw error;
+
+        // Normalize priorities if:
+        // 1. Priority changed
+        // 2. Habit is being archived (removed from active list)
+        // 3. Habit is being resumed (added back to active list)
+        if (updates.priority !== undefined || updates.archived_at !== undefined) {
+            await normalizePriorities();
+        }
         await refreshData();
     };
 
@@ -284,6 +292,7 @@ export function HabitProvider({ children }: { children: ReactNode }) {
             .eq('id', id);
 
         if (error) throw error;
+        await normalizePriorities();
         await refreshData();
     };
 

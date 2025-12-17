@@ -5,8 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { useHabits } from '../context/HabitContext.tsx';
 import { HABIT_CATEGORIES, HabitCategory, Habit } from '../types.ts';
-import { X, Trash2, Archive, RotateCcw } from 'lucide-react';
-import { endOfMonth } from 'date-fns';
+import { X, Trash2, Archive, RotateCcw, Save, Loader } from 'lucide-react';
 
 interface AddHabitModalProps {
     isOpen: boolean;
@@ -20,15 +19,17 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
     const [name, setName] = useState('');
     const [category, setCategory] = useState<HabitCategory>(HABIT_CATEGORIES[0]);
     const [monthGoal, setMonthGoal] = useState(25);
-    const [priority, setPriority] = useState(1);
+    const [priority, setPriority] = useState<number | string>(1);
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]); // Default to today YYYY-MM-DD
     const [type, setType] = useState<'daily' | 'weekly'>('daily');
     const [loading, setLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showDiscontinueConfirm, setShowDiscontinueConfirm] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
             setShowDeleteConfirm(false);
+            setShowDiscontinueConfirm(false);
             if (initialHabit) {
                 setName(initialHabit.name);
                 setCategory(initialHabit.category as HabitCategory);
@@ -64,32 +65,29 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
         setLoading(true);
 
         try {
-            if (initialHabit) {
-                // Logic for update...
-                // Only update created_at if necessary?
-                // Construct Date object from startDate string (YYYY-MM-DD)
-                // Use explicit parsing to ensure Local Time (avoiding UTC midnight shift)
-                const [y, m, d] = startDate.split('-').map(Number);
-                const localDate = new Date(y, m - 1, d, 12, 0, 0); // Noon to be safe
+            // Parse date to ensure local noon (avoiding UTC midnight shift)
+            const [y, m, d] = startDate.split('-').map(Number);
+            const localDate = new Date(y, m - 1, d, 12, 0, 0);
 
+            // Parse priority safely
+            const finalPriority = priority === '' ? 1 : Number(priority);
+
+            if (initialHabit) {
                 await updateHabit(initialHabit.id, {
                     name,
                     category,
                     month_goal: monthGoal,
-                    priority,
+                    priority: finalPriority,
                     type,
                     updated_at: new Date().toISOString(),
                     created_at: localDate.toISOString()
                 });
             } else {
-                const [y, m, d] = startDate.split('-').map(Number);
-                const localDate = new Date(y, m - 1, d, 12, 0, 0);
-
                 await addHabit({
                     name,
                     category,
                     month_goal: monthGoal,
-                    priority,
+                    priority: finalPriority,
                     type,
                     created_at: localDate.toISOString()
                 });
@@ -119,10 +117,12 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
         if (!initialHabit) return;
         setLoading(true);
         try {
-            await updateHabit(initialHabit.id, { archived_at: endOfMonth(new Date()).toISOString() });
+            // Set archived_at to TODAY's date (not end of month)
+            // This ensures the habit is hidden from TOMORROW onwards
+            await updateHabit(initialHabit.id, { archived_at: new Date().toISOString() });
             onClose();
         } catch (error) {
-            console.error('Error archiving habit:', error);
+            console.error('Error discontinuing habit:', error);
         } finally {
             setLoading(false);
         }
@@ -219,7 +219,7 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                                     <input
                                         type="number"
                                         value={priority}
-                                        onChange={(e) => setPriority(Math.max(1, parseInt(e.target.value) || 1))}
+                                        onChange={(e) => setPriority(e.target.value === '' ? '' : parseInt(e.target.value))}
                                         className="input-dark font-medium pl-8"
                                         min="1"
                                         required
@@ -288,15 +288,15 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                         </div>
 
                         {/* Actions */}
-                        <div className="pt-4 flex items-center justify-between gap-3">
+                        <div className="pt-4 flex items-center justify-between gap-2 flex-wrap">
                             {initialHabit ? (
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1.5">
                                     {!showDeleteConfirm ? (
                                         <>
                                             <button
                                                 type="button"
                                                 onClick={() => setShowDeleteConfirm(true)}
-                                                className="px-4 py-2.5 rounded-xl text-red-400 font-bold hover:bg-red-500/10 transition-all flex items-center gap-2"
+                                                className="px-3 py-2 rounded-lg text-red-400 font-semibold hover:bg-red-500/10 transition-all flex items-center gap-1.5 text-sm"
                                                 title="Delete permanently"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -307,21 +307,41 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                                                 <button
                                                     type="button"
                                                     onClick={handleResume}
-                                                    className="px-4 py-2.5 rounded-xl text-green-400 font-bold hover:bg-green-500/10 transition-all flex items-center gap-2"
+                                                    className="px-3 py-2 rounded-lg text-green-400 font-semibold hover:bg-green-500/10 transition-all flex items-center gap-1.5 text-sm"
                                                     title="Resume tracking this habit"
                                                 >
                                                     <RotateCcw className="w-4 h-4" />
-                                                    <span className="hidden sm:inline">Resume Tracking</span>
+                                                    <span className="sm:hidden text-xs">Resume</span>
+                                                    <span className="hidden sm:inline">Resume</span>
                                                 </button>
+                                            ) : showDiscontinueConfirm ? (
+                                                <div className="flex items-center gap-2 animate-scale-in">
+                                                    <span className="text-xs font-bold text-amber-400 mr-1">Discontinue from {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}?</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleArchive}
+                                                        className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 transition-colors"
+                                                    >
+                                                        Confirm
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowDiscontinueConfirm(false)}
+                                                        className="px-3 py-1.5 rounded-lg bg-white/10 text-gray-300 text-xs font-bold hover:bg-white/20 transition-colors"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
                                             ) : (
                                                 <button
                                                     type="button"
-                                                    onClick={handleArchive}
-                                                    className="px-4 py-2.5 rounded-xl text-amber-400 font-bold hover:bg-amber-500/10 transition-all flex items-center gap-2"
-                                                    title="Stop tracking after this month"
+                                                    onClick={() => setShowDiscontinueConfirm(true)}
+                                                    className="px-3 py-2 rounded-lg text-amber-400 font-semibold hover:bg-amber-500/10 transition-all flex items-center gap-1.5 text-sm"
+                                                    title="Discontinue tracking"
                                                 >
                                                     <Archive className="w-4 h-4" />
-                                                    <span className="hidden sm:inline">Stop Tracking</span>
+                                                    <span className="sm:hidden text-xs">Discontinue</span>
+                                                    <span className="hidden sm:inline">Discontinue</span>
                                                 </button>
                                             )}
                                         </>
@@ -349,22 +369,35 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                                 <div />
                             )}
 
-                            <div className="flex items-center gap-3">
-                                <button
-                                    type="button"
-                                    onClick={onClose}
-                                    className="px-6 py-2.5 rounded-xl text-gray-400 font-bold hover:bg-white/5 hover:text-white transition-all"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="bg-gradient-to-r from-primary-500 to-purple-600 text-white px-8 py-2.5 rounded-xl font-bold shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30 active:scale-95 transition-all text-sm"
-                                >
-                                    {loading ? 'Saving...' : (initialHabit ? 'Save Changes' : 'Create Habit')}
-                                </button>
-                            </div>
+                            {/* Cancel/Save - Hide when confirmation is active */}
+                            {!showDeleteConfirm && !showDiscontinueConfirm && (
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={onClose}
+                                        className="px-4 py-2 rounded-lg text-gray-400 font-semibold hover:bg-white/5 hover:text-white transition-all text-sm"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="bg-gradient-to-r from-primary-500 to-purple-600 text-white px-4 py-2 rounded-lg font-semibold shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30 active:scale-95 transition-all text-sm flex items-center gap-1.5"
+                                    >
+                                        {loading ? (
+                                            <Loader className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <Save className="w-4 h-4" />
+                                        )}
+                                        <span className="hidden sm:inline">
+                                            {loading ? 'Saving...' : (initialHabit ? 'Save' : 'Create')}
+                                        </span>
+                                        <span className="sm:hidden">
+                                            {loading ? '' : 'Save'}
+                                        </span>
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </form>
                 </div>

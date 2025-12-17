@@ -74,29 +74,55 @@ export function calculateStreak(habit: Habit, logs: HabitLog[]): number {
  * Calculate the proportional goal for a habit based on when it was created.
  * If viewing the creation month: Goal = (Active Days / Total Days) * Original Goal.
  */
+/*
+ * Calculate the proportional goal for a habit based on creation and archive dates.
+ * Goal scales based on how many days the habit was "active" in the month.
+ */
 export function getDynamicGoal(habit: Habit, currentMonth: Date | string): number {
     const originalGoal = habit.month_goal || 1;
-    if (!habit.created_at) return originalGoal;
 
-    const creationDate = parseISO(habit.created_at);
-    // Be careful with string/date conversions.
+    // Parse View Month
     const viewMonth = typeof currentMonth === 'string' ? parseISO(currentMonth) : currentMonth;
-
-    // Strict comparison of month and year
-    if (!isSameMonth(viewMonth, creationDate)) return originalGoal;
-
-    // If viewing creation month
     const totalDaysInMonth = getDaysInMonth(viewMonth);
-    const creationDay = getDate(creationDate);
-    // Active days = days remaining from creation day (inclusive)
-    const activeDays = Math.max(0, totalDaysInMonth - creationDay + 1);
+    const viewMonthStart = startOfMonth(viewMonth);
+    const viewMonthEnd = endOfMonth(viewMonth);
 
-    if (activeDays <= 0) return 0;
+    // Determine Active Range within this month
+    let startDay = 1;
+    let endDay = totalDaysInMonth;
+
+    // 1. Creation Date Check
+    if (habit.created_at) {
+        const creationDate = parseISO(habit.created_at);
+        if (isSameMonth(creationDate, viewMonth)) {
+            startDay = getDate(creationDate);
+        } else if (creationDate > viewMonthEnd) {
+            // Created in future month? Should be 0 goal.
+            return 0;
+        }
+    }
+
+    // 2. Archive Date Check
+    if (habit.archived_at) {
+        const archiveDate = parseISO(habit.archived_at);
+        if (isSameMonth(archiveDate, viewMonth)) {
+            endDay = getDate(archiveDate);
+        } else if (archiveDate < viewMonthStart) {
+            // Archived in previous month? Goal is 0.
+            return 0;
+        }
+    }
+
+    // Check valid range
+    if (endDay < startDay) return 0;
+
+    const activeDays = endDay - startDay + 1;
+
+    // If fully active, return original
     if (activeDays >= totalDaysInMonth) return originalGoal;
 
-    // Proportional goal
+    // Proportional Calculation
     const ratio = originalGoal / totalDaysInMonth;
-    // Rounding up ensures ambitious but achievable goal (e.g. 12.5 -> 13)
     return Math.max(1, Math.ceil(activeDays * ratio));
 }
 
