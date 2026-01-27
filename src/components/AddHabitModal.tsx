@@ -22,13 +22,11 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]); // Default to today YYYY-MM-DD
     const [type, setType] = useState<'daily' | 'weekly'>('daily');
     const [loading, setLoading] = useState(false);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [showDiscontinueConfirm, setShowDiscontinueConfirm] = useState(false);
+
 
     useEffect(() => {
         if (isOpen) {
-            setShowDeleteConfirm(false);
-            setShowDiscontinueConfirm(false);
+
             if (initialHabit) {
                 setName(initialHabit.name);
                 setCategory(initialHabit.category as HabitCategory);

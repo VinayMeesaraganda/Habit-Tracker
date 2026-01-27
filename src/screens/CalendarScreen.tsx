@@ -4,8 +4,7 @@ import { useHabits } from '../context/HabitContext';
 import { ColorfulHabitCard, SectionDivider } from '../components/ui';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useVisibleHabits } from '../hooks/useVisibleHabits';
-import { calculateStreak } from '../utils/analytics';
-import { getHabitMonthlyProgress } from '../utils/habitProgress';
+
 import { getCategoryEmoji } from '../utils/categoryEmojis';
 import { DATE_FORMATS } from '../utils/dateFormats';
 import { Habit } from '../types';
@@ -15,8 +14,8 @@ interface CalendarScreenProps {
     onEditHabit?: (habit: Habit) => void;
 }
 
-export const CalendarScreen: React.FC<CalendarScreenProps> = ({ currentMonth: initialMonth, onEditHabit }) => {
-    const { habits, logs, getHabitLogs, toggleLog, setCurrentMonth } = useHabits();
+export const CalendarScreen: React.FC<CalendarScreenProps> = ({ currentMonth: initialMonth }) => {
+    const { habits, getHabitLogs, toggleLog, setCurrentMonth } = useHabits();
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [viewMonth, setViewMonth] = useState<Date>(initialMonth);
 

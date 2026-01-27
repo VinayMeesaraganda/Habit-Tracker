@@ -35,7 +35,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
         try {
             if (name !== user?.full_name) {
-                await updateProfile(name);
+                await updateProfile({ full_name: name });
             }
 
             const isEmailChanged = email !== user?.email;

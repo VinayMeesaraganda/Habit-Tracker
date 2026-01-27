@@ -11,8 +11,8 @@ interface HomeScreenProps {
     onEditHabit?: (habit: Habit) => void;
 }
 
-export const HomeScreen: React.FC<HomeScreenProps> = ({ selectedDate, onEditHabit }) => {
-    const { habits, logs, getHabitLogs, toggleLog } = useHabits();
+export const HomeScreen: React.FC<HomeScreenProps> = ({ selectedDate }) => {
+    const { habits, getHabitLogs, toggleLog } = useHabits();
 
     // Get active habits
     const activeHabits = useMemo(() =>

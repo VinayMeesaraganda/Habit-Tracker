@@ -35,11 +35,11 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({
 
         // Filter active habits for display
         const visibleActive = isEditMode
-            ? active.sort((a, b) => a.priority - b.priority)
+            ? active.sort((a, b) => (a.priority || 0) - (b.priority || 0))
             : active.filter(h => {
                 const habitStartDate = startOfDay(new Date(h.created_at));
                 return !isAfter(habitStartDate, selectedDayStart);
-            }).sort((a, b) => a.priority - b.priority);
+            }).sort((a, b) => (a.priority || 0) - (b.priority || 0));
 
         return {
             activeHabits: visibleActive,
@@ -53,14 +53,7 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({
         [selectedDate, getHabitLogs]
     );
 
-    // Calculate stats for multi-segment ring
-    const stats = useMemo(() => {
-        const completed = selectedDateLogs.length;
-        const remaining = Math.max(0, activeHabits.length - completed);
-        const overdue = 0;
 
-        return { completed, remaining, overdue };
-    }, [activeHabits.length, selectedDateLogs.length]);
 
     // Check if habit is completed on selected date
     const isCompleted = useCallback((habitId: string) => {

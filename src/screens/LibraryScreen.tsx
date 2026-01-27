@@ -1,11 +1,10 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { useHabits } from '../context/HabitContext';
 import { SectionDivider, ColorfulHabitCard } from '../components/ui';
-import { calculateStreak } from '../utils/analytics';
-import { getHabitMonthlyProgress } from '../utils/habitProgress';
+
 import { getCategoryEmoji } from '../utils/categoryEmojis';
 import { Habit } from '../types';
-import { Edit2, Archive, Trash2 } from 'lucide-react';
+import { Edit2, Trash2 } from 'lucide-react';
 
 interface LibraryScreenProps {
     onAddHabit: () => void;
@@ -13,7 +12,7 @@ interface LibraryScreenProps {
 }
 
 export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onAddHabit, onEditHabit }) => {
-    const { habits, logs, updateHabit, deleteHabit } = useHabits();
+    const { habits, deleteHabit } = useHabits();
     const [searchQuery, setSearchQuery] = useState('');
 
     // Separate active and archived habits
@@ -46,11 +45,7 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onAddHabit, onEdit
         onEditHabit?.(habit);
     }, [onEditHabit]);
 
-    const handleArchive = useCallback(async (habitId: string) => {
-        if (window.confirm('Archive this habit?')) {
-            await updateHabit(habitId, { archived_at: new Date().toISOString() });
-        }
-    }, [updateHabit]);
+
 
     const handleDelete = useCallback(async (habitId: string) => {
         if (window.confirm('Delete this habit permanently? This cannot be undone.')) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, BarChart3, Settings, User } from 'lucide-react';
+import { Home, BarChart3, User } from 'lucide-react';
 
 export type TabType = 'track' | 'stats' | 'profile';
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, BarChart3, Settings, User } from 'lucide-react';
+import { Home, BarChart3, User } from 'lucide-react';
 
 export type TabType = 'track' | 'stats' | 'profile';
 
@@ -7,7 +7,6 @@ interface SidebarProps {
     activeTab: TabType;
     onTabChange: (tab: TabType) => void;
     onAddHabit: () => void;
-    onProfileClick?: () => void;
     user?: any;
 }
 
@@ -15,7 +14,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     activeTab,
     onTabChange,
     onAddHabit,
-    onProfileClick,
     user
 }) => {
     const tabs: { id: TabType; icon: React.ReactNode; label: string }[] = [

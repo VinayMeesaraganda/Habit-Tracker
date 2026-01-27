@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { BottomNav, TabType } from './BottomNav';
 import { AddHabitModal } from './AddHabitModal';
 import { TrackScreen } from '../screens/TrackScreen';

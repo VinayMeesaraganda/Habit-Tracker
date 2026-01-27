@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useHabits } from '../context/HabitContext';
 import { SectionDivider } from '../components/ui';
-import { User, Mail, Lock, LogOut, Save, Loader, Shield, Camera, Users } from 'lucide-react';
+import { User, Mail, Lock, LogOut, Save, Loader, Shield, Users } from 'lucide-react';
 
 export const ProfileScreen: React.FC = () => {
     const { user, updateProfile, updateEmail, updatePassword, signOut, verifyPassword } = useHabits();
