@@ -19,7 +19,6 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
     const [name, setName] = useState('');
     const [category, setCategory] = useState<HabitCategory>(HABIT_CATEGORIES[0]);
     const [monthGoal, setMonthGoal] = useState(25);
-    const [priority, setPriority] = useState<number | string>(1);
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]); // Default to today YYYY-MM-DD
     const [type, setType] = useState<'daily' | 'weekly'>('daily');
     const [loading, setLoading] = useState(false);
@@ -34,7 +33,6 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                 setName(initialHabit.name);
                 setCategory(initialHabit.category as HabitCategory);
                 setMonthGoal(initialHabit.month_goal);
-                setPriority(initialHabit.priority || 999);
                 setType(initialHabit.type);
                 // For editing, we don't usually change start date, but maybe display it?
                 // Or just keep it hidden/immutable for existing habits to avoid data loss issues?
@@ -51,8 +49,6 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                 setCategory(HABIT_CATEGORIES[0]);
                 setMonthGoal(25);
                 setType('daily');
-                const maxPriority = habits.length > 0 ? Math.max(...habits.map(h => h.priority || 0)) : 0;
-                setPriority(maxPriority + 1);
                 setStartDate(new Date().toISOString().split('T')[0]);
             }
         }
@@ -69,15 +65,11 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
             const [y, m, d] = startDate.split('-').map(Number);
             const localDate = new Date(y, m - 1, d, 12, 0, 0);
 
-            // Parse priority safely
-            const finalPriority = priority === '' ? 1 : Number(priority);
-
             if (initialHabit) {
                 await updateHabit(initialHabit.id, {
                     name,
                     category,
                     month_goal: monthGoal,
-                    priority: finalPriority,
                     type,
                     updated_at: new Date().toISOString(),
                     created_at: localDate.toISOString()
@@ -87,7 +79,6 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                     name,
                     category,
                     month_goal: monthGoal,
-                    priority: finalPriority,
                     type,
                     created_at: localDate.toISOString()
                 });
@@ -145,106 +136,118 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
+                className="absolute inset-0 bg-black/90 backdrop-blur-md transition-opacity"
                 onClick={onClose}
             />
 
             {/* Modal Card */}
-            <div className="relative w-full max-w-lg card-glass shadow-2xl animate-scale-in flex flex-col max-h-[90vh]">
+            <div
+                className="relative w-full max-w-lg rounded-2xl shadow-2xl animate-scale-in flex flex-col"
+                style={{
+                    background: '#FFFFFF',
+                    maxHeight: '85vh',
+                }}
+            >
                 {/* Header */}
-                <div className="flex-shrink-0 flex items-center justify-between px-6 py-5 border-b border-white/10 bg-[#1A1A1A]/80 backdrop-blur-md z-10">
+                <div
+                    className="flex-shrink-0 flex items-center justify-between px-6 py-5 rounded-t-2xl"
+                    style={{
+                        background: 'linear-gradient(135deg, #FF7A6B 0%, #FFA094 100%)',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    }}
+                >
                     <div>
                         <h2 className="text-xl font-bold text-white tracking-tight">
                             {initialHabit ? 'Edit Habit' : 'New Habit'}
                         </h2>
-                        <p className="text-sm text-gray-400 font-medium">
+                        <p className="text-sm text-white/90 font-medium">
                             {initialHabit ? 'Update your tracking details' : 'Commit to a new goal'}
                         </p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-gray-500 hover:text-white p-2 rounded-full hover:bg-white/10 transition-all"
+                        className="text-white/80 hover:text-white p-2 rounded-full hover:bg-white/20 transition-all"
                     >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                <div className="overflow-y-auto custom-scrollbar">
-                    <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <div className="overflow-y-auto">
+                    <form onSubmit={handleSubmit} className="p-5 space-y-4">
                         {/* Name Input */}
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9E9E9E' }}>
                                 Habit Name
                             </label>
                             <input
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="input-dark text-lg font-medium"
+                                className="w-full px-3 py-2.5 rounded-xl text-base font-medium transition-all focus:outline-none focus:ring-2"
+                                style={{
+                                    background: '#F5F5F5',
+                                    border: '1px solid #E0E0E0',
+                                    color: '#1F1F1F',
+                                }}
                                 placeholder="e.g. detailed reading, morning jog..."
                                 required
                                 autoFocus
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                        {/* Category and Start Date Row */}
+                        <div className="grid grid-cols-2 gap-3">
                             {/* Category Select */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9E9E9E' }}>
                                     Category
                                 </label>
                                 <div className="relative">
                                     <select
                                         value={category}
                                         onChange={(e) => setCategory(e.target.value as HabitCategory)}
-                                        className="input-dark appearance-none font-medium w-full"
+                                        className="w-full px-3 py-2.5 rounded-xl font-medium appearance-none transition-all focus:outline-none focus:ring-2"
+                                        style={{
+                                            background: '#F5F5F5',
+                                            border: '1px solid #E0E0E0',
+                                            color: '#1F1F1F',
+                                        }}
                                     >
                                         {HABIT_CATEGORIES.map((cat) => (
                                             <option key={cat} value={cat}>{cat}</option>
                                         ))}
                                     </select>
-                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#6B6B6B' }}>
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Priority Input */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                                    Priority
-                                </label>
-                                <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">#</span>
-                                    <input
-                                        type="number"
-                                        value={priority}
-                                        onChange={(e) => setPriority(e.target.value === '' ? '' : parseInt(e.target.value))}
-                                        className="input-dark font-medium pl-8"
-                                        min="1"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
                             {/* Start Date */}
-                            <div className="space-y-2 col-span-2 sm:col-span-1">
-                                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9E9E9E' }}>
                                     Start Date
                                 </label>
                                 <input
                                     type="date"
                                     value={startDate}
                                     onChange={(e) => setStartDate(e.target.value)}
-                                    className="input-dark font-medium w-full"
-                                    style={{ colorScheme: 'dark' }}
+                                    className="w-full px-3 py-2.5 rounded-xl font-medium transition-all focus:outline-none focus:ring-2"
+                                    style={{
+                                        background: '#F5F5F5',
+                                        border: '1px solid #E0E0E0',
+                                        color: '#1F1F1F',
+                                    }}
                                     required
                                 />
                             </div>
+                        </div>
 
-                            {/* Goal Input - Hidden on mobile, full width on small screens? No, just keep layout */}
-                            <div className="space-y-2 col-span-2 sm:col-span-1">
-                                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        {/* Monthly Goal and Frequency Row */}
+                        <div className="grid grid-cols-2 gap-3">
+                            {/* Monthly Goal */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9E9E9E' }}>
                                     Monthly Goal
                                 </label>
                                 <div className="relative">
@@ -252,157 +255,166 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                                         type="number"
                                         value={monthGoal}
                                         onChange={(e) => setMonthGoal(parseInt(e.target.value))}
-                                        className="input-dark font-medium"
+                                        className="w-full px-3 py-2.5 rounded-xl font-medium transition-all focus:outline-none focus:ring-2"
+                                        style={{
+                                            background: '#F5F5F5',
+                                            border: '1px solid #E0E0E0',
+                                            color: '#1F1F1F',
+                                        }}
                                         min="1"
                                         max="31"
                                         required
                                     />
-                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium pointer-events-none">
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium pointer-events-none" style={{ color: '#6B6B6B' }}>
                                         days
                                     </span>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Frequency Segmented Control */}
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                                Frequency
-                            </label>
-                            <div className="flex p-1 bg-white/5 rounded-xl border border-white/10">
-                                <button
-                                    type="button"
-                                    onClick={() => setType('daily')}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${type === 'daily' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}
-                                >
-                                    Daily
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setType('weekly')}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${type === 'weekly' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}
-                                >
-                                    Weekly
-                                </button>
+                            {/* Frequency */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9E9E9E' }}>
+                                    Frequency
+                                </label>
+                                <div className="flex p-0.5 rounded-xl" style={{ background: '#F5F5F5', border: '1px solid #E0E0E0' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setType('daily')}
+                                        className="flex-1 flex items-center justify-center py-2 rounded-lg text-sm font-bold transition-all"
+                                        style={{
+                                            background: type === 'daily' ? '#FF7A6B' : 'transparent',
+                                            color: type === 'daily' ? '#FFFFFF' : '#6B6B6B',
+                                        }}
+                                    >
+                                        Daily
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setType('weekly')}
+                                        className="flex-1 flex items-center justify-center py-2 rounded-lg text-sm font-bold transition-all"
+                                        style={{
+                                            background: type === 'weekly' ? '#FF7A6B' : 'transparent',
+                                            color: type === 'weekly' ? '#FFFFFF' : '#6B6B6B',
+                                        }}
+                                    >
+                                        Weekly
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         {/* Actions */}
-                        <div className="pt-4 flex items-center justify-between gap-2 flex-wrap">
-                            {initialHabit ? (
-                                <div className="flex items-center gap-1.5">
-                                    {!showDeleteConfirm ? (
-                                        <>
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowDeleteConfirm(true)}
-                                                className="px-3 py-2 rounded-lg text-red-400 font-semibold hover:bg-red-500/10 transition-all flex items-center gap-1.5 text-sm"
-                                                title="Delete permanently"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                                <span className="hidden sm:inline">Delete</span>
-                                            </button>
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="flex-1 py-2.5 rounded-xl font-semibold transition-all hover:scale-105 active:scale-95"
+                                style={{
+                                    background: '#F5F5F5',
+                                    color: '#6B6B6B',
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="flex-1 py-2.5 rounded-xl font-semibold transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                style={{
+                                    background: 'linear-gradient(135deg, #FF7A6B 0%, #FFA094 100%)',
+                                    color: '#FFFFFF',
+                                }}
+                            >
+                                {loading ? (
+                                    <>
+                                        <Loader className="w-4 h-4 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="w-4 h-4" />
+                                        {initialHabit ? 'Update' : 'Create'}
+                                    </>
+                                )}
+                            </button>
+                        </div>
 
-                                            {initialHabit.archived_at ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={handleResume}
-                                                    className="px-3 py-2 rounded-lg text-green-400 font-semibold hover:bg-green-500/10 transition-all flex items-center gap-1.5 text-sm"
-                                                    title="Resume tracking this habit"
-                                                >
-                                                    <RotateCcw className="w-4 h-4" />
-                                                    <span className="sm:hidden text-xs">Resume</span>
-                                                    <span className="hidden sm:inline">Resume</span>
-                                                </button>
-                                            ) : showDiscontinueConfirm ? (
-                                                <div className="flex items-center gap-2 animate-scale-in">
-                                                    <span className="text-xs font-bold text-amber-400 mr-1">Discontinue from {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}?</span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleArchive}
-                                                        className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 transition-colors"
-                                                    >
-                                                        Confirm
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowDiscontinueConfirm(false)}
-                                                        className="px-3 py-1.5 rounded-lg bg-white/10 text-gray-300 text-xs font-bold hover:bg-white/20 transition-colors"
-                                                    >
-                                                        Cancel
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowDiscontinueConfirm(true)}
-                                                    className="px-3 py-2 rounded-lg text-amber-400 font-semibold hover:bg-amber-500/10 transition-all flex items-center gap-1.5 text-sm"
-                                                    title="Discontinue tracking"
-                                                >
+                        {/* Danger Zone (Only for existing habits) */}
+                        {initialHabit && (
+                            <div className="pt-6 mt-6 border-t border-gray-100">
+                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                                    Manage Habit
+                                </h4>
+
+                                <div className="space-y-3">
+                                    {/* Archive Option */}
+                                    {!initialHabit.archived_at ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (window.confirm("Discontinue this habit? It will be moved to archives and hidden from your daily view.")) {
+                                                    handleArchive();
+                                                }
+                                            }}
+                                            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-orange-50 transition-colors group"
+                                            style={{ border: '1px solid #FFE0B2' }}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-500">
                                                     <Archive className="w-4 h-4" />
-                                                    <span className="sm:hidden text-xs">Discontinue</span>
-                                                    <span className="hidden sm:inline">Discontinue</span>
-                                                </button>
-                                            )}
-                                        </>
+                                                </div>
+                                                <div className="text-left">
+                                                    <span className="block text-sm font-semibold text-gray-700">Discontinue Habit</span>
+                                                    <span className="block text-xs text-gray-500">Stop tracking but keep history</span>
+                                                </div>
+                                            </div>
+                                        </button>
                                     ) : (
-                                        <div className="flex items-center gap-2 animate-scale-in">
-                                            <span className="text-xs font-bold text-red-400 mr-1">Are you sure?</span>
-                                            <button
-                                                type="button"
-                                                onClick={handleDelete}
-                                                className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors"
-                                            >
-                                                Yes, delete
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowDeleteConfirm(false)}
-                                                className="px-3 py-1.5 rounded-lg bg-white/10 text-gray-300 text-xs font-bold hover:bg-white/20 transition-colors"
-                                            >
-                                                Cancel
-                                            </button>
-                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleResume}
+                                            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-green-50 transition-colors group"
+                                            style={{ border: '1px solid #C8E6C9' }}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-500">
+                                                    <RotateCcw className="w-4 h-4" />
+                                                </div>
+                                                <div className="text-left">
+                                                    <span className="block text-sm font-semibold text-gray-700">Resume Habit</span>
+                                                    <span className="block text-xs text-gray-500">Add back to active list</span>
+                                                </div>
+                                            </div>
+                                        </button>
                                     )}
-                                </div>
-                            ) : (
-                                <div />
-                            )}
 
-                            {/* Cancel/Save - Hide when confirmation is active */}
-                            {!showDeleteConfirm && !showDiscontinueConfirm && (
-                                <div className="flex items-center gap-2">
+                                    {/* Delete Option */}
                                     <button
                                         type="button"
-                                        onClick={onClose}
-                                        className="px-4 py-2 rounded-lg text-gray-400 font-semibold hover:bg-white/5 hover:text-white transition-all text-sm"
+                                        onClick={() => {
+                                            if (window.confirm("Delete this habit permanently? This action cannot be undone and all history will be lost.")) {
+                                                handleDelete();
+                                            }
+                                        }}
+                                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-red-50 transition-colors group"
+                                        style={{ border: '1px solid #FFCDD2' }}
                                     >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className="bg-gradient-to-r from-primary-500 to-purple-600 text-white px-4 py-2 rounded-lg font-semibold shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30 active:scale-95 transition-all text-sm flex items-center gap-1.5"
-                                    >
-                                        {loading ? (
-                                            <Loader className="w-4 h-4 animate-spin" />
-                                        ) : (
-                                            <Save className="w-4 h-4" />
-                                        )}
-                                        <span className="hidden sm:inline">
-                                            {loading ? 'Saving...' : (initialHabit ? 'Save' : 'Create')}
-                                        </span>
-                                        <span className="sm:hidden">
-                                            {loading ? '' : 'Save'}
-                                        </span>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-500">
+                                                <Trash2 className="w-4 h-4" />
+                                            </div>
+                                            <div className="text-left">
+                                                <span className="block text-sm font-semibold text-gray-700 group-hover:text-red-600">Delete Habit</span>
+                                                <span className="block text-xs text-gray-500 group-hover:text-red-400">Permanently remove all data</span>
+                                            </div>
+                                        </div>
                                     </button>
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </form>
                 </div>
             </div>
         </div>
     );
 }
-

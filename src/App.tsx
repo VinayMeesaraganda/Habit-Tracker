@@ -3,7 +3,6 @@ import { HabitProvider, useHabits } from './context/HabitContext';
 import { Auth } from './components/Auth';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { FullPageLoader } from './components/ui/LoadingSpinner';
-import { MobileDashboardSkeleton, DesktopDashboardSkeleton } from './components/skeletons/DashboardSkeleton';
 
 // Lazy load the heavy dashboard components for code splitting
 const MobileDashboard = lazy(() => import('./components/MobileDashboard').then(module => ({ default: module.MobileDashboard })));
@@ -34,12 +33,9 @@ function AppContent() {
         return <Auth />;
     }
 
-    // Determine which skeleton to show based on viewport
-    const DashboardSkeleton = isMobile ? MobileDashboardSkeleton : DesktopDashboardSkeleton;
-
     return (
         <ErrorBoundary>
-            <Suspense fallback={<DashboardSkeleton />}>
+            <Suspense fallback={<FullPageLoader text="Loading dashboard..." />}>
                 {isMobile ? <MobileDashboard /> : <DesktopDashboard />}
             </Suspense>
         </ErrorBoundary>

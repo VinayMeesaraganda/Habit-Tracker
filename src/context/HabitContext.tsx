@@ -6,7 +6,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Habit, HabitLog, User } from '../types';
-import { startOfMonth, format, subMonths } from 'date-fns';
+import { startOfMonth, format } from 'date-fns';
 
 interface HabitContextType {
     // Auth state
@@ -26,7 +26,7 @@ interface HabitContextType {
     resetPassword: (email: string) => Promise<void>;
     verifyPassword: (password: string) => Promise<void>;
 
-    updateProfile: (name: string) => Promise<void>;
+    updateProfile: (updates: { full_name?: string; gender?: string }) => Promise<void>;
     updateEmail: (email: string) => Promise<void>;
     updatePassword: (password: string) => Promise<void>;
 
@@ -58,7 +58,8 @@ export function HabitProvider({ children }: { children: ReactNode }) {
             setUser(session?.user ? {
                 id: session.user.id,
                 email: session.user.email!,
-                full_name: session.user.user_metadata?.full_name
+                full_name: session.user.user_metadata?.full_name,
+                gender: session.user.user_metadata?.gender
             } : null);
             setLoading(false);
         });
@@ -67,7 +68,8 @@ export function HabitProvider({ children }: { children: ReactNode }) {
             setUser(session?.user ? {
                 id: session.user.id,
                 email: session.user.email!,
-                full_name: session.user.user_metadata?.full_name
+                full_name: session.user.user_metadata?.full_name,
+                gender: session.user.user_metadata?.gender
             } : null);
         });
 
@@ -139,7 +141,6 @@ export function HabitProvider({ children }: { children: ReactNode }) {
                 supabase
                     .from('habit_logs')
                     .select('*')
-                    .gte('date', format(startOfMonth(subMonths(currentMonth, 1)), 'yyyy-MM-dd'))
                     .eq('user_id', user.id)
             ]);
 
@@ -186,15 +187,19 @@ export function HabitProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
     };
 
-    const updateProfile = async (name: string) => {
+    const updateProfile = async (updates: { full_name?: string; gender?: string }) => {
         const { data, error } = await supabase.auth.updateUser({
-            data: { full_name: name }
+            data: updates
         });
         if (error) throw error;
 
         // Manual update of local state to reflect change immediately
         if (data.user) {
-            setUser(prev => prev ? { ...prev, full_name: name } : null);
+            setUser(prev => prev ? {
+                ...prev,
+                full_name: updates.full_name || prev.full_name,
+                gender: updates.gender || prev.gender
+            } : null);
         }
     };
 
@@ -245,10 +250,6 @@ export function HabitProvider({ children }: { children: ReactNode }) {
                 .upsert(updates);
 
             if (upsertError) console.error('Error updating priorities:', upsertError);
-            // No need to call refreshData() here if we call it in the parent actions, 
-            // but satisfying the safety check, we might want to ensure state is consistent.
-            // However, the parent actions calls refreshData(). I'll let them handle it or do it here.
-            // If we update here, local state is stale until refresh.
         }
     };
 
@@ -299,92 +300,73 @@ export function HabitProvider({ children }: { children: ReactNode }) {
     const toggleLog = async (habitId: string, date: string) => {
         if (!user) throw new Error('User not authenticated');
 
-        // Optimistic Update
+        // Check if log exists locally
         const existingLogIndex = logs.findIndex(
             log => log.habit_id === habitId && log.date === date
         );
 
-        let optimisticCompleted = true;
+        const isCurrentlyCompleted = existingLogIndex >= 0;
 
-        if (existingLogIndex >= 0) {
-            optimisticCompleted = !logs[existingLogIndex].completed;
-
-            // Optimistically update existing
-            setLogs(prev => {
-                const newLogs = [...prev];
-                newLogs[existingLogIndex] = { ...newLogs[existingLogIndex], completed: optimisticCompleted };
-                return newLogs;
-            });
+        // Optimistic Update
+        if (isCurrentlyCompleted) {
+            // Remove from local state (uncompleting)
+            setLogs(prev => prev.filter(l => !(l.habit_id === habitId && l.date === date)));
         } else {
-            // Optimistically add new
+            // Add to local state (completing)
             const tempLog: HabitLog = {
                 id: 'temp-' + Date.now(),
                 user_id: user.id,
                 habit_id: habitId,
                 date,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                completed: true
             };
             setLogs(prev => [...prev, tempLog]);
         }
 
         try {
-            // 1. Check if log exists in DB (Explicit check to avoid Unique Constraint dependency)
+            // Check if log exists in DB
             const { data: existingDbLog } = await supabase
                 .from('habit_logs')
-                .select('id, completed')
+                .select('id')
                 .eq('user_id', user.id)
                 .eq('habit_id', habitId)
                 .eq('date', date)
-                .maybeSingle(); // Use maybeSingle to avoid error if not found
-
-            let finalData: HabitLog | null = null;
+                .maybeSingle();
 
             if (existingDbLog) {
-                // 2. Update existing
-                const { data, error } = await supabase
+                // Log exists → User is uncompleting → DELETE
+                const { error } = await supabase
                     .from('habit_logs')
-                    .update({ completed: optimisticCompleted })
-                    .eq('id', existingDbLog.id)
-                    .select()
-                    .single();
+                    .delete()
+                    .eq('id', existingDbLog.id);
 
                 if (error) throw error;
-                finalData = data;
+
+                // Update local state to remove the log
+                setLogs(prev => prev.filter(l => l.id !== existingDbLog.id));
             } else {
-                // 3. Insert new
+                // Log doesn't exist → User is completing → INSERT
                 const { data, error } = await supabase
                     .from('habit_logs')
                     .insert({
                         user_id: user.id,
                         habit_id: habitId,
                         date,
-                        completed: optimisticCompleted,
                     })
                     .select()
                     .single();
 
                 if (error) throw error;
-                finalData = data;
-            }
 
-            // 4. Update local state with real data to replace optimistic/temp data
-            if (finalData) {
+                // Update local state with real data (replace temp)
                 setLogs(prev => {
-                    const idx = prev.findIndex(l => l.habit_id === habitId && l.date === date);
-                    if (idx >= 0) {
-                        const newLogs = [...prev];
-                        newLogs[idx] = finalData!;
-                        return newLogs;
-                    }
-                    return [...prev, finalData!];
+                    const filtered = prev.filter(l => !(l.habit_id === habitId && l.date === date));
+                    return [...filtered, data];
                 });
             }
 
         } catch (error) {
             console.error("Toggle log failed:", error);
-            // Revert optimistic update on critical failure
+            // Revert optimistic update on failure
             await refreshData();
             throw error;
         }
@@ -397,6 +379,7 @@ export function HabitProvider({ children }: { children: ReactNode }) {
 
     const getHabitLogs = useCallback((date: Date) => {
         const dateStr = format(date, 'yyyy-MM-dd');
+        // All logs in the array are completed (completion-only storage)
         return logs.filter(log => log.date === dateStr);
     }, [logs]);
 

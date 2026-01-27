@@ -12,17 +12,17 @@ export function calculateStreak(habit: Habit, logs: HabitLog[]): number {
         let checkDate = today;
 
         // Check if completed today, if not, check yesterday to start streak
-        const completedToday = logs.some(l => l.habit_id === habit.id && l.completed && isSameDay(parseISO(l.date), today));
+        const completedToday = logs.some(l => l.habit_id === habit.id && isSameDay(parseISO(l.date), today));
 
         if (!completedToday) {
             checkDate = subDays(today, 1);
-            const completedYesterday = logs.some(l => l.habit_id === habit.id && l.completed && isSameDay(parseISO(l.date), checkDate));
+            const completedYesterday = logs.some(l => l.habit_id === habit.id && isSameDay(parseISO(l.date), checkDate));
             if (!completedYesterday) return 0; // No streak
         }
 
         // Count backwards
         while (true) {
-            const isCompleted = logs.some(l => l.habit_id === habit.id && l.completed && isSameDay(parseISO(l.date), checkDate));
+            const isCompleted = logs.some(l => l.habit_id === habit.id && isSameDay(parseISO(l.date), checkDate));
             if (isCompleted) {
                 streak++;
                 checkDate = subDays(checkDate, 1);
@@ -46,7 +46,7 @@ export function calculateStreak(habit: Habit, logs: HabitLog[]): number {
             const weekEnd = endOfWeek(checkWeekStart);
             const hasLog = logs.some(l => {
                 const d = parseISO(l.date);
-                return l.habit_id === habit.id && l.completed && d >= checkWeekStart && d <= weekEnd;
+                return l.habit_id === habit.id && d >= checkWeekStart && d <= weekEnd;
             });
 
             if (hasLog) {
@@ -180,7 +180,6 @@ export function getHabitMetrics(habit: Habit, logs: HabitLog[], currentMonth: Da
     // Filter logs for this habit in current month
     const monthlyLogs = logs.filter(l =>
         l.habit_id === habit.id &&
-        l.completed &&
         l.date >= format(start, 'yyyy-MM-dd') &&
         l.date <= format(end, 'yyyy-MM-dd')
     );
@@ -205,7 +204,6 @@ export function getBestDay(logs: HabitLog[], currentMonth: Date): { date: string
     const end = endOfMonth(currentMonth);
 
     const monthlyLogs = logs.filter(l =>
-        l.completed &&
         l.date >= format(start, 'yyyy-MM-dd') &&
         l.date <= format(end, 'yyyy-MM-dd')
     );
@@ -256,7 +254,6 @@ export function getConsistencyScore(habits: Habit[], logs: HabitLog[], currentMo
         // Count completions
         const completions = logs.filter(l =>
             l.habit_id === habit.id &&
-            l.completed &&
             l.date >= format(start, 'yyyy-MM-dd') &&
             l.date <= format(effectiveEnd, 'yyyy-MM-dd')
         ).length;
@@ -291,7 +288,8 @@ export function getProgressBadges(habits: Habit[], logs: HabitLog[]): Badge[] {
     });
 
     // Total completions ever
-    const totalCompletions = logs.filter(l => l.completed).length;
+    // All logs are completions (completion-only storage)
+    const totalCompletions = logs.length;
 
     // 7-Day Streak Badge
     badges.push({

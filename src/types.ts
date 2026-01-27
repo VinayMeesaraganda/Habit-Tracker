@@ -8,7 +8,7 @@ export interface Habit {
     name: string;
     category: string;
     month_goal: number;
-    priority: number;
+    priority?: number; // Optional - habits ordered by created_at if not set
     type: 'daily' | 'weekly';
     created_at: string;
     updated_at: string;
@@ -19,16 +19,16 @@ export interface HabitLog {
     id: string;
     user_id: string;
     habit_id: string;
-    date: string; // ISO format "2025-12-01"
-    completed: boolean;
-    created_at: string;
-    updated_at: string;
+    date: string; // ISO format "2025-12-01" - stored as DATE in DB
+    // Note: No 'completed' field - existence of log = completed
+    // No timestamps - 'date' field is sufficient
 }
 
 export interface User {
     id: string;
     email: string;
     full_name?: string;
+    gender?: string;
 }
 
 // Analytics interfaces

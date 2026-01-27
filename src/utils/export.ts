@@ -22,7 +22,7 @@ export function generateCSV(habits: Habit[], logs: HabitLog[], currentMonth: Dat
         // Let's pre-process logs for this habit to a Set of dates string for O(1) lookup
         const habitLogDates = new Set(
             logs
-                .filter(l => l.habit_id === habit.id && l.completed)
+                .filter(l => l.habit_id === habit.id)
                 .map(l => l.date) // 'yyyy-MM-dd' from DB
         );
 
