@@ -7,6 +7,7 @@ import { FocusTimer } from '../components/FocusTimer';
 import { DATE_FORMATS } from '../utils/dateFormats';
 import { Habit } from '../types';
 import { Calendar, Plus, Settings, Edit2 } from 'lucide-react';
+import { isHabitScheduledForDate } from '../utils/frequencyUtils';
 
 interface TrackScreenProps {
     selectedDate: Date;
@@ -41,7 +42,11 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({
             ? active.sort((a, b) => (a.priority || 0) - (b.priority || 0))
             : active.filter(h => {
                 const habitStartDate = startOfDay(new Date(h.created_at));
-                return !isAfter(habitStartDate, selectedDayStart);
+                // Check if habit started before or on selected date
+                if (isAfter(habitStartDate, selectedDayStart)) return false;
+                // Check if habit is scheduled for this day (frequency filter)
+                if (!isHabitScheduledForDate(h, selectedDate)) return false;
+                return true;
             }).sort((a, b) => (a.priority || 0) - (b.priority || 0));
 
         return {
@@ -108,7 +113,7 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({
     return (
         <div className="min-h-screen pb-24 px-4" style={{ background: '#FFF8E7' }}>
             {/* Header */}
-            <div className="pt-8 pb-6 flex items-center justify-between">
+            <div className="pt-8 pb-6 flex items-center justify-between safe-area-top">
                 <div>
                     <h1 className="text-2xl font-bold" style={{ color: '#1F1F1F' }}>
                         {isToday ? 'Today' : format(selectedDate, 'EEEE')}

@@ -56,12 +56,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ selectedDate }) => {
     return (
         <div className="min-h-screen pb-24 px-4" style={{ background: '#FFF8E7' }}>
             {/* Header */}
-            <div className="pt-8 pb-4">
+            <div className="pt-8 pb-4 safe-area-top">
                 <h1 className="text-2xl font-bold mb-1" style={{ color: '#1F1F1F' }}>
-                    Good <span style={{ color: '#FF7A6B' }}>Afternoon</span>
+                    {(() => {
+                        const hour = new Date().getHours();
+                        if (hour < 12) return <>Good <span style={{ color: '#FF7A6B' }}>Morning</span></>;
+                        if (hour < 17) return <>Good <span style={{ color: '#FF7A6B' }}>Afternoon</span></>;
+                        return <>Good <span style={{ color: '#FF7A6B' }}>Evening</span></>;
+                    })()}
                 </h1>
                 <p className="text-sm" style={{ color: '#6B6B6B' }}>
-                    ☀️ 32°C
+                    {format(new Date(), 'EEEE, MMMM d')}
                 </p>
             </div>
 

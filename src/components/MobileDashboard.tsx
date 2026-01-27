@@ -38,8 +38,8 @@ export function MobileDashboard() {
 
     return (
         <div className="min-h-screen" style={{ background: '#FFF8E7' }}>
-            {/* Main Content */}
-            <div className="pb-safe">
+            {/* Main Content - Constrained for iPad */}
+            <div className="max-w-lg mx-auto pb-safe">
                 {activeTab === 'track' && (
                     <TrackScreen
                         selectedDate={selectedDate}

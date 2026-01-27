@@ -133,7 +133,7 @@ export const TasksScreen: React.FC = () => {
     return (
         <div className="min-h-screen pb-24 px-4 bg-[#FFF8E7]">
             {/* Header */}
-            <div className="pt-8 pb-6 flex items-center justify-between">
+            <div className="pt-8 pb-6 flex items-center justify-between safe-area-top">
                 <div>
                     <h1 className="text-3xl font-extra-bold text-[#1F1F1F] tracking-tight mb-1">
                         Tasks

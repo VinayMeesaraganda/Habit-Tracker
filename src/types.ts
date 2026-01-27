@@ -2,6 +2,15 @@
  * Core TypeScript interfaces for the Habit Tracker app
  */
 
+// Habit frequency settings
+export type FrequencyType = 'daily' | 'weekdays' | 'weekends' | 'weekly' | 'custom';
+
+export interface HabitFrequency {
+    type: FrequencyType;
+    days_per_week?: number;   // For 'weekly': 1-6 times per week
+    custom_days?: number[];   // For 'custom': array of day indices (0=Sunday, 6=Saturday)
+}
+
 export interface Habit {
     id: string;
     user_id: string;
@@ -10,6 +19,7 @@ export interface Habit {
     month_goal: number;
     priority?: number; // Optional - habits ordered by created_at if not set
     type: 'daily' | 'weekly';
+    frequency?: HabitFrequency; // New: user-defined repeat schedule
     created_at: string;
     updated_at: string;
     archived_at?: string | null; // ISO Date string for when the habit was archived

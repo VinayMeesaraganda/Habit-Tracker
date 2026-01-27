@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useHabits } from '../context/HabitContext.tsx';
-import { HABIT_CATEGORIES, HabitCategory, Habit } from '../types.ts';
+import { HABIT_CATEGORIES, HabitCategory, Habit, HabitFrequency, FrequencyType } from '../types.ts';
 import { X, Trash2, Archive, RotateCcw, Save, Loader } from 'lucide-react';
 
 interface AddHabitModalProps {
@@ -21,6 +21,10 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
     const [monthGoal, setMonthGoal] = useState(25);
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]); // Default to today YYYY-MM-DD
     const [type, setType] = useState<'daily' | 'weekly'>('daily');
+    // Frequency settings
+    const [frequencyType, setFrequencyType] = useState<FrequencyType>('daily');
+    const [daysPerWeek, setDaysPerWeek] = useState(3);
+    const [customDays, setCustomDays] = useState<number[]>([1, 2, 3, 4, 5]); // Default Mon-Fri
     const [loading, setLoading] = useState(false);
     // Quantifiable habit state
     const [isQuantifiable, setIsQuantifiable] = useState(false);
@@ -40,6 +44,14 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                 setCategory(initialHabit.category as HabitCategory);
                 setMonthGoal(initialHabit.month_goal);
                 setType(initialHabit.type);
+                // Frequency
+                if (initialHabit.frequency) {
+                    setFrequencyType(initialHabit.frequency.type);
+                    setDaysPerWeek(initialHabit.frequency.days_per_week || 3);
+                    setCustomDays(initialHabit.frequency.custom_days || [1, 2, 3, 4, 5]);
+                } else {
+                    setFrequencyType('daily');
+                }
                 // Quantifiable fields
                 setIsQuantifiable(initialHabit.is_quantifiable || false);
                 setTargetValue(initialHabit.target_value || 2000);
@@ -56,6 +68,9 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                 setCategory(HABIT_CATEGORIES[0]);
                 setMonthGoal(25);
                 setType('daily');
+                setFrequencyType('daily');
+                setDaysPerWeek(3);
+                setCustomDays([1, 2, 3, 4, 5]);
                 setStartDate(new Date().toISOString().split('T')[0]);
                 // Reset quantifiable
                 setIsQuantifiable(false);
@@ -81,11 +96,17 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
             const localDate = new Date(y, m - 1, d, 12, 0, 0);
 
             if (initialHabit) {
+                // Build frequency object
+                const frequency: HabitFrequency = { type: frequencyType };
+                if (frequencyType === 'weekly') frequency.days_per_week = daysPerWeek;
+                if (frequencyType === 'custom') frequency.custom_days = customDays;
+
                 await updateHabit(initialHabit.id, {
                     name,
                     category,
                     month_goal: monthGoal,
                     type,
+                    frequency,
                     updated_at: new Date().toISOString(),
                     created_at: localDate.toISOString(),
                     is_quantifiable: isQuantifiable,
@@ -95,11 +116,17 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                     auto_complete: hasTimer ? autoComplete : undefined,
                 });
             } else {
+                // Build frequency object
+                const frequency: HabitFrequency = { type: frequencyType };
+                if (frequencyType === 'weekly') frequency.days_per_week = daysPerWeek;
+                if (frequencyType === 'custom') frequency.custom_days = customDays;
+
                 await addHabit({
                     name,
                     category,
                     month_goal: monthGoal,
                     type,
+                    frequency,
                     created_at: localDate.toISOString(),
                     is_quantifiable: isQuantifiable,
                     target_value: isQuantifiable ? targetValue : undefined,
@@ -239,64 +266,125 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                             />
                         </div>
 
-                        {/* Monthly Goal and Frequency Row */}
-                        <div className="grid grid-cols-2 gap-3">
-                            {/* Monthly Goal */}
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9E9E9E' }}>
-                                    Monthly Goal
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        value={monthGoal}
-                                        onChange={(e) => setMonthGoal(parseInt(e.target.value))}
-                                        className="w-full px-3 py-2.5 rounded-xl font-medium transition-all focus:outline-none focus:ring-2"
+                        {/* Frequency Selector */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9E9E9E' }}>
+                                Repeat
+                            </label>
+
+                            {/* Frequency Options - 3 columns for better fit */}
+                            <div className="grid grid-cols-3 gap-2">
+                                {[
+                                    { value: 'daily' as FrequencyType, label: 'Every Day' },
+                                    { value: 'weekdays' as FrequencyType, label: 'Weekdays' },
+                                    { value: 'weekends' as FrequencyType, label: 'Weekends' },
+                                ].map((option) => (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        onClick={() => setFrequencyType(option.value)}
+                                        className={`py-2.5 px-2 rounded-xl text-sm font-semibold transition-all ${frequencyType === option.value
+                                            ? 'ring-2 ring-[#FF7A6B]'
+                                            : ''
+                                            }`}
                                         style={{
-                                            background: '#F5F5F5',
+                                            background: frequencyType === option.value ? '#FFE8E5' : '#F5F5F5',
+                                            color: frequencyType === option.value ? '#FF7A6B' : '#6B6B6B',
                                             border: '1px solid #E0E0E0',
-                                            color: '#1F1F1F',
                                         }}
-                                        min="1"
-                                        max="31"
-                                        required
-                                    />
-                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium pointer-events-none" style={{ color: '#6B6B6B' }}>
-                                        days
-                                    </span>
-                                </div>
+                                    >
+                                        {option.label}
+                                    </button>
+                                ))}
                             </div>
 
-                            {/* Frequency */}
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9E9E9E' }}>
-                                    Frequency
-                                </label>
-                                <div className="flex p-0.5 rounded-xl" style={{ background: '#F5F5F5', border: '1px solid #E0E0E0' }}>
-                                    <button
-                                        type="button"
-                                        onClick={() => setType('daily')}
-                                        className="flex-1 flex items-center justify-center py-2 rounded-lg text-sm font-bold transition-all"
-                                        style={{
-                                            background: type === 'daily' ? '#FF7A6B' : 'transparent',
-                                            color: type === 'daily' ? '#FFFFFF' : '#6B6B6B',
-                                        }}
-                                    >
-                                        Daily
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setType('weekly')}
-                                        className="flex-1 flex items-center justify-center py-2 rounded-lg text-sm font-bold transition-all"
-                                        style={{
-                                            background: type === 'weekly' ? '#FF7A6B' : 'transparent',
-                                            color: type === 'weekly' ? '#FFFFFF' : '#6B6B6B',
-                                        }}
-                                    >
-                                        Weekly
-                                    </button>
-                                </div>
+                            {/* Second row for custom options */}
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setFrequencyType('weekly')}
+                                    className={`py-2.5 px-2 rounded-xl text-sm font-semibold transition-all ${frequencyType === 'weekly'
+                                        ? 'ring-2 ring-[#FF7A6B]'
+                                        : ''
+                                        }`}
+                                    style={{
+                                        background: frequencyType === 'weekly' ? '#FFE8E5' : '#F5F5F5',
+                                        color: frequencyType === 'weekly' ? '#FF7A6B' : '#6B6B6B',
+                                        border: '1px solid #E0E0E0',
+                                    }}
+                                >
+                                    X per Week
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFrequencyType('custom')}
+                                    className={`py-2.5 px-2 rounded-xl text-sm font-semibold transition-all ${frequencyType === 'custom'
+                                        ? 'ring-2 ring-[#FF7A6B]'
+                                        : ''
+                                        }`}
+                                    style={{
+                                        background: frequencyType === 'custom' ? '#FFE8E5' : '#F5F5F5',
+                                        color: frequencyType === 'custom' ? '#FF7A6B' : '#6B6B6B',
+                                        border: '1px solid #E0E0E0',
+                                    }}
+                                >
+                                    Custom Days
+                                </button>
                             </div>
+
+                            {/* Weekly: Days per week selector - stacked layout */}
+                            {frequencyType === 'weekly' && (
+                                <div className="mt-2 p-3 rounded-xl animate-fadeIn" style={{ background: '#F5F5F5', border: '1px solid #E0E0E0' }}>
+                                    <span className="text-xs font-semibold text-gray-500 mb-2 block">How many times per week?</span>
+                                    <div className="flex gap-2">
+                                        {[1, 2, 3, 4, 5, 6].map((num) => (
+                                            <button
+                                                key={num}
+                                                type="button"
+                                                onClick={() => setDaysPerWeek(num)}
+                                                className="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
+                                                style={{
+                                                    background: daysPerWeek === num ? '#FF7A6B' : '#FFFFFF',
+                                                    color: daysPerWeek === num ? '#FFFFFF' : '#6B6B6B',
+                                                    border: '1px solid #E0E0E0',
+                                                }}
+                                            >
+                                                {num}×
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Custom: Day picker */}
+                            {frequencyType === 'custom' && (
+                                <div className="mt-2 p-3 rounded-xl animate-fadeIn" style={{ background: '#F5F5F5', border: '1px solid #E0E0E0' }}>
+                                    <span className="text-xs font-semibold text-gray-500 mb-2 block">Select days:</span>
+                                    <div className="flex justify-between gap-1">
+                                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                                            <button
+                                                key={index}
+                                                type="button"
+                                                onClick={() => {
+                                                    if (customDays.includes(index)) {
+                                                        setCustomDays(customDays.filter(d => d !== index));
+                                                    } else {
+                                                        setCustomDays([...customDays, index].sort());
+                                                    }
+                                                }}
+                                                className="w-9 h-9 rounded-full text-xs font-bold transition-all"
+                                                style={{
+                                                    background: customDays.includes(index) ? '#FF7A6B' : '#FFFFFF',
+                                                    color: customDays.includes(index) ? '#FFFFFF' : '#6B6B6B',
+                                                    border: '1px solid #E0E0E0',
+                                                }}
+                                            >
+                                                {day}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Quantifiable Habit Toggle */}

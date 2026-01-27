@@ -3,10 +3,11 @@ import { useHabits } from '../context/HabitContext';
 import { SectionDivider } from '../components/ui';
 import { User, Mail, Lock, LogOut, Save, Loader, Shield, Users, Download } from 'lucide-react';
 import { generateCSV, downloadCSV } from '../utils/export';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { format } from 'date-fns';
 
 export const ProfileScreen: React.FC = () => {
-    const { user, updateProfile, updateEmail, updatePassword, signOut, verifyPassword, habits, logs } = useHabits();
+    const { user, updateProfile, updateEmail, updatePassword, signOut, deleteAccount, verifyPassword, habits, logs } = useHabits();
 
     const [fullName, setFullName] = useState('');
     const [gender, setGender] = useState('');
@@ -96,7 +97,7 @@ export const ProfileScreen: React.FC = () => {
     return (
         <div className="min-h-screen pb-24 px-4 bg-[#FFF8E7]">
             {/* Header */}
-            <div className="pt-8 pb-6">
+            <div className="pt-8 pb-6 safe-area-top">
                 <h1 className="text-3xl font-extra-bold text-[#1F1F1F] tracking-tight mb-1">
                     Profile
                 </h1>
@@ -297,6 +298,120 @@ export const ProfileScreen: React.FC = () => {
                             </button>
                         </div>
                     </div>
+                </section>
+
+                {/* Notifications Section */}
+                <section>
+                    <SectionDivider text="PREFERENCES" />
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="font-bold text-gray-800">Daily Reminder</h3>
+                                <p className="text-sm text-gray-500">Get a notification to check your habits</p>
+                            </div>
+                            <div className="relative">
+                                {/* Simple implementation: Fixed time or toggle. Let's do a time picker logic later, 
+                                    for "Caveman" speed, let's just have a "Remind me at 9 AM" toggle or a simple time input. 
+                                    Let's do a time input. */}
+                                <input
+                                    type="time"
+                                    className="px-3 py-2 bg-gray-50 rounded-lg border-2 border-transparent focus:border-orange-200 outline-none font-bold text-gray-700"
+                                    onChange={async (e) => {
+                                        const time = e.target.value;
+                                        if (!time) return;
+                                        const [hours, minutes] = time.split(':').map(Number);
+
+                                        try {
+                                            // 1. Request Permissions
+                                            let perm = await LocalNotifications.checkPermissions();
+                                            if (perm.display !== 'granted') {
+                                                perm = await LocalNotifications.requestPermissions();
+                                                if (perm.display !== 'granted') {
+                                                    alert('Notifications permission denied');
+                                                    return;
+                                                }
+                                            }
+
+                                            // 2. Schedule Notification
+                                            await LocalNotifications.schedule({
+                                                notifications: [{
+                                                    title: "Time to check your habits! 📝",
+                                                    body: "Keep your streak checks going.",
+                                                    id: 1, // Constant ID to overwrite
+                                                    schedule: {
+                                                        on: { hour: hours, minute: minutes },
+                                                        allowWhileIdle: true
+                                                    }
+                                                }]
+                                            });
+
+                                            alert(`Reminder set for ${time}!`);
+                                        } catch (err: any) {
+                                            console.error(err);
+                                            alert('Failed to schedule: ' + err.message);
+                                        }
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Legal Section */}
+                <section>
+                    <SectionDivider text="LEGAL" />
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <a
+                            href="https://habit-tracker.example.com/privacy"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                        >
+                            <span className="font-medium text-gray-700">Privacy Policy</span>
+                            <span className="text-gray-400">→</span>
+                        </a>
+                        <a
+                            href="https://habit-tracker.example.com/terms"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                        >
+                            <span className="font-medium text-gray-700">Terms of Use</span>
+                            <span className="text-gray-400">→</span>
+                        </a>
+                        <a
+                            href="mailto:support@habit-tracker.app"
+                            className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                        >
+                            <span className="font-medium text-gray-700">Contact Support</span>
+                            <span className="text-gray-400">→</span>
+                        </a>
+                    </div>
+                </section>
+
+                {/* Danger Zone: Delete Account */}
+                <section>
+                    <SectionDivider text="DANGER ZONE" />
+                    <button
+                        onClick={async () => {
+                            if (window.confirm('CRITICAL WARNING:\n\nThis will PERMANENTLY delete your account and all your data.\nThis action cannot be undone.\n\nAre you absolutely sure?')) {
+                                try {
+                                    setLoading(true);
+                                    await deleteAccount();
+                                } catch (err: any) {
+                                    alert('Failed to delete account: ' + err.message);
+                                    setLoading(false);
+                                }
+                            }
+                        }}
+                        className="w-full py-4 rounded-2xl font-bold text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-sm"
+                    >
+                        <LogOut className="w-5 h-5 rotate-180" />
+                        Delete Account
+                    </button>
+                    <p className="text-center text-xs text-gray-400 mt-2 px-4">
+                        This action will immediately delete all your habits, logs, and account data.
+                    </p>
                 </section>
 
                 {/* Sign Out */}

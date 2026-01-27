@@ -56,7 +56,7 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onAddHabit, onEdit
     return (
         <div className="min-h-screen pb-24 px-4" style={{ background: '#FFF8E7' }}>
             {/* Header */}
-            <div className="pt-8 pb-6 flex items-center justify-between">
+            <div className="pt-8 pb-6 flex items-center justify-between safe-area-top">
                 <h1 className="text-2xl font-bold" style={{ color: '#1F1F1F' }}>
                     Library
                 </h1>

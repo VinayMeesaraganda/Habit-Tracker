@@ -3,10 +3,11 @@
  * Manages habits, logs, authentication, and real-time sync
  */
 
-import { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { Habit, HabitLog, User } from '../types';
 import { startOfMonth, format } from 'date-fns';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 interface HabitContextType {
     // Auth state
@@ -22,6 +23,7 @@ interface HabitContextType {
     signUp: (email: string, password: string) => Promise<void>;
     signIn: (email: string, password: string) => Promise<void>;
     signOut: () => Promise<void>;
+    deleteAccount: () => Promise<void>;
 
     resetPassword: (email: string) => Promise<void>;
     verifyPassword: (password: string) => Promise<void>;
@@ -57,6 +59,10 @@ export function HabitProvider({ children }: { children: ReactNode }) {
     const [logs, setLogs] = useState<HabitLog[]>([]);
     const [currentMonth, setCurrentMonth] = useState<Date>(startOfMonth(new Date()));
 
+    // Race condition prevention: Track if a local operation is in-flight
+    const operationInFlightRef = useRef(false);
+    const refreshDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
     // Initialize auth state
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -91,9 +97,29 @@ export function HabitProvider({ children }: { children: ReactNode }) {
         }
     }, [user]);
 
-    // Set up real-time subscriptions
+    // Set up real-time subscriptions with debouncing to prevent race conditions
     useEffect(() => {
         if (!user) return;
+
+        // Debounced refresh handler - prevents rapid-fire updates from racing with local state
+        const debouncedRefresh = () => {
+            // Skip if a local operation is in progress
+            if (operationInFlightRef.current) {
+                console.log('[Realtime] Skipping refresh - operation in flight');
+                return;
+            }
+
+            // Clear any pending debounce
+            if (refreshDebounceRef.current) {
+                clearTimeout(refreshDebounceRef.current);
+            }
+
+            // Debounce the refresh by 300ms to batch rapid-fire events
+            refreshDebounceRef.current = setTimeout(() => {
+                console.log('[Realtime] Executing debounced refresh');
+                refreshData();
+            }, 300);
+        };
 
         const habitsSubscription = supabase
             .channel('habits_changes')
@@ -105,9 +131,7 @@ export function HabitProvider({ children }: { children: ReactNode }) {
                     table: 'habits',
                     filter: `user_id=eq.${user.id}`,
                 },
-                () => {
-                    refreshData();
-                }
+                debouncedRefresh
             )
             .subscribe();
 
@@ -121,13 +145,14 @@ export function HabitProvider({ children }: { children: ReactNode }) {
                     table: 'habit_logs',
                     filter: `user_id=eq.${user.id}`,
                 },
-                () => {
-                    refreshData();
-                }
+                debouncedRefresh
             )
             .subscribe();
 
         return () => {
+            if (refreshDebounceRef.current) {
+                clearTimeout(refreshDebounceRef.current);
+            }
             habitsSubscription.unsubscribe();
             logsSubscription.unsubscribe();
         };
@@ -305,6 +330,16 @@ export function HabitProvider({ children }: { children: ReactNode }) {
     const toggleLog = async (habitId: string, date: string) => {
         if (!user) throw new Error('User not authenticated');
 
+        // Mark operation as in-flight to prevent realtime refresh conflicts
+        operationInFlightRef.current = true;
+
+        // Haptic Feedback (Native Polish)
+        try {
+            await Haptics.impact({ style: ImpactStyle.Light });
+        } catch (e) {
+            // Ignore error on web
+        }
+
         // Check if log exists locally
         const existingLogIndex = logs.findIndex(
             log => log.habit_id === habitId && log.date === date
@@ -374,6 +409,9 @@ export function HabitProvider({ children }: { children: ReactNode }) {
             // Revert optimistic update on failure
             await refreshData();
             throw error;
+        } finally {
+            // Always release the in-flight lock
+            operationInFlightRef.current = false;
         }
     };
 
@@ -426,18 +464,42 @@ export function HabitProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        console.log('addLogWithValue called:', { habitId, date, value, user_id: user.id });
+        // Mark operation as in-flight to prevent realtime refresh conflicts
+        operationInFlightRef.current = true;
+
+        // Haptic Feedback
+        try {
+            await Haptics.impact({ style: ImpactStyle.Light });
+        } catch (e) { /* Ignore */ }
 
         // Check if there's already a log for this habit on this date
         const existingLog = logs.find(
             log => log.habit_id === habitId && log.date === date
         );
 
+        // Optimistic Update - update UI immediately
+        if (existingLog) {
+            const newValue = (existingLog.value || 0) + value;
+            setLogs(prev => prev.map(log =>
+                log.id === existingLog.id
+                    ? { ...log, value: newValue }
+                    : log
+            ));
+        } else {
+            const tempLog: HabitLog = {
+                id: 'temp-' + Date.now(),
+                user_id: user.id,
+                habit_id: habitId,
+                date,
+                value,
+            };
+            setLogs(prev => [...prev, tempLog]);
+        }
+
         try {
             if (existingLog) {
                 // Update existing log by adding the new value
                 const newValue = (existingLog.value || 0) + value;
-                console.log('Updating existing log:', { id: existingLog.id, newValue });
 
                 const { error } = await supabase
                     .from('habit_logs')
@@ -446,20 +508,14 @@ export function HabitProvider({ children }: { children: ReactNode }) {
 
                 if (error) {
                     console.error('Update error:', error);
-                    alert('Backend error (update): ' + error.message);
+                    // Revert on error
+                    await refreshData();
                     return;
                 }
 
-                console.log('Update successful!');
-                // Update local state
-                setLogs(prev => prev.map(log =>
-                    log.id === existingLog.id
-                        ? { ...log, value: newValue }
-                        : log
-                ));
+                // Sync with actual DB value (already optimistically set)
             } else {
                 // Create new log
-                console.log('Creating new log...');
                 const { data, error } = await supabase
                     .from('habit_logs')
                     .insert({
@@ -473,19 +529,25 @@ export function HabitProvider({ children }: { children: ReactNode }) {
 
                 if (error) {
                     console.error('Insert error:', error);
-                    alert('Backend error (insert): ' + error.message);
+                    // Revert on error
+                    await refreshData();
                     return;
                 }
 
-                console.log('Insert successful!', data);
-                // Add to local state
+                // Replace temp with real data
                 if (data) {
-                    setLogs(prev => [...prev, data]);
+                    setLogs(prev => {
+                        const filtered = prev.filter(l => !(l.habit_id === habitId && l.date === date && l.id.startsWith('temp-')));
+                        return [...filtered, data];
+                    });
                 }
             }
         } catch (err) {
             console.error('Unexpected error:', err);
-            alert('Unexpected error: ' + String(err));
+            await refreshData();
+        } finally {
+            // Always release the in-flight lock
+            operationInFlightRef.current = false;
         }
     };
 
@@ -551,6 +613,25 @@ export function HabitProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const deleteAccount = async () => {
+        if (!user) throw new Error('Not authenticated');
+
+        // 1. Delete all user data
+        // Order matters if there are foreign key constraints (logs depend on habits)
+        const { error: logsError } = await supabase.from('habit_logs').delete().eq('user_id', user.id);
+        if (logsError) throw logsError;
+
+        const { error: tasksError } = await supabase.from('tasks').delete().eq('user_id', user.id);
+        // Tolerate task error if table doesn't exist yet, but log it
+        if (tasksError && tasksError.code !== '42P01') console.error('Error deleting tasks:', tasksError);
+
+        const { error: habitsError } = await supabase.from('habits').delete().eq('user_id', user.id);
+        if (habitsError) throw habitsError;
+
+        // 2. Sign Out
+        await signOut();
+    };
+
     const value: HabitContextType = useMemo(() => ({
         user,
         loading,
@@ -560,6 +641,7 @@ export function HabitProvider({ children }: { children: ReactNode }) {
         signUp,
         signIn,
         signOut,
+        deleteAccount,
         resetPassword,
         verifyPassword,
         updateProfile,
