@@ -8,11 +8,14 @@ import { calculateStreak, getLongestStreak } from '../utils/analytics';
 import { isHabitScheduledForDate, getFrequencyLabel, getHabitFrequency } from '../utils/frequencyUtils';
 import { CompletionRing } from '../components/charts/CompletionRing';
 import { WeeklyHeatmap } from '../components/charts/WeeklyHeatmap';
-import { CategoryBreakdown } from '../components/charts/CategoryBreakdown';
+import { HabitDetailView } from '../components/HabitDetailView';
+import { AnimatePresence } from 'framer-motion';
+import { Habit } from '../types';
 
 export const InsightsScreen: React.FC = () => {
     const { habits, logs } = useHabits();
     const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+    const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
 
     // Determine navigation bounds
     const dataBounds = useMemo(() => {
@@ -295,15 +298,7 @@ export const InsightsScreen: React.FC = () => {
                 />
             </div>
 
-            {/* Category Breakdown */}
-            <div className="px-4 mb-6">
-                <CategoryBreakdown
-                    habits={activeHabits}
-                    logs={logs}
-                    startDate={format(monthStart, 'yyyy-MM-dd')}
-                    endDate={format(monthEnd, 'yyyy-MM-dd')}
-                />
-            </div>
+
 
             {/* Habit Leaderboard */}
             <div className="px-4 mb-6">
@@ -328,7 +323,8 @@ export const InsightsScreen: React.FC = () => {
                                 return (
                                     <div
                                         key={habit.id}
-                                        className="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
+                                        onClick={() => setSelectedHabit(habit)}
+                                        className="group flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors cursor-pointer active:bg-gray-100"
                                     >
                                         {/* Rank */}
                                         <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold 
@@ -368,6 +364,9 @@ export const InsightsScreen: React.FC = () => {
                                         {/* Rate */}
                                         <div className="text-right">
                                             <div className="text-xl font-black text-gray-800">{rate}%</div>
+                                            <div className="flex items-center justify-end gap-0.5 text-[10px] text-gray-300 font-medium mt-0.5 group-hover:text-gray-500 transition-colors">
+                                                View <ChevronRight className="w-3 h-3" />
+                                            </div>
                                         </div>
                                     </div>
                                 );
@@ -376,6 +375,16 @@ export const InsightsScreen: React.FC = () => {
                     )}
                 </div>
             </div>
+            {/* Habit Detail View Overlay */}
+            <AnimatePresence>
+                {selectedHabit && (
+                    <HabitDetailView
+                        habit={selectedHabit}
+                        logs={logs}
+                        onClose={() => setSelectedHabit(null)}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };
