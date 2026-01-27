@@ -10,7 +10,7 @@ import { Habit } from '../types';
 import { useHabits } from '../context/HabitContext';
 
 export function MobileDashboard() {
-    const { currentMonth, setCurrentMonth } = useHabits();
+    const { setCurrentMonth } = useHabits();
     const [activeTab, setActiveTab] = useState<TabType>('track');
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [isAddHabitModalOpen, setIsAddHabitModalOpen] = useState(false);
@@ -49,7 +49,7 @@ export function MobileDashboard() {
                     />
                 )}
                 {activeTab === 'stats' && (
-                    <InsightsScreen currentMonth={currentMonth} />
+                    <InsightsScreen />
                 )}
                 {activeTab === 'tasks' && (
                     <TasksScreen />

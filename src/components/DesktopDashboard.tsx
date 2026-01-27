@@ -7,7 +7,7 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { Habit } from '../types';
 
 export function DesktopDashboard() {
-    const { currentMonth, user } = useHabits();
+    const { user } = useHabits();
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [activeTab, setActiveTab] = useState<TabType>('track');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -68,7 +68,7 @@ export function DesktopDashboard() {
                     />
                 )}
                 {activeTab === 'stats' && (
-                    <InsightsScreen currentMonth={currentMonth} />
+                    <InsightsScreen />
                 )}
                 {activeTab === 'tasks' && (
                     <TasksScreen />
