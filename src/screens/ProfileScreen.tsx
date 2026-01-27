@@ -6,9 +6,15 @@ import { generateCSV, downloadCSV } from '../utils/export';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { format } from 'date-fns';
 
+import { PrivacyPolicyScreen } from './PrivacyPolicyScreen';
+import { TermsOfUseScreen } from './TermsOfUseScreen';
+
+type ProfileView = 'main' | 'privacy' | 'terms';
+
 export const ProfileScreen: React.FC = () => {
     const { user, updateProfile, updateEmail, updatePassword, signOut, deleteAccount, verifyPassword, habits, logs } = useHabits();
 
+    const [view, setView] = useState<ProfileView>('main');
     const [fullName, setFullName] = useState('');
     const [gender, setGender] = useState('');
     const [email, setEmail] = useState('');
@@ -93,6 +99,15 @@ export const ProfileScreen: React.FC = () => {
         if (!fullName) return user?.email?.substring(0, 2).toUpperCase() || '??';
         return fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
     };
+
+    // If viewing a legal page, return that component
+    if (view === 'privacy') {
+        return <PrivacyPolicyScreen onBack={() => setView('main')} />;
+    }
+
+    if (view === 'terms') {
+        return <TermsOfUseScreen onBack={() => setView('main')} />;
+    }
 
     return (
         <div className="min-h-screen pb-24 px-4 bg-[#FFF8E7]">
@@ -361,26 +376,22 @@ export const ProfileScreen: React.FC = () => {
                 <section>
                     <SectionDivider text="LEGAL" />
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        <a
-                            href="https://habit-tracker.example.com/privacy"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                        <button
+                            onClick={() => setView('privacy')}
+                            className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100"
                         >
                             <span className="font-medium text-gray-700">Privacy Policy</span>
                             <span className="text-gray-400">→</span>
-                        </a>
-                        <a
-                            href="https://habit-tracker.example.com/terms"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                        </button>
+                        <button
+                            onClick={() => setView('terms')}
+                            className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100"
                         >
                             <span className="font-medium text-gray-700">Terms of Use</span>
                             <span className="text-gray-400">→</span>
-                        </a>
+                        </button>
                         <a
-                            href="mailto:support@habit-tracker.app"
+                            href="mailto:Vinaykiran.018@gmail.com"
                             className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
                         >
                             <span className="font-medium text-gray-700">Contact Support</span>
@@ -424,7 +435,7 @@ export const ProfileScreen: React.FC = () => {
                 </button>
 
                 <div className="text-center text-xs text-gray-400 pb-8">
-                    Habit Tracker v1.0.0
+                    Itera v1.0.0
                 </div>
             </div>
         </div>

@@ -14,62 +14,123 @@ export function calculateStreak(habit: Habit, logs: HabitLog[]): number {
         return habit.skip_dates.includes(dateStr);
     };
 
-    if (habit.type === 'daily') {
-        let streak = 0;
-        const today = startOfDay(new Date());
-        let checkDate = today;
+    // Helper to check if date is scheduled
+    const isScheduled = (date: Date): boolean => {
+        // Import this dynamically or duplicate simple logic to avoid circular deps if needed
+        // For now assuming we can replicate the simple check or import
+        // Since we can't import easily here without potential cycles, let's implement the logic
+        // This mirrors isHabitScheduledForDate from frequencyUtils
+        if (!habit.frequency) return true; // Default to daily if no frequency
 
-        // Check if completed or skipped today
-        const completedToday = logs.some(l => l.habit_id === habit.id && isSameDay(parseISO(l.date), today));
-        const skippedToday = isSkipped(today);
+        const type = habit.frequency.type;
+        const dayOfWeek = date.getDay(); // 0 = Sunday
 
-        if (!completedToday && !skippedToday) {
-            checkDate = subDays(today, 1);
-            const completedYesterday = logs.some(l => l.habit_id === habit.id && isSameDay(parseISO(l.date), checkDate));
-            const skippedYesterday = isSkipped(checkDate);
-            if (!completedYesterday && !skippedYesterday) return 0; // No streak
-        }
+        if (type === 'daily') return true;
+        if (type === 'weekdays') return dayOfWeek >= 1 && dayOfWeek <= 5;
+        if (type === 'weekends') return dayOfWeek === 0 || dayOfWeek === 6;
+        if (type === 'custom') return (habit.frequency.custom_days || []).includes(dayOfWeek);
+        if (type === 'weekly') return true; // Handled separately
+        return true;
+    };
 
-        // Count backwards
-        while (true) {
-            const isCompleted = logs.some(l => l.habit_id === habit.id && isSameDay(parseISO(l.date), checkDate));
-            const wasSkipped = isSkipped(checkDate);
+    let streak = 0;
+    const today = startOfDay(new Date());
+    let checkDate = today;
 
-            if (isCompleted || wasSkipped) {
-                streak++;
-                checkDate = subDays(checkDate, 1);
-            } else {
-                break;
-            }
-        }
-        return streak;
-    } else {
-        // Weekly Streak Logic
-        let streak = 0;
-        const currentWeekStart = startOfWeek(new Date());
-        let checkWeekStart = currentWeekStart;
+    // Special handling for "X times per week" habits
+    if (habit.frequency?.type === 'weekly') {
+        const targetPerWeek = habit.frequency.days_per_week || 1;
+        let currentWeekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday start
 
-        while (true) {
-            const weekEnd = endOfWeek(checkWeekStart);
-            const hasLog = logs.some(l => {
+        // Check current week
+        const checkWeek = (weekStart: Date) => {
+            const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+            const logsInWeek = logs.filter(l => {
                 const d = parseISO(l.date);
-                return l.habit_id === habit.id && d >= checkWeekStart && d <= weekEnd;
+                return d >= weekStart && d <= weekEnd && l.habit_id === habit.id;
             });
+            return logsInWeek.length >= targetPerWeek;
+        };
 
-            if (hasLog) {
+        // If current week is done, streak starts. If not, check if we can still do it?
+        // Actually for "current streak", if we met last week's goal, streak is usually valid. 
+        // If we haven't met THIS week's goal yet, it shouldn't break the streak unless the week is over.
+        // But usually streak counts consecutive periods.
+
+        // Simplified: Count consecutive weeks where goal was met
+        // Start checking from THIS week. If this week is met, count it. 
+        // If not met *yet*, but week isn't over, maybe don't count it but don't break simple streak?
+        // Standard logic: Check previous completed weeks + current week if completed.
+
+        if (checkWeek(currentWeekStart)) {
+            streak++;
+        }
+
+        // Check past weeks
+        while (true) {
+            currentWeekStart = subWeeks(currentWeekStart, 1);
+            if (checkWeek(currentWeekStart)) {
                 streak++;
-                checkWeekStart = subWeeks(checkWeekStart, 1);
             } else {
-                if (isSameDay(checkWeekStart, currentWeekStart)) {
-                    checkWeekStart = subWeeks(checkWeekStart, 1);
-                    continue;
-                }
                 break;
             }
         }
         return streak;
     }
+
+    // Standard logic (Daily/Custom/Weekdays/Weekends)
+    // 1. Check today
+    // If completed today: Streak starts at 1, check yesterday
+    // If NOT completed today:
+    //    Is it scheduled today? 
+    //       Yes: Streak is 0 (unless skipped/vacation mode). 
+    //            BUT standard behavior: if I check at 8am and haven't done it yet, streak shouldn't be 0 if I had a streak yesterday.
+    //            Usually "Current Streak" includes today if done, or continues from yesterday.
+    //            If I missed yesterday (and it was scheduled), THEN streak is 0.
+    //       No (Off day): Streak is carried over from yesterday.
+
+    // Check if streak is alive (completed today, or completed yesterday, or off-day today)
+    const completedToday = logs.some(l => l.habit_id === habit.id && isSameDay(parseISO(l.date), today));
+
+    // If done today, start with 1 and look back
+    if (completedToday) {
+        streak = 1;
+        checkDate = subDays(today, 1);
+    } else {
+        // Not done today. 
+        // If today is scheduled and not skipped, streak maintains ONLY if we look at yesterday.
+        // Actually, usually we start checking from YESTERDAY if today is incomplete.
+        // But if today IS scheduled and missed (so far), we just report the streak ending yesterday.
+        checkDate = subDays(today, 1);
+    }
+
+    // Iterate backwards
+    while (true) {
+        const dateStr = format(checkDate, 'yyyy-MM-dd');
+        const isDayScheduled = isScheduled(checkDate);
+
+        if (!isDayScheduled) {
+            // Off day - skip it, don't break streak, don't increment streak
+            checkDate = subDays(checkDate, 1);
+            continue;
+        }
+
+        const isCompleted = logs.some(l => l.habit_id === habit.id && l.date === dateStr);
+        const wasSkipped = isSkipped(checkDate);
+
+        if (isCompleted || wasSkipped) {
+            streak++;
+            checkDate = subDays(checkDate, 1);
+        } else {
+            // Missed a scheduled day - streak ends
+            break;
+        }
+    }
+
+    return streak;
 }
+
+
 
 /**
  * Calculates if the user is On Track, Behind, or Ahead for a monthly goal.

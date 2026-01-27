@@ -19,61 +19,95 @@ export const InsightsScreen: React.FC<InsightsScreenProps> = () => {
     const { habits, logs } = useHabits();
     const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
 
-    // Determine earliest habit creation date for navigation bounds
+    // Determine navigation bounds - allow 12 months back and 3 months forward
     const dataBounds = useMemo(() => {
+        const today = new Date();
+        // Allow going back up to 12 months or to earliest habit, whichever is earlier
         const activeHabits = habits.filter(h => !h.archived_at);
-        if (activeHabits.length === 0) {
-            return { earliest: new Date(), latest: new Date() };
+        let earliest = subMonths(today, 12);
+        if (activeHabits.length > 0) {
+            const earliestHabit = new Date(Math.min(...activeHabits.map(h => new Date(h.created_at).getTime())));
+            earliest = startOfMonth(earliestHabit) < earliest ? startOfMonth(earliestHabit) : earliest;
         }
-        const dates = activeHabits.map(h => new Date(h.created_at));
-        const earliest = new Date(Math.min(...dates.map(d => d.getTime())));
-        return { earliest: startOfMonth(earliest), latest: startOfMonth(new Date()) };
+        // Allow going forward up to 3 months for planning
+        const latest = addMonths(today, 3);
+        return { earliest: startOfMonth(earliest), latest: startOfMonth(latest) };
     }, [habits]);
 
-    // Get active habits
+    // Calculate days in selected month (moved up for dependency order)
+    const daysInMonth = getDaysInMonth(selectedMonth);
+    const monthStart = startOfMonth(selectedMonth);
+    const monthEnd = endOfMonth(selectedMonth);
+    const isCurrentMonth = isSameMonth(selectedMonth, new Date());
+    const isFutureMonth = isAfter(monthStart, new Date());
+
+    // Get habits that were active during the selected month
+    // This properly handles:
+    // - Habits created after month end → excluded
+    // - Habits archived before month start → excluded
+    // - Habits archived during or after the month → included
+    const habitsForMonth = useMemo(() => {
+        return habits.filter(h => {
+            const createdDate = startOfMonth(new Date(h.created_at));
+
+            // Exclude if created after the selected month ends
+            if (isAfter(createdDate, monthEnd)) return false;
+
+            // If archived, check if archived before the selected month started
+            if (h.archived_at) {
+                const archivedDate = new Date(h.archived_at);
+                // Exclude if archived before the selected month started
+                if (isBefore(archivedDate, monthStart)) return false;
+            }
+
+            return true;
+        }).sort((a, b) => (a.priority || 0) - (b.priority || 0));
+    }, [habits, monthStart, monthEnd]);
+
+    // Get currently active habits (for pulse data - only non-archived)
     const activeHabits = useMemo(() =>
         habits.filter(h => !h.archived_at).sort((a, b) => (a.priority || 0) - (b.priority || 0)),
         [habits]
     );
 
-    // Calculate days in selected month
-    const daysInMonth = getDaysInMonth(selectedMonth);
-    const monthStart = startOfMonth(selectedMonth);
-    const monthEnd = endOfMonth(selectedMonth);
-    const isCurrentMonth = isSameMonth(selectedMonth, new Date());
-
     // Navigation handlers
     const handlePreviousMonth = () => {
         const prevMonth = subMonths(selectedMonth, 1);
-        if (!isBefore(prevMonth, dataBounds.earliest)) {
+        if (!isBefore(startOfMonth(prevMonth), dataBounds.earliest)) {
             setSelectedMonth(prevMonth);
         }
     };
 
     const handleNextMonth = () => {
         const nextMonth = addMonths(selectedMonth, 1);
-        if (!isAfter(nextMonth, dataBounds.latest)) {
+        if (!isAfter(startOfMonth(nextMonth), dataBounds.latest)) {
             setSelectedMonth(nextMonth);
         }
     };
 
-    const canGoBack = !isBefore(subMonths(selectedMonth, 1), dataBounds.earliest);
-    const canGoForward = !isAfter(addMonths(selectedMonth, 1), dataBounds.latest);
+    const canGoBack = !isBefore(startOfMonth(subMonths(selectedMonth, 1)), dataBounds.earliest);
+    const canGoForward = !isAfter(startOfMonth(addMonths(selectedMonth, 1)), dataBounds.latest);
 
     // --- Productivity Pulse Data for Selected Month ---
     const pulseData = useMemo(() => {
+        // For future months, return empty array (no data yet)
+        if (isFutureMonth) {
+            return [];
+        }
+
+        const today = new Date();
         const days = isCurrentMonth
-            ? Math.min(new Date().getDate(), daysInMonth)
+            ? Math.min(today.getDate(), daysInMonth)
             : daysInMonth;
 
         const data = [];
-        const endDate = isCurrentMonth ? new Date() : monthEnd;
 
         for (let i = 0; i < days; i++) {
             const date = new Date(monthStart);
             date.setDate(date.getDate() + i);
 
-            if (isAfter(date, endDate)) break;
+            // Don't go beyond today for current month
+            if (isCurrentMonth && isAfter(date, today)) break;
 
             const dateStr = format(date, 'yyyy-MM-dd');
 
@@ -81,9 +115,14 @@ export const InsightsScreen: React.FC<InsightsScreenProps> = () => {
             let habitCount = 0;
             const dayLogs = logs.filter(l => l.date === dateStr);
 
-            activeHabits.forEach(habit => {
-                // Only count if habit existed on this day
-                if (new Date(habit.created_at) <= date) {
+            habitsForMonth.forEach(habit => {
+                // Only count if habit existed on this day AND is scheduled
+                const habitCreated = new Date(habit.created_at);
+                // Also check if habit was archived before this date
+                const habitArchived = habit.archived_at ? new Date(habit.archived_at) : null;
+                const isArchived = habitArchived && habitArchived < date;
+
+                if (habitCreated <= date && !isArchived && isHabitScheduledForDate(habit, date)) {
                     habitCount++;
                     const log = dayLogs.find(l => l.habit_id === habit.id);
                     if (habit.is_quantifiable) {
@@ -100,11 +139,12 @@ export const InsightsScreen: React.FC<InsightsScreenProps> = () => {
             data.push({ date: dateStr, score: dailyScore });
         }
         return data;
-    }, [activeHabits, logs, selectedMonth, isCurrentMonth, daysInMonth, monthStart, monthEnd]);
+    }, [habitsForMonth, logs, selectedMonth, isCurrentMonth, isFutureMonth, daysInMonth, monthStart]);
 
     // Calculate habit performance for the selected month
+    // Uses habitsForMonth to properly filter by creation/archive dates
     const habitPerformance = useMemo(() => {
-        return activeHabits.map(habit => {
+        return habitsForMonth.map(habit => {
             // Normalize habit creation date to start of day for proper comparison
             const habitCreatedDate = new Date(habit.created_at);
             habitCreatedDate.setHours(0, 0, 0, 0);
@@ -119,10 +159,16 @@ export const InsightsScreen: React.FC<InsightsScreenProps> = () => {
 
             // Determine the effective end date
             // Always use end of month for denominator - shows total scheduled days for the month
-            // This way "2/6 days" means 2 completed out of 6 total scheduled days in this month
-            const effectiveEnd = monthEnd;
+            // BUT cap it at the habit's archive date if it was archived this month
+            let effectiveEnd = monthEnd;
+            if (habit.archived_at) {
+                const archiveDate = new Date(habit.archived_at);
+                if (archiveDate < monthEnd) {
+                    effectiveEnd = archiveDate;
+                }
+            }
 
-            // Only calculate if habit existed during this month
+            // Only calculate if habit existed during this month (and wasn't archived before start)
             if (effectiveStart <= effectiveEnd) {
                 const days = eachDayOfInterval({ start: effectiveStart, end: effectiveEnd });
 
