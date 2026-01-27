@@ -1,9 +1,9 @@
 import React, { useMemo, useCallback, useState } from 'react';
 import { format, isAfter, isSameDay, startOfDay } from 'date-fns';
 import { useHabits } from '../context/HabitContext';
-import { ColorfulHabitCard, MultiSegmentProgressRing, SectionDivider } from '../components/ui';
+import { ColorfulHabitCard, QuantifiableHabitCard, MultiSegmentProgressRing, SectionDivider } from '../components/ui';
 import { DatePickerModal } from '../components/DatePickerModal';
-import { getCategoryEmoji } from '../utils/categoryEmojis';
+import { FocusTimer } from '../components/FocusTimer';
 import { DATE_FORMATS } from '../utils/dateFormats';
 import { Habit } from '../types';
 import { Calendar, Plus, Settings, Edit2 } from 'lucide-react';
@@ -21,10 +21,13 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({
     onEditHabit,
     onAddHabit
 }) => {
-    const { habits, getHabitLogs, toggleLog } = useHabits();
+    const { habits, getHabitLogs, toggleLog, toggleSkipDay, isSkipped, addLogWithValue, updateLogValue, getHabitLogsForDate } = useHabits();
     const [showDatePicker, setShowDatePicker] = useState(false);
 
     const [isEditMode, setIsEditMode] = useState(false);
+
+    // Timer state
+    const [timerHabit, setTimerHabit] = useState<Habit | null>(null);
 
     // Get active and archived habits
     const { activeHabits, archivedHabits } = useMemo(() => {
@@ -66,13 +69,25 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({
         await toggleLog(habitId, dateStr);
     }, [selectedDate, toggleLog]);
 
+    // Handle skip toggle for selected date
+    const handleSkip = useCallback(async (habitId: string) => {
+        const dateStr = format(selectedDate, DATE_FORMATS.ISO_DATE);
+        await toggleSkipDay(habitId, dateStr);
+    }, [selectedDate, toggleSkipDay]);
+
+    // Get date string for skip checks
+    const selectedDateStr = format(selectedDate, DATE_FORMATS.ISO_DATE);
+
     // Handle card click based on mode
-    const handleCardClick = (habit: Habit) => {
+    // For quantifiable habits, only edit mode clicks should work (not toggle)
+    const handleCardClick = (habit: Habit, isQuantifiable: boolean = false) => {
         if (isEditMode) {
             onEditHabit?.(habit);
-        } else {
+        } else if (!isQuantifiable) {
+            // Only toggle for non-quantifiable habits
             handleToggle(habit.id);
         }
+        // For quantifiable habits in normal mode, do nothing (use quick-add buttons)
     };
 
     // Handle date selection from calendar
@@ -141,12 +156,49 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({
                             </div>
                         </div>
 
-                        {/* Progress Ring */}
-                        <MultiSegmentProgressRing
-                            completed={activeHabits.filter(h => isCompleted(h.id)).length}
-                            remaining={Math.max(0, activeHabits.length - activeHabits.filter(h => isCompleted(h.id)).length)}
-                            overdue={0}
-                        />
+                        {/* Progress Ring - with proportional contribution for quantifiable habits */}
+                        {(() => {
+                            // Calculate proportional completion
+                            // - Non-quantifiable: 0% or 100%
+                            // - Quantifiable: actual percentage (e.g., 500/2000 = 25%)
+                            const totalHabits = activeHabits.length;
+                            if (totalHabits === 0) {
+                                return (
+                                    <MultiSegmentProgressRing
+                                        completed={0}
+                                        remaining={0}
+                                        overdue={0}
+                                    />
+                                );
+                            }
+
+                            let totalContribution = 0;
+                            activeHabits.forEach(habit => {
+                                if (habit.is_quantifiable) {
+                                    // Get current value for this habit on selected date
+                                    const habitLogs = getHabitLogsForDate(habit.id, selectedDateStr);
+                                    const currentValue = habitLogs.reduce((sum, log) => sum + (log.value || 0), 0);
+                                    const targetValue = habit.target_value || 1;
+                                    const percentage = Math.min(currentValue / targetValue, 1);
+                                    totalContribution += percentage;
+                                } else {
+                                    // Non-quantifiable: 0 or 1
+                                    totalContribution += isCompleted(habit.id) ? 1 : 0;
+                                }
+                            });
+
+                            // Convert to counts for the ring (out of totalHabits)
+                            const completedEquivalent = totalContribution;
+                            const remainingEquivalent = totalHabits - completedEquivalent;
+
+                            return (
+                                <MultiSegmentProgressRing
+                                    completed={completedEquivalent}
+                                    remaining={Math.max(0, remainingEquivalent)}
+                                    overdue={0}
+                                />
+                            );
+                        })()}
                     </div>
                 </div>
             )}
@@ -183,16 +235,34 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({
                 <div className="grid grid-cols-2 gap-3">
                     {activeHabits.map(habit => (
                         <div key={habit.id} className="relative group">
-                            <ColorfulHabitCard
-                                icon={getCategoryEmoji(habit.category)}
-                                name={habit.name}
-                                schedule={getScheduleText(habit)}
-                                completed={isEditMode ? false : isCompleted(habit.id)}
-                                category={habit.category}
-                                onToggle={() => handleCardClick(habit)}
-                                disabled={!isEditMode && isFuture}
-                                className={isEditMode ? 'ring-2 ring-orange-400 ring-offset-2 scale-[0.98]' : ''}
-                            />
+                            {/* Render QuantifiableHabitCard for quantifiable habits */}
+                            {habit.is_quantifiable ? (
+                                <QuantifiableHabitCard
+                                    habit={habit}
+                                    logs={getHabitLogsForDate(habit.id, selectedDateStr)}
+                                    onAddValue={(value) => addLogWithValue(habit.id, selectedDateStr, value)}
+                                    onUpdateValue={(value) => updateLogValue(habit.id, selectedDateStr, value)}
+                                    skipped={isSkipped(habit.id, selectedDateStr)}
+                                    onSkip={() => handleSkip(habit.id)}
+                                    onClick={() => handleCardClick(habit, true)}
+                                    disabled={!isEditMode && isFuture}
+                                    className={isEditMode ? 'ring-2 ring-orange-400 ring-offset-2 scale-[0.98]' : ''}
+                                />
+                            ) : (
+                                <ColorfulHabitCard
+                                    name={habit.name}
+                                    schedule={getScheduleText(habit)}
+                                    completed={isEditMode ? false : isCompleted(habit.id)}
+                                    skipped={isEditMode ? false : isSkipped(habit.id, selectedDateStr)}
+                                    category={habit.category}
+                                    onToggle={() => handleCardClick(habit)}
+                                    onSkip={isEditMode ? undefined : () => handleSkip(habit.id)}
+                                    onTimer={habit.timer_minutes ? () => setTimerHabit(habit) : undefined}
+                                    timerMinutes={habit.timer_minutes}
+                                    disabled={!isEditMode && isFuture}
+                                    className={isEditMode ? 'ring-2 ring-orange-400 ring-offset-2 scale-[0.98]' : ''}
+                                />
+                            )}
                             {isEditMode && (
                                 <div className="absolute -top-2 -right-2 bg-orange-500 text-white rounded-full p-1.5 shadow-md">
                                     <Edit2 className="w-3 h-3" />
@@ -211,7 +281,6 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({
                         {archivedHabits.map(habit => (
                             <div key={habit.id} className="relative group grayscale">
                                 <ColorfulHabitCard
-                                    icon={getCategoryEmoji(habit.category)}
                                     name={habit.name}
                                     schedule={getScheduleText(habit)}
                                     completed={false}
@@ -233,8 +302,9 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({
                 onClick={onAddHabit}
                 className="fixed bottom-24 right-6 w-14 h-14 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-40"
                 style={{
-                    background: 'linear-gradient(135deg, #FF7A6B 0%, #FFA094 100%)',
-                    boxShadow: '0 6px 20px rgba(255, 122, 107, 0.4)',
+                    background: '#1F1F1F', // Dark background for high contrast
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)', // Stronger shadow
+                    border: '2px solid rgba(255,255,255,0.1)'
                 }}
             >
                 <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
@@ -247,6 +317,19 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({
                 onDateSelect={handleDateSelect}
                 onClose={() => setShowDatePicker(false)}
             />
+
+            {/* Focus Timer Modal */}
+            {timerHabit && (
+                <FocusTimer
+                    habit={timerHabit}
+                    isOpen={!!timerHabit}
+                    onClose={() => setTimerHabit(null)}
+                    onComplete={() => {
+                        handleToggle(timerHabit.id);
+                        setTimerHabit(null);
+                    }}
+                />
+            )}
         </div>
     );
 };

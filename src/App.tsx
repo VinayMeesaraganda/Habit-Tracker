@@ -1,5 +1,6 @@
 import { useState, Suspense, lazy, useEffect } from 'react';
 import { HabitProvider, useHabits } from './context/HabitContext';
+import { TaskProvider } from './context/TaskContext';
 import { Auth } from './components/Auth';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { FullPageLoader } from './components/ui/LoadingSpinner';
@@ -45,7 +46,9 @@ function AppContent() {
 export default function App() {
     return (
         <HabitProvider>
-            <AppContent />
+            <TaskProvider>
+                <AppContent />
+            </TaskProvider>
         </HabitProvider>
     );
 }

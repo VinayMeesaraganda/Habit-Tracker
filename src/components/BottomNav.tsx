@@ -1,7 +1,7 @@
 import React from 'react';
-import { Home, BarChart3, User } from 'lucide-react';
+import { Home, BarChart3, User, CheckSquare } from 'lucide-react';
 
-export type TabType = 'track' | 'stats' | 'profile';
+export type TabType = 'track' | 'tasks' | 'stats' | 'profile';
 
 interface BottomNavProps {
     activeTab: TabType;
@@ -11,6 +11,7 @@ interface BottomNavProps {
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) => {
     const tabs: { id: TabType; icon: React.ReactNode; label: string }[] = [
         { id: 'track', icon: <Home className="w-6 h-6" />, label: 'Track' },
+        { id: 'tasks', icon: <CheckSquare className="w-6 h-6" />, label: 'Tasks' },
         { id: 'stats', icon: <BarChart3 className="w-6 h-6" />, label: 'Stats' },
         { id: 'profile', icon: <User className="w-6 h-6" />, label: 'Profile' },
     ];

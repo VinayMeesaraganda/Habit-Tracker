@@ -2,7 +2,7 @@ import React, { useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { useHabits } from '../context/HabitContext';
 import { ColorfulHabitCard, MultiSegmentProgressRing, SectionDivider } from '../components/ui';
-import { getCategoryEmoji } from '../utils/categoryEmojis';
+
 import { DATE_FORMATS } from '../utils/dateFormats';
 import { Habit } from '../types';
 
@@ -138,7 +138,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ selectedDate }) => {
                     {activeHabits.map(habit => (
                         <ColorfulHabitCard
                             key={habit.id}
-                            icon={getCategoryEmoji(habit.category)}
                             name={habit.name}
                             schedule={getScheduleText(habit)}
                             completed={isCompleted(habit.id)}

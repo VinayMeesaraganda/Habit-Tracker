@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useHabits } from '../context/HabitContext';
 import { SectionDivider } from '../components/ui';
-import { User, Mail, Lock, LogOut, Save, Loader, Shield, Users } from 'lucide-react';
+import { User, Mail, Lock, LogOut, Save, Loader, Shield, Users, Download } from 'lucide-react';
+import { generateCSV, downloadCSV } from '../utils/export';
+import { format } from 'date-fns';
 
 export const ProfileScreen: React.FC = () => {
-    const { user, updateProfile, updateEmail, updatePassword, signOut, verifyPassword } = useHabits();
+    const { user, updateProfile, updateEmail, updatePassword, signOut, verifyPassword, habits, logs } = useHabits();
 
     const [fullName, setFullName] = useState('');
     const [gender, setGender] = useState('');
@@ -269,6 +271,31 @@ export const ProfileScreen: React.FC = () => {
                                 Change Password
                             </button>
                         </form>
+                    </div>
+                </section>
+
+                {/* Data Export */}
+                <section>
+                    <SectionDivider text="DATA" />
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="font-bold text-gray-800">Export Your Data</h3>
+                                <p className="text-sm text-gray-500">Download habits and logs as CSV</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    const csv = generateCSV(habits, logs, new Date());
+                                    const filename = `habit_tracker_export_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+                                    downloadCSV(csv, filename);
+                                    setMessage({ type: 'success', text: 'Data exported successfully!' });
+                                }}
+                                className="px-4 py-2 rounded-xl font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all flex items-center gap-2"
+                            >
+                                <Download className="w-4 h-4" />
+                                Export CSV
+                            </button>
+                        </div>
                     </div>
                 </section>
 

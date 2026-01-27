@@ -4,26 +4,38 @@ import { isSameDay, subDays, startOfDay, parseISO, startOfWeek, endOfWeek, subWe
 /**
  * Calculates the current streak for a habit.
  * Streak = consecutive days/weeks ending today or yesterday.
+ * Skip dates are counted as "done" to preserve streaks.
  */
 export function calculateStreak(habit: Habit, logs: HabitLog[]): number {
+    // Helper to check if a date is skipped
+    const isSkipped = (date: Date): boolean => {
+        if (!habit.skip_dates || habit.skip_dates.length === 0) return false;
+        const dateStr = format(date, 'yyyy-MM-dd');
+        return habit.skip_dates.includes(dateStr);
+    };
+
     if (habit.type === 'daily') {
         let streak = 0;
         const today = startOfDay(new Date());
         let checkDate = today;
 
-        // Check if completed today, if not, check yesterday to start streak
+        // Check if completed or skipped today
         const completedToday = logs.some(l => l.habit_id === habit.id && isSameDay(parseISO(l.date), today));
+        const skippedToday = isSkipped(today);
 
-        if (!completedToday) {
+        if (!completedToday && !skippedToday) {
             checkDate = subDays(today, 1);
             const completedYesterday = logs.some(l => l.habit_id === habit.id && isSameDay(parseISO(l.date), checkDate));
-            if (!completedYesterday) return 0; // No streak
+            const skippedYesterday = isSkipped(checkDate);
+            if (!completedYesterday && !skippedYesterday) return 0; // No streak
         }
 
         // Count backwards
         while (true) {
             const isCompleted = logs.some(l => l.habit_id === habit.id && isSameDay(parseISO(l.date), checkDate));
-            if (isCompleted) {
+            const wasSkipped = isSkipped(checkDate);
+
+            if (isCompleted || wasSkipped) {
                 streak++;
                 checkDate = subDays(checkDate, 1);
             } else {
@@ -33,15 +45,10 @@ export function calculateStreak(habit: Habit, logs: HabitLog[]): number {
         return streak;
     } else {
         // Weekly Streak Logic
-        // For simplicity: Consecutive weeks where goal was met? 
-        // Or simpler: Consecutive weeks with AT LEAST ONE entry? 
-        // Let's go with: Consecutive weeks with at least 1 log.
         let streak = 0;
         const currentWeekStart = startOfWeek(new Date());
         let checkWeekStart = currentWeekStart;
 
-        // Similar lookback logic... (Simplified for now to " Weeks Active")
-        // Just counting consecutive weeks with activity
         while (true) {
             const weekEnd = endOfWeek(checkWeekStart);
             const hasLog = logs.some(l => {
@@ -53,9 +60,6 @@ export function calculateStreak(habit: Habit, logs: HabitLog[]): number {
                 streak++;
                 checkWeekStart = subWeeks(checkWeekStart, 1);
             } else {
-                // Allow missing *this* week if it just started? No, simpler is better.
-                // If no log this week, streak is 0? Or 0 for this week but saved previous?
-                // Let's be lenient: if no log THIS week, check LAST week.
                 if (isSameDay(checkWeekStart, currentWeekStart)) {
                     checkWeekStart = subWeeks(checkWeekStart, 1);
                     continue;

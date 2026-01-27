@@ -37,7 +37,12 @@ interface HabitContextType {
 
     toggleLog: (habitId: string, date: string) => Promise<void>;
     toggleHabit: (habitId: string, date: Date) => Promise<void>;
+    toggleSkipDay: (habitId: string, date: string) => Promise<void>;
+    addLogWithValue: (habitId: string, date: string, value: number) => Promise<void>;
+    updateLogValue: (habitId: string, date: string, newValue: number) => Promise<void>;
     getHabitLogs: (date: Date) => HabitLog[];
+    getHabitLogsForDate: (habitId: string, date: string) => HabitLog[];
+    isSkipped: (habitId: string, date: string) => boolean;
 
     setCurrentMonth: (date: Date) => void;
     refreshData: () => Promise<void>;
@@ -383,6 +388,169 @@ export function HabitProvider({ children }: { children: ReactNode }) {
         return logs.filter(log => log.date === dateStr);
     }, [logs]);
 
+    // Check if a specific date is skipped for a habit
+    const isSkipped = useCallback((habitId: string, date: string): boolean => {
+        const habit = habits.find(h => h.id === habitId);
+        if (!habit || !habit.skip_dates) return false;
+        return habit.skip_dates.includes(date);
+    }, [habits]);
+
+    // Toggle skip status for a specific date
+    const toggleSkipDay = async (habitId: string, date: string) => {
+        const habit = habits.find(h => h.id === habitId);
+        if (!habit) throw new Error('Habit not found');
+
+        const currentSkips = habit.skip_dates || [];
+        let newSkips: string[];
+
+        if (currentSkips.includes(date)) {
+            // Remove from skip list
+            newSkips = currentSkips.filter(d => d !== date);
+        } else {
+            // Add to skip list
+            newSkips = [...currentSkips, date];
+        }
+
+        await updateHabit(habitId, { skip_dates: newSkips });
+    };
+
+    // Get logs for a specific habit on a specific date
+    const getHabitLogsForDate = useCallback((habitId: string, date: string): HabitLog[] => {
+        return logs.filter(log => log.habit_id === habitId && log.date === date);
+    }, [logs]);
+
+    // Add a log with a specific value (for quantifiable habits)
+    const addLogWithValue = async (habitId: string, date: string, value: number) => {
+        if (!user) {
+            console.error('addLogWithValue: Not authenticated');
+            return;
+        }
+
+        console.log('addLogWithValue called:', { habitId, date, value, user_id: user.id });
+
+        // Check if there's already a log for this habit on this date
+        const existingLog = logs.find(
+            log => log.habit_id === habitId && log.date === date
+        );
+
+        try {
+            if (existingLog) {
+                // Update existing log by adding the new value
+                const newValue = (existingLog.value || 0) + value;
+                console.log('Updating existing log:', { id: existingLog.id, newValue });
+
+                const { error } = await supabase
+                    .from('habit_logs')
+                    .update({ value: newValue })
+                    .eq('id', existingLog.id);
+
+                if (error) {
+                    console.error('Update error:', error);
+                    alert('Backend error (update): ' + error.message);
+                    return;
+                }
+
+                console.log('Update successful!');
+                // Update local state
+                setLogs(prev => prev.map(log =>
+                    log.id === existingLog.id
+                        ? { ...log, value: newValue }
+                        : log
+                ));
+            } else {
+                // Create new log
+                console.log('Creating new log...');
+                const { data, error } = await supabase
+                    .from('habit_logs')
+                    .insert({
+                        user_id: user.id,
+                        habit_id: habitId,
+                        date: date,
+                        value: value
+                    })
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error('Insert error:', error);
+                    alert('Backend error (insert): ' + error.message);
+                    return;
+                }
+
+                console.log('Insert successful!', data);
+                // Add to local state
+                if (data) {
+                    setLogs(prev => [...prev, data]);
+                }
+            }
+        } catch (err) {
+            console.error('Unexpected error:', err);
+            alert('Unexpected error: ' + String(err));
+        }
+    };
+
+    // Update a log with a specific absolute value (overwrite)
+    const updateLogValue = async (habitId: string, date: string, newValue: number) => {
+        if (!user) {
+            console.error('updateLogValue: Not authenticated');
+            return;
+        }
+
+        console.log('updateLogValue called:', { habitId, date, newValue });
+
+        const existingLog = logs.find(
+            log => log.habit_id === habitId && log.date === date
+        );
+
+        try {
+            if (existingLog) {
+                // Update existing log
+                const { error } = await supabase
+                    .from('habit_logs')
+                    .update({ value: newValue })
+                    .eq('id', existingLog.id);
+
+                if (error) {
+                    console.error('Update error:', error);
+                    alert('Backend error (update): ' + error.message);
+                    return;
+                }
+
+                // Update local state
+                setLogs(prev => prev.map(log =>
+                    log.id === existingLog.id
+                        ? { ...log, value: newValue }
+                        : log
+                ));
+            } else {
+                // Create new log with this value
+                const { data, error } = await supabase
+                    .from('habit_logs')
+                    .insert({
+                        user_id: user.id,
+                        habit_id: habitId,
+                        date: date,
+                        value: newValue
+                    })
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error('Insert error:', error);
+                    alert('Backend error (insert): ' + error.message);
+                    return;
+                }
+
+                if (data) {
+                    setLogs(prev => [...prev, data]);
+                }
+            }
+        } catch (err) {
+            console.error('Unexpected error:', err);
+            alert('Unexpected error: ' + String(err));
+        }
+    };
+
     const value: HabitContextType = useMemo(() => ({
         user,
         loading,
@@ -402,10 +570,15 @@ export function HabitProvider({ children }: { children: ReactNode }) {
         deleteHabit,
         toggleLog,
         toggleHabit,
+        toggleSkipDay,
+        addLogWithValue,
+        updateLogValue,
         getHabitLogs,
+        getHabitLogsForDate,
+        isSkipped,
         setCurrentMonth,
         refreshData,
-    }), [user, loading, habits, logs, currentMonth, getHabitLogs]);
+    }), [user, loading, habits, logs, currentMonth, getHabitLogs, getHabitLogsForDate, isSkipped]);
 
     return <HabitContext.Provider value={value}>{children}</HabitContext.Provider>;
 }

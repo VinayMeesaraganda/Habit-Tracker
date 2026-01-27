@@ -4,6 +4,7 @@ import { AddHabitModal } from './AddHabitModal';
 import { TrackScreen } from '../screens/TrackScreen';
 import { InsightsScreen } from '../screens/InsightsScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { TasksScreen } from '../screens/TasksScreen';
 import { Habit } from '../types';
 
 import { useHabits } from '../context/HabitContext';
@@ -49,6 +50,9 @@ export function MobileDashboard() {
                 )}
                 {activeTab === 'stats' && (
                     <InsightsScreen currentMonth={currentMonth} />
+                )}
+                {activeTab === 'tasks' && (
+                    <TasksScreen />
                 )}
                 {activeTab === 'profile' && (
                     <ProfileScreen />

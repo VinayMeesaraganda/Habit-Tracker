@@ -5,7 +5,7 @@ import { ColorfulHabitCard, SectionDivider } from '../components/ui';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useVisibleHabits } from '../hooks/useVisibleHabits';
 
-import { getCategoryEmoji } from '../utils/categoryEmojis';
+
 import { DATE_FORMATS } from '../utils/dateFormats';
 import { Habit } from '../types';
 
@@ -164,7 +164,6 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ currentMonth: in
                     {selectedDateHabits.map(habit => (
                         <ColorfulHabitCard
                             key={habit.id}
-                            icon={getCategoryEmoji(habit.category)}
                             name={habit.name}
                             schedule={getScheduleText(habit)}
                             completed={habit.completed}

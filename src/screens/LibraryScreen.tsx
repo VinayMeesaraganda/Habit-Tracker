@@ -2,7 +2,7 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { useHabits } from '../context/HabitContext';
 import { SectionDivider, ColorfulHabitCard } from '../components/ui';
 
-import { getCategoryEmoji } from '../utils/categoryEmojis';
+
 import { Habit } from '../types';
 import { Edit2, Trash2 } from 'lucide-react';
 
@@ -104,7 +104,6 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onAddHabit, onEdit
                         {activeHabits.map(habit => (
                             <div key={habit.id} className="relative">
                                 <ColorfulHabitCard
-                                    icon={getCategoryEmoji(habit.category)}
                                     name={habit.name}
                                     schedule={getScheduleText(habit)}
                                     completed={false}
@@ -147,9 +146,7 @@ export const LibraryScreen: React.FC<LibraryScreenProps> = ({ onAddHabit, onEdit
                                     border: '1px solid #F0F0F0',
                                 }}
                             >
-                                <span className="text-3xl flex-shrink-0">
-                                    {getCategoryEmoji(habit.category)}
-                                </span>
+
                                 <div className="flex-1 min-w-0">
                                     <h3 className="text-base font-medium truncate" style={{ color: '#1F1F1F' }}>
                                         {habit.name}

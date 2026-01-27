@@ -22,6 +22,14 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]); // Default to today YYYY-MM-DD
     const [type, setType] = useState<'daily' | 'weekly'>('daily');
     const [loading, setLoading] = useState(false);
+    // Quantifiable habit state
+    const [isQuantifiable, setIsQuantifiable] = useState(false);
+    const [targetValue, setTargetValue] = useState(2000);
+    const [unit, setUnit] = useState('ml');
+    // Focus Timer state
+    const [hasTimer, setHasTimer] = useState(false);
+    const [timerMinutes, setTimerMinutes] = useState(25);
+    const [autoComplete, setAutoComplete] = useState(true);
 
 
     useEffect(() => {
@@ -32,13 +40,14 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                 setCategory(initialHabit.category as HabitCategory);
                 setMonthGoal(initialHabit.month_goal);
                 setType(initialHabit.type);
-                // For editing, we don't usually change start date, but maybe display it?
-                // Or just keep it hidden/immutable for existing habits to avoid data loss issues?
-                // Providing ability to change start date on existing habit might hide logs?
-                // User requirement implies "create a habit on back date".
-                // I'll only show it for NEW habits, or make it readonly/editable?
-                // Safest is distinct implementation for NEW vs EDIT.
-                // Assuming creation flow primarily.
+                // Quantifiable fields
+                setIsQuantifiable(initialHabit.is_quantifiable || false);
+                setTargetValue(initialHabit.target_value || 2000);
+                setUnit(initialHabit.unit || 'ml');
+                // Timer fields
+                setHasTimer(!!initialHabit.timer_minutes);
+                setTimerMinutes(initialHabit.timer_minutes || 25);
+                setAutoComplete(initialHabit.auto_complete || false);
                 if (initialHabit.created_at) {
                     setStartDate(initialHabit.created_at.split('T')[0]);
                 }
@@ -48,6 +57,14 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                 setMonthGoal(25);
                 setType('daily');
                 setStartDate(new Date().toISOString().split('T')[0]);
+                // Reset quantifiable
+                setIsQuantifiable(false);
+                setTargetValue(2000);
+                setUnit('ml');
+                // Reset timer
+                setHasTimer(false);
+                setTimerMinutes(25);
+                setAutoComplete(true);
             }
         }
     }, [isOpen, initialHabit, habits]);
@@ -70,7 +87,12 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                     month_goal: monthGoal,
                     type,
                     updated_at: new Date().toISOString(),
-                    created_at: localDate.toISOString()
+                    created_at: localDate.toISOString(),
+                    is_quantifiable: isQuantifiable,
+                    target_value: isQuantifiable ? targetValue : undefined,
+                    unit: isQuantifiable ? unit : undefined,
+                    timer_minutes: hasTimer ? timerMinutes : undefined,
+                    auto_complete: hasTimer ? autoComplete : undefined,
                 });
             } else {
                 await addHabit({
@@ -78,7 +100,12 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                     category,
                     month_goal: monthGoal,
                     type,
-                    created_at: localDate.toISOString()
+                    created_at: localDate.toISOString(),
+                    is_quantifiable: isQuantifiable,
+                    target_value: isQuantifiable ? targetValue : undefined,
+                    unit: isQuantifiable ? unit : undefined,
+                    timer_minutes: hasTimer ? timerMinutes : undefined,
+                    auto_complete: hasTimer ? autoComplete : undefined,
                 });
             }
             onClose();
@@ -193,52 +220,23 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                             />
                         </div>
 
-                        {/* Category and Start Date Row */}
-                        <div className="grid grid-cols-2 gap-3">
-                            {/* Category Select */}
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9E9E9E' }}>
-                                    Category
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        value={category}
-                                        onChange={(e) => setCategory(e.target.value as HabitCategory)}
-                                        className="w-full px-3 py-2.5 rounded-xl font-medium appearance-none transition-all focus:outline-none focus:ring-2"
-                                        style={{
-                                            background: '#F5F5F5',
-                                            border: '1px solid #E0E0E0',
-                                            color: '#1F1F1F',
-                                        }}
-                                    >
-                                        {HABIT_CATEGORIES.map((cat) => (
-                                            <option key={cat} value={cat}>{cat}</option>
-                                        ))}
-                                    </select>
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#6B6B6B' }}>
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Start Date */}
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9E9E9E' }}>
-                                    Start Date
-                                </label>
-                                <input
-                                    type="date"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full px-3 py-2.5 rounded-xl font-medium transition-all focus:outline-none focus:ring-2"
-                                    style={{
-                                        background: '#F5F5F5',
-                                        border: '1px solid #E0E0E0',
-                                        color: '#1F1F1F',
-                                    }}
-                                    required
-                                />
-                            </div>
+                        {/* Start Date */}
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9E9E9E' }}>
+                                Start Date
+                            </label>
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="w-full px-3 py-2.5 rounded-xl font-medium transition-all focus:outline-none focus:ring-2"
+                                style={{
+                                    background: '#F5F5F5',
+                                    border: '1px solid #E0E0E0',
+                                    color: '#1F1F1F',
+                                }}
+                                required
+                            />
                         </div>
 
                         {/* Monthly Goal and Frequency Row */}
@@ -299,6 +297,142 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                                     </button>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Quantifiable Habit Toggle */}
+                        <div className="space-y-3">
+                            <div
+                                className="flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all hover:bg-gray-50"
+                                style={{ background: '#F5F5F5', border: '1px solid #E0E0E0' }}
+                                onClick={() => setIsQuantifiable(!isQuantifiable)}
+                            >
+                                <div>
+                                    <span className="font-semibold text-gray-800">Track Quantity</span>
+                                    <p className="text-xs text-gray-500">e.g., water, pages, minutes</p>
+                                </div>
+                                <div
+                                    className={`w-12 h-7 rounded-full transition-all flex items-center px-1 ${isQuantifiable ? 'bg-orange-500' : 'bg-gray-300'}`}
+                                >
+                                    <div
+                                        className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${isQuantifiable ? 'translate-x-5' : 'translate-x-0'}`}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Target Value and Unit (shown when quantifiable) */}
+                            {isQuantifiable && (
+                                <div className="grid grid-cols-2 gap-3 animate-fadeIn">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9E9E9E' }}>
+                                            Daily Target
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={targetValue}
+                                            onChange={(e) => setTargetValue(parseInt(e.target.value) || 0)}
+                                            className="w-full px-3 py-2.5 rounded-xl font-medium transition-all focus:outline-none focus:ring-2"
+                                            style={{
+                                                background: '#FFFFFF',
+                                                border: '1px solid #E0E0E0',
+                                                color: '#1F1F1F',
+                                            }}
+                                            min="1"
+                                            required={isQuantifiable}
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9E9E9E' }}>
+                                            Unit
+                                        </label>
+                                        <select
+                                            value={unit}
+                                            onChange={(e) => setUnit(e.target.value)}
+                                            className="w-full px-3 py-2.5 rounded-xl font-medium appearance-none transition-all focus:outline-none focus:ring-2"
+                                            style={{
+                                                background: '#FFFFFF',
+                                                border: '1px solid #E0E0E0',
+                                                color: '#1F1F1F',
+                                            }}
+                                        >
+                                            <option value="ml">ml</option>
+                                            <option value="L">L</option>
+                                            <option value="glasses">glasses</option>
+                                            <option value="oz">oz</option>
+                                            <option value="pages">pages</option>
+                                            <option value="minutes">minutes</option>
+                                            <option value="hours">hours</option>
+                                            <option value="reps">reps</option>
+                                            <option value="steps">steps</option>
+                                            <option value="calories">calories</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Focus Timer Toggle */}
+                        <div className="space-y-3">
+                            <div
+                                className="flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all hover:bg-gray-50"
+                                style={{ background: '#F5F5F5', border: '1px solid #E0E0E0' }}
+                                onClick={() => setHasTimer(!hasTimer)}
+                            >
+                                <div>
+                                    <span className="font-semibold text-gray-800">Focus Timer</span>
+                                    <p className="text-xs text-gray-500">Pomodoro-style focus sessions</p>
+                                </div>
+                                <div
+                                    className={`w-12 h-7 rounded-full transition-all flex items-center px-1 ${hasTimer ? 'bg-orange-500' : 'bg-gray-300'}`}
+                                >
+                                    <div
+                                        className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${hasTimer ? 'translate-x-5' : 'translate-x-0'}`}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Timer duration and auto-complete (shown when timer enabled) */}
+                            {hasTimer && (
+                                <div className="space-y-3 animate-fadeIn">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9E9E9E' }}>
+                                            Timer Duration
+                                        </label>
+                                        <div className="flex gap-2">
+                                            {[15, 25, 45, 60].map((mins) => (
+                                                <button
+                                                    key={mins}
+                                                    type="button"
+                                                    onClick={() => setTimerMinutes(mins)}
+                                                    className="flex-1 py-2 rounded-lg font-semibold text-sm transition-all"
+                                                    style={{
+                                                        background: timerMinutes === mins ? '#FF7A6B' : '#F5F5F5',
+                                                        color: timerMinutes === mins ? '#FFF' : '#6B6B6B',
+                                                        border: '1px solid #E0E0E0',
+                                                    }}
+                                                >
+                                                    {mins}m
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Auto-complete toggle */}
+                                    <div
+                                        className="flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all"
+                                        style={{ background: '#FFFFFF', border: '1px solid #E0E0E0' }}
+                                        onClick={() => setAutoComplete(!autoComplete)}
+                                    >
+                                        <span className="text-sm font-medium text-gray-700">Auto-complete when timer ends</span>
+                                        <div
+                                            className={`w-10 h-6 rounded-full transition-all flex items-center px-0.5 ${autoComplete ? 'bg-green-500' : 'bg-gray-300'}`}
+                                        >
+                                            <div
+                                                className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${autoComplete ? 'translate-x-4' : 'translate-x-0'}`}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Actions */}
