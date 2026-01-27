@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import { useTasks } from '../context/TaskContext';
 import { Task } from '../types';
-import { Plus, Check, Trash2, Calendar, Loader } from 'lucide-react';
+import { Plus, Check, Trash2, Calendar, Loader, Pencil, X } from 'lucide-react'; // Added Pencil and X icons
 import { format, isToday, isPast, parseISO } from 'date-fns';
 
 const PRIORITY_COLORS = {
@@ -15,7 +15,8 @@ const PRIORITY_COLORS = {
 };
 
 export const TasksScreen: React.FC = () => {
-    const { tasks, loading, addTask, toggleTask, deleteTask } = useTasks();
+    const { tasks, loading, addTask, toggleTask, deleteTask, updateTask } = useTasks();
+    const [editingTask, setEditingTask] = useState<Task | null>(null); // New state for editing
     const [newTaskTitle, setNewTaskTitle] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
     const [newTaskPriority, setNewTaskPriority] = useState<0 | 1 | 2>(0);
@@ -26,26 +27,54 @@ export const TasksScreen: React.FC = () => {
     const pendingTasks = tasks.filter(t => !t.completed_at);
     const completedTasks = tasks.filter(t => t.completed_at);
 
-    const handleAddTask = async (e: React.FormEvent) => {
+    const handleTaskSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newTaskTitle.trim()) return;
 
         setIsSubmitting(true);
         try {
-            await addTask({
-                title: newTaskTitle.trim(),
-                priority: newTaskPriority,
-                due_date: newTaskDueDate || undefined,
-            });
+            if (editingTask) {
+                // Update existing task
+                await updateTask(editingTask.id, {
+                    title: newTaskTitle.trim(),
+                    priority: newTaskPriority,
+                    due_date: newTaskDueDate || undefined,
+                });
+                setEditingTask(null);
+            } else {
+                // Add new task
+                await addTask({
+                    title: newTaskTitle.trim(),
+                    priority: newTaskPriority,
+                    due_date: newTaskDueDate || undefined,
+                });
+            }
+            // Reset form
             setNewTaskTitle('');
             setNewTaskPriority(0);
             setNewTaskDueDate('');
             setShowAddForm(false);
         } catch (error) {
-            console.error('Error adding task:', error);
+            console.error('Error saving task:', error);
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const startEditing = (task: Task) => {
+        setEditingTask(task);
+        setNewTaskTitle(task.title);
+        setNewTaskPriority(task.priority);
+        setNewTaskDueDate(task.due_date ? task.due_date.split('T')[0] : ''); // Format ISO to YYYY-MM-DD
+        setShowAddForm(true);
+    };
+
+    const cancelEditing = () => {
+        setEditingTask(null);
+        setNewTaskTitle('');
+        setNewTaskPriority(0);
+        setNewTaskDueDate('');
+        setShowAddForm(false);
     };
 
     const handleDelete = async (id: string) => {
@@ -110,13 +139,25 @@ export const TasksScreen: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Delete Button */}
-                    <button
-                        onClick={() => handleDelete(task.id)}
-                        className="flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
+                    {/* Actions */}
+                    <div className="flex items-center gap-1">
+                        {/* Edit Button */}
+                        {!isCompleted && (
+                            <button
+                                onClick={() => startEditing(task)}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-all"
+                            >
+                                <Pencil className="w-4 h-4" />
+                            </button>
+                        )}
+                        {/* Delete Button */}
+                        <button
+                            onClick={() => handleDelete(task.id)}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -143,19 +184,36 @@ export const TasksScreen: React.FC = () => {
                     </p>
                 </div>
                 <button
-                    onClick={() => setShowAddForm(!showAddForm)}
-                    className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
-                    style={{
-                        background: 'linear-gradient(135deg, #FF7A6B 0%, #FFA094 100%)',
+                    onClick={() => {
+                        if (showAddForm) {
+                            cancelEditing();
+                        } else {
+                            setShowAddForm(true);
+                        }
                     }}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95 ${showAddForm ? 'bg-gray-200' : ''
+                        }`}
+                    style={!showAddForm ? {
+                        background: 'linear-gradient(135deg, #FF7A6B 0%, #FFA094 100%)',
+                    } : {}}
                 >
-                    <Plus className="w-6 h-6 text-white" />
+                    {showAddForm ? <X className="w-6 h-6 text-gray-600" /> : <Plus className="w-6 h-6 text-white" />}
                 </button>
             </div>
 
             {/* Add Task Form */}
             {showAddForm && (
-                <form onSubmit={handleAddTask} className="mb-6 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-3">
+                <form onSubmit={handleTaskSubmit} className="mb-6 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-3">
+                    <div className="flex justify-between items-center mb-1">
+                        <h3 className="text-sm font-bold text-gray-700">
+                            {editingTask ? 'Edit Task' : 'New Task'}
+                        </h3>
+                        {editingTask && (
+                            <button type="button" onClick={cancelEditing} className="text-xs text-gray-400 hover:text-gray-600">
+                                Cancel
+                            </button>
+                        )}
+                    </div>
                     <input
                         type="text"
                         value={newTaskTitle}
@@ -181,13 +239,20 @@ export const TasksScreen: React.FC = () => {
                                 </button>
                             ))}
                         </div>
-                        {/* Due Date */}
-                        <input
-                            type="date"
-                            value={newTaskDueDate}
-                            onChange={(e) => setNewTaskDueDate(e.target.value)}
-                            className="px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm"
-                        />
+                        {/* Due Date with Placeholder */}
+                        <div className="relative">
+                            <input
+                                type="text"
+                                onFocus={(e) => (e.target.type = "date")}
+                                onBlur={(e) => (e.target.type = e.target.value ? "date" : "text")}
+                                value={newTaskDueDate}
+                                onChange={(e) => setNewTaskDueDate(e.target.value)}
+                                placeholder="Due Date"
+                                className="pl-9 pr-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-900 w-[140px] focus:outline-none focus:ring-2 focus:ring-orange-200 placeholder-gray-400"
+                                style={{ colorScheme: 'light' }}
+                            />
+                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                        </div>
                     </div>
                     <button
                         type="submit"
@@ -197,7 +262,7 @@ export const TasksScreen: React.FC = () => {
                             background: 'linear-gradient(135deg, #FF7A6B 0%, #FFA094 100%)',
                         }}
                     >
-                        {isSubmitting ? 'Adding...' : 'Add Task'}
+                        {isSubmitting ? 'Saving...' : (editingTask ? 'Update Task' : 'Add Task')}
                     </button>
                 </form>
             )}

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useHabits } from '../context/HabitContext';
 import { AddHabitModal } from './AddHabitModal';
 import { Sidebar, TabType } from './Sidebar';
-import { TrackScreen, InsightsScreen } from '../screens';
+import { TrackScreen, InsightsScreen, TasksScreen } from '../screens';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { Habit } from '../types';
 
@@ -18,6 +18,7 @@ export function DesktopDashboard() {
         const titles: Record<TabType, string> = {
             track: 'Track',
             stats: 'Stats',
+            tasks: 'Tasks',
             profile: 'Profile',
         };
         document.title = `${titles[activeTab]} | Habit Tracker`;
@@ -68,6 +69,9 @@ export function DesktopDashboard() {
                 )}
                 {activeTab === 'stats' && (
                     <InsightsScreen currentMonth={currentMonth} />
+                )}
+                {activeTab === 'tasks' && (
+                    <TasksScreen />
                 )}
                 {activeTab === 'profile' && (
                     <ProfileScreen />

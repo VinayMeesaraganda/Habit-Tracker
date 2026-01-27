@@ -90,7 +90,13 @@ export function calculateStreak(habit: Habit, logs: HabitLog[]): number {
     //       No (Off day): Streak is carried over from yesterday.
 
     // Check if streak is alive (completed today, or completed yesterday, or off-day today)
-    const completedToday = logs.some(l => l.habit_id === habit.id && isSameDay(parseISO(l.date), today));
+    const completedToday = logs.some(l => {
+        if (l.habit_id !== habit.id || !isSameDay(parseISO(l.date), today)) return false;
+        if (habit.is_quantifiable) {
+            return (l.value || 0) >= (habit.target_value || 1);
+        }
+        return true;
+    });
 
     // If done today, start with 1 and look back
     if (completedToday) {
@@ -115,7 +121,13 @@ export function calculateStreak(habit: Habit, logs: HabitLog[]): number {
             continue;
         }
 
-        const isCompleted = logs.some(l => l.habit_id === habit.id && l.date === dateStr);
+        const isCompleted = logs.some(l => {
+            if (l.habit_id !== habit.id || l.date !== dateStr) return false;
+            if (habit.is_quantifiable) {
+                return (l.value || 0) >= (habit.target_value || 1);
+            }
+            return true;
+        });
         const wasSkipped = isSkipped(checkDate);
 
         if (isCompleted || wasSkipped) {

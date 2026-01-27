@@ -11,8 +11,8 @@ interface BottomNavProps {
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) => {
     const tabs: { id: TabType; icon: React.ReactNode; label: string }[] = [
         { id: 'track', icon: <Home className="w-6 h-6" />, label: 'Track' },
-        { id: 'tasks', icon: <CheckSquare className="w-6 h-6" />, label: 'Tasks' },
         { id: 'stats', icon: <BarChart3 className="w-6 h-6" />, label: 'Stats' },
+        { id: 'tasks', icon: <CheckSquare className="w-6 h-6" />, label: 'Tasks' },
         { id: 'profile', icon: <User className="w-6 h-6" />, label: 'Profile' },
     ];
 

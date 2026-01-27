@@ -1,7 +1,7 @@
 import React from 'react';
-import { Home, BarChart3, User } from 'lucide-react';
+import { Home, BarChart3, User, CheckSquare } from 'lucide-react';
 
-export type TabType = 'track' | 'stats' | 'profile';
+export type TabType = 'track' | 'stats' | 'tasks' | 'profile';
 
 interface SidebarProps {
     activeTab: TabType;
@@ -19,6 +19,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const tabs: { id: TabType; icon: React.ReactNode; label: string }[] = [
         { id: 'track', icon: <Home className="w-5 h-5" />, label: 'Track' },
         { id: 'stats', icon: <BarChart3 className="w-5 h-5" />, label: 'Stats' },
+        { id: 'tasks', icon: <CheckSquare className="w-5 h-5" />, label: 'Tasks' },
         { id: 'profile', icon: <User className="w-5 h-5" />, label: 'Profile' },
     ];
 
