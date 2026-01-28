@@ -2,7 +2,7 @@ import React from 'react';
 import { colors, categoryColorMap, HabitColor } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { shadows } from '../../theme/shadows';
-import { Timer } from 'lucide-react';
+import { Timer, Bell } from 'lucide-react';
 
 interface ColorfulHabitCardProps {
     name: string;
@@ -14,8 +14,10 @@ interface ColorfulHabitCardProps {
     onSkip?: () => void;
     onTimer?: () => void;
     timerMinutes?: number;
+    reminderTime?: string;
     className?: string;
     disabled?: boolean;
+    onClick?: () => void;
 }
 
 export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
@@ -28,8 +30,10 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
     onSkip,
     onTimer,
     timerMinutes,
+    reminderTime,
     className = '',
     disabled = false,
+    onClick,
 }) => {
     // Get gradient color based on category with fallback to coral
     const colorKey: HabitColor = categoryColorMap[category] || 'coral';
@@ -39,11 +43,11 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
     const isSkippedState = skipped && !completed;
 
     return (
-        <button
-            disabled={disabled}
+        <div
+            onClick={onClick}
             className={`
                 relative overflow-hidden transition-all duration-200 
-                ${disabled ? 'opacity-50 cursor-not-allowed grayscale' : 'cursor-pointer hover:scale-105 active:scale-95'} 
+                ${disabled ? 'opacity-50 cursor-not-allowed grayscale' : ''} 
                 ${isSkippedState ? 'opacity-60' : ''}
                 ${className}
             `}
@@ -60,11 +64,15 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
                 width: '100%',
                 textAlign: 'left'
             }}
-            onClick={onToggle}
         >
-            {/* Always visible completion toggle */}
-            <div
-                className="absolute top-3 right-3 flex items-center justify-center transition-all duration-300 z-10"
+            {/* Completion Toggle Button */}
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (!disabled) onToggle();
+                }}
+                disabled={disabled}
+                className="absolute top-3 right-3 flex items-center justify-center transition-all duration-300 z-10 cursor-pointer hover:scale-110 active:scale-95"
                 style={{
                     width: '32px',
                     height: '32px',
@@ -93,9 +101,7 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
                 ) : (
                     <div className="w-full h-full rounded-full" />
                 )}
-            </div>
-
-
+            </button>
 
             {/* Skip button (only shown if NOT completed) */}
             {onSkip && !completed && !disabled && (
@@ -121,7 +127,7 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
                         e.stopPropagation();
                         onTimer();
                     }}
-                    className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-lg z-20"
+                    className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-lg z-20"
                     style={{
                         background: 'white',
                         color: '#F97316', // Orange color for timer
@@ -153,7 +159,14 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
                 >
                     {isSkippedState ? 'Skipped' : (completed ? '🎉 Complete!' : schedule)}
                 </p>
+                {/* Reminder Badge */}
+                {reminderTime && !completed && !isSkippedState && (
+                    <div className="flex items-center gap-1 mt-2 text-white/90 bg-black/10 w-fit px-2 py-0.5 rounded-full">
+                        <Bell className="w-3 h-3" />
+                        <span className="text-xs font-medium">{reminderTime}</span>
+                    </div>
+                )}
             </div>
-        </button>
+        </div>
     );
 };

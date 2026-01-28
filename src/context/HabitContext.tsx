@@ -33,6 +33,7 @@ interface HabitContextType {
     updatePassword: (password: string) => Promise<void>;
 
     // Data actions
+    // Data actions
     addHabit: (habit: Omit<Habit, 'id' | 'user_id' | 'updated_at'> & { created_at?: string }) => Promise<void>;
     updateHabit: (id: string, updates: Partial<Habit>) => Promise<void>;
     deleteHabit: (id: string) => Promise<void>;

@@ -31,6 +31,8 @@ export interface Habit {
     // Focus Timer fields
     timer_minutes?: number; // Focus timer duration in minutes
     auto_complete?: boolean; // Auto-complete habit when timer finishes
+    // Smart Reminders
+    reminder_time?: string; // "HH:MM" (24h) or null if disabled
 }
 
 export interface HabitLog {

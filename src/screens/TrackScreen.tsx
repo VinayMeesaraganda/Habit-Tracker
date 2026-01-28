@@ -273,6 +273,7 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({
                                     onClick={() => handleCardClick(habit, true)}
                                     disabled={!isEditMode && isFuture}
                                     className={isEditMode ? 'ring-2 ring-orange-400 ring-offset-2 scale-[0.98]' : ''}
+                                    reminderTime={habit.reminder_time}
                                 />
                             ) : (
                                 <ColorfulHabitCard
@@ -287,6 +288,7 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({
                                     timerMinutes={habit.timer_minutes}
                                     disabled={!isEditMode && isFuture}
                                     className={isEditMode ? 'ring-2 ring-orange-400 ring-offset-2 scale-[0.98]' : ''}
+                                    reminderTime={habit.reminder_time}
                                 />
                             )}
                             {isEditMode && (

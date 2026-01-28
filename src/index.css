@@ -64,6 +64,16 @@
 @layer base {
   * {
     @apply border-DEFAULT;
+    -webkit-tap-highlight-color: transparent;
+    /* Remove blue flash on tap */
+  }
+
+  /* Disable text selection on UI elements for native app feel */
+  button,
+  a,
+  .select-none {
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   body {

@@ -3,7 +3,7 @@ import { Habit, HabitLog } from '../../types';
 import { colors, categoryColorMap, HabitColor } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { shadows } from '../../theme/shadows';
-import { Plus, Check, Edit2 } from 'lucide-react';
+import { Plus, Check, Edit2, Bell } from 'lucide-react';
 
 interface QuantifiableHabitCardProps {
     habit: Habit;
@@ -15,6 +15,7 @@ interface QuantifiableHabitCardProps {
     onClick?: () => void;
     className?: string;
     disabled?: boolean;
+    reminderTime?: string;
 }
 
 export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
@@ -27,6 +28,7 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
     onClick,
     className = '',
     disabled = false,
+    reminderTime,
 }) => {
     const [showInput, setShowInput] = useState(false);
     const [inputValue, setInputValue] = useState('');
@@ -157,6 +159,12 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
                         <Edit2 className="w-3 h-3" />
                     </button>
                 )}
+                {reminderTime && !isComplete && !isSkippedState && (
+                    <span className="flex items-center gap-1 text-xs font-medium text-white/80 bg-white/20 px-2 py-0.5 rounded-full">
+                        <Bell className="w-3 h-3" />
+                        {reminderTime}
+                    </span>
+                )}
             </div>
 
             {/* Progress Bar */}
@@ -218,7 +226,7 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
                 </div>
             )}
 
-            {/* Completed Message (only if complete and NOT editing and NOT showing input) */}
+            {/* Completed Message */}
             {isComplete && !showInput && (
                 <div className="text-center text-white/90 text-sm font-medium mt-3">
                     🎉 Complete!

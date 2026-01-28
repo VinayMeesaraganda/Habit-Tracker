@@ -4,6 +4,7 @@ import { TaskProvider } from './context/TaskContext';
 import { Auth } from './components/Auth';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { FullPageLoader } from './components/ui/LoadingSpinner';
+import { OnboardingScreen } from './screens/OnboardingScreen';
 
 // Lazy load the heavy dashboard components for code splitting
 const MobileDashboard = lazy(() => import('./components/MobileDashboard').then(module => ({ default: module.MobileDashboard })));
@@ -22,9 +23,34 @@ function useIsMobile() {
     return isMobile;
 }
 
+import { useNotificationScheduler } from './hooks/useNotificationScheduler';
+
+// ...
+
 function AppContent() {
-    const { user, loading } = useHabits();
+    const { user, loading, habits } = useHabits();
     const isMobile = useIsMobile();
+    const [showOnboarding, setShowOnboarding] = useState(false);
+
+    // Activate Notification Scheduler
+    useNotificationScheduler();
+
+    useEffect(() => {
+        if (!loading && user) {
+            const hasOnboarded = localStorage.getItem('has_onboarded');
+
+            // If user already has habits, mark as onboarded automatically (legacy users)
+            if (habits.length > 0) {
+                if (!hasOnboarded) {
+                    localStorage.setItem('has_onboarded', 'true');
+                }
+                setShowOnboarding(false);
+            } else if (!hasOnboarded) {
+                // Only show if no habits AND no flag
+                setShowOnboarding(true);
+            }
+        }
+    }, [user, loading, habits.length]);
 
     if (loading) {
         return <FullPageLoader text="Loading your habits..." />;
@@ -32,6 +58,10 @@ function AppContent() {
 
     if (!user) {
         return <Auth />;
+    }
+
+    if (showOnboarding) {
+        return <OnboardingScreen onComplete={() => setShowOnboarding(false)} />;
     }
 
     return (
@@ -47,7 +77,9 @@ export default function App() {
     return (
         <HabitProvider>
             <TaskProvider>
-                <AppContent />
+                <ErrorBoundary>
+                    <AppContent />
+                </ErrorBoundary>
             </TaskProvider>
         </HabitProvider>
     );

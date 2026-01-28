@@ -8,6 +8,7 @@ import { Task } from '../types';
 import { Plus, Check, Trash2, Calendar, Loader, Pencil, X } from 'lucide-react'; // Added Pencil and X icons
 import { format, isToday, isPast, parseISO } from 'date-fns';
 import { DatePickerModal } from '../components/DatePickerModal';
+import { SwipeRow } from '../components/ui/SwipeRow';
 
 const PRIORITY_COLORS = {
     0: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Normal' },
@@ -93,75 +94,95 @@ export const TasksScreen: React.FC = () => {
         return { color: 'text-gray-500', label: format(date, 'MMM d') };
     };
 
+    // Removed misplaced import and comments
+
     const TaskItem: React.FC<{ task: Task }> = ({ task }) => {
         const priorityStyle = PRIORITY_COLORS[task.priority];
         const dueDateStatus = getDueDateStatus(task.due_date);
         const isCompleted = !!task.completed_at;
 
         return (
-            <div
-                className={`
-                    relative bg-white rounded-xl p-4 shadow-sm border transition-all
-                    ${isCompleted ? 'opacity-60' : 'border-gray-100'}
-                `}
+            <SwipeRow
+                key={task.id}
+                enabled={!loading}
+                onSwipeRight={() => toggleTask(task.id)}
+                onSwipeLeft={() => handleDelete(task.id)}
             >
-                <div className="flex items-start gap-3">
-                    {/* Checkbox */}
-                    <button
-                        onClick={() => toggleTask(task.id)}
-                        className={`
-                            flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all
-                            ${isCompleted
-                                ? 'bg-green-500 border-green-500'
-                                : 'border-gray-300 hover:border-orange-400'}
-                        `}
-                    >
-                        {isCompleted && <Check className="w-4 h-4 text-white" />}
-                    </button>
+                <div
+                    className={`
+                        relative bg-white p-4 shadow-sm border transition-all
+                        ${isCompleted ? 'opacity-60' : 'border-gray-100'}
+                    `}
+                    // Remove margin/rounded from here since SwipeRow handles container
+                    style={{ borderRadius: '0.75rem' }}
+                >
+                    <div className="flex items-start gap-3">
+                        {/* Checkbox */}
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation(); // Prevent swipe trigger if tapping checkbox
+                                toggleTask(task.id);
+                            }}
+                            className={`
+                                flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all
+                                ${isCompleted
+                                    ? 'bg-green-500 border-green-500'
+                                    : 'border-gray-300 hover:border-orange-400'}
+                            `}
+                        >
+                            {isCompleted && <Check className="w-4 h-4 text-white" />}
+                        </button>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                        <p className={`font-medium ${isCompleted ? 'line-through text-gray-400' : 'text-gray-800'}`}>
-                            {task.title}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            {/* Priority Badge */}
-                            {task.priority > 0 && (
-                                <span className={`text-xs px-2 py-0.5 rounded-full ${priorityStyle.bg} ${priorityStyle.text}`}>
-                                    {priorityStyle.label}
-                                </span>
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                            <p className={`font-medium ${isCompleted ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                                {task.title}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                {/* Priority Badge */}
+                                {task.priority > 0 && (
+                                    <span className={`text-xs px-2 py-0.5 rounded-full ${priorityStyle.bg} ${priorityStyle.text}`}>
+                                        {priorityStyle.label}
+                                    </span>
+                                )}
+                                {/* Due Date */}
+                                {dueDateStatus && (
+                                    <span className={`text-xs flex items-center gap-1 ${dueDateStatus.color}`}>
+                                        <Calendar className="w-3 h-3" />
+                                        {dueDateStatus.label}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-1">
+                            {/* Edit Button */}
+                            {!isCompleted && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        startEditing(task);
+                                    }}
+                                    className="p-1.5 rounded-lg text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-all"
+                                >
+                                    <Pencil className="w-4 h-4" />
+                                </button>
                             )}
-                            {/* Due Date */}
-                            {dueDateStatus && (
-                                <span className={`text-xs flex items-center gap-1 ${dueDateStatus.color}`}>
-                                    <Calendar className="w-3 h-3" />
-                                    {dueDateStatus.label}
-                                </span>
-                            )}
+                            {/* Delete Button */}
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(task.id);
+                                }}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
                         </div>
                     </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-1">
-                        {/* Edit Button */}
-                        {!isCompleted && (
-                            <button
-                                onClick={() => startEditing(task)}
-                                className="p-1.5 rounded-lg text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-all"
-                            >
-                                <Pencil className="w-4 h-4" />
-                            </button>
-                        )}
-                        {/* Delete Button */}
-                        <button
-                            onClick={() => handleDelete(task.id)}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
-                    </div>
                 </div>
-            </div>
+            </SwipeRow>
         );
     };
 
