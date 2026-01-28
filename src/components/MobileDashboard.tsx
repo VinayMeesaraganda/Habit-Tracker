@@ -15,6 +15,7 @@ export function MobileDashboard() {
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [isAddHabitModalOpen, setIsAddHabitModalOpen] = useState(false);
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+    const [isEditMode, setIsEditMode] = useState(false);
 
     const handleAddHabit = () => {
         setEditingHabit(null);
@@ -36,6 +37,14 @@ export function MobileDashboard() {
         setCurrentMonth(date);
     };
 
+    const handleTabChange = (tab: TabType) => {
+        // If clicking 'Track' tab while already active, or switching tabs, text edit mode
+        if ((tab === 'track' && activeTab === 'track') || tab !== activeTab) {
+            setIsEditMode(false);
+        }
+        setActiveTab(tab);
+    };
+
     return (
         <div className="min-h-screen" style={{ background: '#FFF8E7' }}>
             {/* Main Content - Constrained for iPad */}
@@ -46,6 +55,8 @@ export function MobileDashboard() {
                         onDateChange={handleDateChange}
                         onEditHabit={handleEditHabit}
                         onAddHabit={handleAddHabit}
+                        isEditMode={isEditMode}
+                        onToggleEditMode={setIsEditMode}
                     />
                 )}
                 {activeTab === 'stats' && (
@@ -60,7 +71,7 @@ export function MobileDashboard() {
             </div>
 
             {/* Bottom Navigation */}
-            <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+            <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
 
             {/* Add/Edit Habit Modal */}
             <AddHabitModal

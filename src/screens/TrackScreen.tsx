@@ -14,18 +14,31 @@ interface TrackScreenProps {
     onDateChange?: (date: Date) => void;
     onEditHabit?: (habit: Habit) => void;
     onAddHabit?: () => void;
+    isEditMode?: boolean;
+    onToggleEditMode?: (isEdit: boolean) => void;
 }
 
 export const TrackScreen: React.FC<TrackScreenProps> = ({
     selectedDate,
     onDateChange,
     onEditHabit,
-    onAddHabit
+    onAddHabit,
+    isEditMode: controlledEditMode,
+    onToggleEditMode
 }) => {
     const { habits, getHabitLogs, toggleLog, toggleSkipDay, isSkipped, addLogWithValue, updateLogValue, getHabitLogsForDate } = useHabits();
     const [showDatePicker, setShowDatePicker] = useState(false);
 
-    const [isEditMode, setIsEditMode] = useState(false);
+    const [internalEditMode, setInternalEditMode] = useState(false);
+    const isEditMode = controlledEditMode ?? internalEditMode;
+
+    const handleToggleEditMode = () => {
+        if (onToggleEditMode) {
+            onToggleEditMode(!isEditMode);
+        } else {
+            setInternalEditMode(!isEditMode);
+        }
+    };
 
     // Timer state
     const [timerHabit, setTimerHabit] = useState<Habit | null>(null);
@@ -90,6 +103,8 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({
             onEditHabit?.(habit);
         } else if (!isQuantifiable) {
             // Only toggle for non-quantifiable habits
+            // If skipped, do not allow toggle (must unskip first)
+            if (isSkipped(habit.id, selectedDateStr)) return;
             handleToggle(habit.id);
         }
         // For quantifiable habits in normal mode, do nothing (use quick-add buttons)
@@ -124,7 +139,7 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({
                 </div>
                 <div className="flex gap-2">
                     <button
-                        onClick={() => setIsEditMode(!isEditMode)}
+                        onClick={handleToggleEditMode}
                         className={`p-3 rounded-xl transition-all active:scale-95 ${isEditMode ? 'bg-orange-100 ring-2 ring-orange-500' : 'bg-white hover:bg-gray-50'}`}
                         style={{
                             border: isEditMode ? 'none' : '1px solid #F0F0F0',
@@ -245,8 +260,14 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({
                                 <QuantifiableHabitCard
                                     habit={habit}
                                     logs={getHabitLogsForDate(habit.id, selectedDateStr)}
-                                    onAddValue={(value) => addLogWithValue(habit.id, selectedDateStr, value)}
-                                    onUpdateValue={(value) => updateLogValue(habit.id, selectedDateStr, value)}
+                                    onAddValue={(value) => {
+                                        if (isSkipped(habit.id, selectedDateStr)) return;
+                                        addLogWithValue(habit.id, selectedDateStr, value);
+                                    }}
+                                    onUpdateValue={(value) => {
+                                        if (isSkipped(habit.id, selectedDateStr)) return;
+                                        updateLogValue(habit.id, selectedDateStr, value);
+                                    }}
                                     skipped={isSkipped(habit.id, selectedDateStr)}
                                     onSkip={() => handleSkip(habit.id)}
                                     onClick={() => handleCardClick(habit, true)}

@@ -7,6 +7,7 @@ import { useTasks } from '../context/TaskContext';
 import { Task } from '../types';
 import { Plus, Check, Trash2, Calendar, Loader, Pencil, X } from 'lucide-react'; // Added Pencil and X icons
 import { format, isToday, isPast, parseISO } from 'date-fns';
+import { DatePickerModal } from '../components/DatePickerModal';
 
 const PRIORITY_COLORS = {
     0: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Normal' },
@@ -19,6 +20,7 @@ export const TasksScreen: React.FC = () => {
     const [editingTask, setEditingTask] = useState<Task | null>(null); // New state for editing
     const [newTaskTitle, setNewTaskTitle] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
+    const [showDatePicker, setShowDatePicker] = useState(false);
     const [newTaskPriority, setNewTaskPriority] = useState<0 | 1 | 2>(0);
     const [newTaskDueDate, setNewTaskDueDate] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -241,17 +243,34 @@ export const TasksScreen: React.FC = () => {
                         </div>
                         {/* Due Date with Placeholder */}
                         <div className="relative">
-                            <input
-                                type="text"
-                                onFocus={(e) => (e.target.type = "date")}
-                                onBlur={(e) => (e.target.type = e.target.value ? "date" : "text")}
-                                value={newTaskDueDate}
-                                onChange={(e) => setNewTaskDueDate(e.target.value)}
-                                placeholder="Due Date"
-                                className="pl-9 pr-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-900 w-[140px] focus:outline-none focus:ring-2 focus:ring-orange-200 placeholder-gray-400"
-                                style={{ colorScheme: 'light' }}
-                            />
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                            {newTaskDueDate ? (
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowDatePicker(true)}
+                                        className="relative pl-9 pr-8 py-2 rounded-lg bg-orange-50 border border-orange-200 text-sm text-orange-700 font-medium focus:outline-none focus:ring-2 focus:ring-orange-200 flex items-center min-w-[140px]"
+                                    >
+                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-500" />
+                                        {format(parseISO(newTaskDueDate), 'MMM d, yyyy')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setNewTaskDueDate('')}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-orange-100 hover:bg-orange-200 text-orange-600 transition-colors"
+                                    >
+                                        <X className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDatePicker(true)}
+                                    className="relative pl-9 pr-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-200 flex items-center min-w-[140px] hover:bg-gray-100 transition-colors"
+                                >
+                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    Due Date
+                                </button>
+                            )}
                         </div>
                     </div>
                     <button
@@ -266,6 +285,13 @@ export const TasksScreen: React.FC = () => {
                     </button>
                 </form>
             )}
+
+            <DatePickerModal
+                isOpen={showDatePicker}
+                selectedDate={newTaskDueDate ? parseISO(newTaskDueDate) : new Date()}
+                onDateSelect={(date) => setNewTaskDueDate(format(date, 'yyyy-MM-dd'))}
+                onClose={() => setShowDatePicker(false)}
+            />
 
             {/* Empty State */}
             {tasks.length === 0 && (

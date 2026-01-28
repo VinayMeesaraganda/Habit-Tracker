@@ -95,21 +95,7 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
                 )}
             </div>
 
-            {/* Skip badge (only if skipped and NOT completed) */}
-            {isSkippedState && !completed && (
-                <div
-                    className="absolute top-3 right-12 flex items-center justify-center"
-                    style={{
-                        width: '28px',
-                        height: '28px',
-                        borderRadius: '50%',
-                        backgroundColor: 'rgba(255, 255, 255, 0.4)',
-                        backdropFilter: 'blur(10px)',
-                    }}
-                >
-                    <span className="text-white text-xs font-bold">⏭</span>
-                </div>
-            )}
+
 
             {/* Skip button (only shown if NOT completed) */}
             {onSkip && !completed && !disabled && (

@@ -12,6 +12,7 @@ export function DesktopDashboard() {
     const [activeTab, setActiveTab] = useState<TabType>('track');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+    const [isEditMode, setIsEditMode] = useState(false);
 
     // Update document title based on active tab
     useEffect(() => {
@@ -65,6 +66,8 @@ export function DesktopDashboard() {
                         onDateChange={handleDateChange}
                         onEditHabit={handleEditHabit}
                         onAddHabit={handleAddHabit}
+                        isEditMode={isEditMode}
+                        onToggleEditMode={setIsEditMode}
                     />
                 )}
                 {activeTab === 'stats' && (

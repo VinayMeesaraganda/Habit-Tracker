@@ -171,7 +171,7 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
             </div>
 
             {/* Add/Edit Input Area */}
-            {!disabled && (
+            {!disabled && !isSkippedState && (
                 <div onClick={e => e.stopPropagation()}>
                     {showInput ? (
                         <div className="flex gap-2">

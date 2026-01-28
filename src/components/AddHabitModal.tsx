@@ -13,6 +13,8 @@ interface AddHabitModalProps {
     initialHabit?: Habit | null;
 }
 
+const STANDARD_UNITS = ['ml', 'oz', 'g', 'lb', 'km', 'steps', 'calories', 'min', 'hr', 'pages'];
+
 export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalProps) {
     const { addHabit, updateHabit, deleteHabit, habits } = useHabits();
 
@@ -30,6 +32,7 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
     const [isQuantifiable, setIsQuantifiable] = useState(false);
     const [targetValue, setTargetValue] = useState(2000);
     const [unit, setUnit] = useState('ml');
+    const [isCustomUnit, setIsCustomUnit] = useState(false);
     // Focus Timer state
     const [hasTimer, setHasTimer] = useState(false);
     const [timerMinutes, setTimerMinutes] = useState(25);
@@ -55,7 +58,9 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                 // Quantifiable fields
                 setIsQuantifiable(initialHabit.is_quantifiable || false);
                 setTargetValue(initialHabit.target_value || 2000);
-                setUnit(initialHabit.unit || 'ml');
+                const u = initialHabit.unit || 'ml';
+                setUnit(u);
+                setIsCustomUnit(!STANDARD_UNITS.includes(u));
                 // Timer fields
                 setHasTimer(!!initialHabit.timer_minutes);
                 setTimerMinutes(initialHabit.timer_minutes || 25);
@@ -76,6 +81,7 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                 setIsQuantifiable(false);
                 setTargetValue(2000);
                 setUnit('ml');
+                setIsCustomUnit(false);
                 // Reset timer
                 setHasTimer(false);
                 setTimerMinutes(25);
@@ -432,27 +438,67 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                                         <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9E9E9E' }}>
                                             Unit
                                         </label>
-                                        <select
-                                            value={unit}
-                                            onChange={(e) => setUnit(e.target.value)}
-                                            className="w-full px-3 py-2.5 rounded-xl font-medium appearance-none transition-all focus:outline-none focus:ring-2"
-                                            style={{
-                                                background: '#FFFFFF',
-                                                border: '1px solid #E0E0E0',
-                                                color: '#1F1F1F',
-                                            }}
-                                        >
-                                            <option value="ml">ml</option>
-                                            <option value="L">L</option>
-                                            <option value="glasses">glasses</option>
-                                            <option value="oz">oz</option>
-                                            <option value="pages">pages</option>
-                                            <option value="minutes">minutes</option>
-                                            <option value="hours">hours</option>
-                                            <option value="reps">reps</option>
-                                            <option value="steps">steps</option>
-                                            <option value="calories">calories</option>
-                                        </select>
+
+                                        {/* Logic: Show Select if standard unit OR if unit is empty (default state). Show Input if custom. */}
+                                        {/* Logic: Explicit toggle based on isCustomUnit state */}
+                                        {!isCustomUnit ? (
+                                            <select
+                                                value={STANDARD_UNITS.includes(unit) ? unit : 'custom'}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    if (val === 'custom') {
+                                                        setIsCustomUnit(true);
+                                                        setUnit(''); // Start empty for custom input
+                                                    } else {
+                                                        setUnit(val);
+                                                    }
+                                                }}
+                                                className="w-full px-3 py-2.5 rounded-xl font-medium transition-all focus:outline-none focus:ring-2 appearance-none"
+                                                style={{
+                                                    background: '#FFFFFF',
+                                                    border: '1px solid #E0E0E0',
+                                                    color: '#1F1F1F',
+                                                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                                                    backgroundPosition: 'right 0.5rem center',
+                                                    backgroundRepeat: 'no-repeat',
+                                                    backgroundSize: '1.5em 1.5em',
+                                                    paddingRight: '2.5rem'
+                                                }}
+                                            >
+                                                {STANDARD_UNITS.map(u => (
+                                                    <option key={u} value={u}>{u}</option>
+                                                ))}
+                                                <option value="custom">Custom...</option>
+                                            </select>
+                                        ) : (
+                                            <div className="relative animate-fadeIn">
+                                                <input
+                                                    type="text"
+                                                    value={unit}
+                                                    onChange={(e) => setUnit(e.target.value)}
+                                                    className="w-full px-3 py-2.5 rounded-xl font-medium transition-all focus:outline-none focus:ring-2"
+                                                    style={{
+                                                        background: '#FFFFFF',
+                                                        border: '1px solid #E0E0E0',
+                                                        color: '#1F1F1F',
+                                                        paddingRight: '40px'
+                                                    }}
+                                                    placeholder="Enter custom unit"
+                                                    autoFocus
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setIsCustomUnit(false);
+                                                        setUnit('ml'); // Revert to default
+                                                    }}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                                                    title="Switch to list"
+                                                >
+                                                    <RotateCcw className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -483,7 +529,7 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                                 <div className="space-y-3 animate-fadeIn">
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9E9E9E' }}>
-                                            Timer Duration
+                                            Timer Duration (minutes)
                                         </label>
                                         <div className="flex gap-2">
                                             {[15, 25, 45, 60].map((mins) => (
@@ -501,6 +547,18 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                                                     {mins}m
                                                 </button>
                                             ))}
+                                            <input
+                                                type="number"
+                                                value={[15, 25, 45, 60].includes(timerMinutes) ? '' : timerMinutes}
+                                                onChange={(e) => setTimerMinutes(parseInt(e.target.value) || 0)}
+                                                className="w-20 px-2 rounded-lg font-semibold text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#FF7A6B]"
+                                                style={{
+                                                    background: '#FFFFFF',
+                                                    border: '1px solid #E0E0E0',
+                                                    color: '#1F1F1F',
+                                                }}
+                                                placeholder="Custom"
+                                            />
                                         </div>
                                     </div>
 
