@@ -133,7 +133,7 @@ export const FocusTrackerScreen: React.FC = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start lg:items-center">
                     {/* Left Column: Timer & Controls */}
-                    <div className="flex flex-col items-center justify-center order-2 lg:order-1">
+                    <div className="flex flex-col items-center justify-center order-1 lg:order-1">
                         <motion.div
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
@@ -243,7 +243,7 @@ export const FocusTrackerScreen: React.FC = () => {
                     </div>
 
                     {/* Right Column: Stats & Mode */}
-                    <div className="order-1 lg:order-2 space-y-6 lg:max-w-md w-full mx-auto">
+                    <div className="order-2 lg:order-2 space-y-6 lg:max-w-md w-full mx-auto">
                         {/* Mode Tabs */}
                         <div className="flex gap-2">
                             {(['focus', 'shortBreak', 'longBreak'] as TimerMode[]).map((m) => (

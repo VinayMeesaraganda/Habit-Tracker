@@ -246,15 +246,37 @@ export const InsightsScreen: React.FC = () => {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-3xl p-5 lg:p-8 shadow-sm border border-gray-100 flex flex-col items-center justify-center"
+                        className="bg-white rounded-3xl p-4 lg:p-8 shadow-sm border border-gray-100 flex flex-row lg:flex-col items-center justify-between lg:justify-center gap-4"
                     >
-                        <h3 className="text-gray-500 font-bold uppercase tracking-wider mb-4 lg:mb-6 self-start text-xs lg:text-sm">Monthly Completion</h3>
-                        <div className="transform scale-75 lg:scale-100 -my-4 lg:my-0">
+                        <div className="flex flex-col lg:items-center">
+                            <h3 className="text-gray-500 font-bold uppercase tracking-wider mb-1 lg:mb-6 text-xs lg:text-sm">Monthly Completion</h3>
+                            <div className="lg:hidden text-3xl font-black text-gray-800">
+                                {Math.round(ringData.percentage)}%
+                            </div>
+                            <div className="lg:hidden text-xs text-gray-400 font-medium mt-1">
+                                {ringData.perfectDays}/{ringData.totalDays} perfect days
+                            </div>
+                        </div>
+
+                        {/* Mobile: Small Ring, Desktop: Large Ring */}
+                        <div className="hidden lg:block transform scale-100">
                             <CompletionRing
                                 percentage={ringData.percentage}
                                 completedDays={ringData.perfectDays}
                                 totalDays={ringData.totalDays}
                                 size={240}
+                            />
+                        </div>
+                        {/* Mobile View: Smaller Ring representation or just a simplified view if needed. 
+                             But user asked to reduce space. The simplest 'compact' view is text on left, small ring right.
+                             Let's use a scale down trick for mobile or render a smaller ring. 
+                          */}
+                        <div className="block lg:hidden transform scale-50 origin-right -mr-6">
+                            <CompletionRing
+                                percentage={ringData.percentage}
+                                completedDays={ringData.perfectDays}
+                                totalDays={ringData.totalDays}
+                                size={120}
                             />
                         </div>
                     </motion.div>
@@ -389,10 +411,10 @@ export const InsightsScreen: React.FC = () => {
                                                     <div className="flex items-center gap-3 mt-1">
                                                         <div className="flex items-center gap-1 text-orange-500 text-xs font-bold bg-orange-50 px-2 py-0.5 rounded-full">
                                                             <Flame className="w-3 h-3" />
-                                                            {streak} days
+                                                            {streak}
                                                         </div>
                                                         <span className="text-xs text-gray-400 font-medium">
-                                                            {completed}/{possible} checks
+                                                            {completed}/{possible}
                                                         </span>
                                                         <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
                                                             {getFrequencyLabel(getHabitFrequency(habit))}
