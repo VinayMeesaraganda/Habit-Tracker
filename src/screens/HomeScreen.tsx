@@ -201,40 +201,42 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="flex md:grid md:grid-cols-3 gap-4 mt-8 max-w-3xl overflow-x-auto md:overflow-visible pb-4 md:pb-0 snap-x md:snap-none -mx-6 px-6 md:mx-0 md:px-0 scrollbar-hide"
+                            className="grid grid-cols-3 gap-2 md:gap-4 mt-6 md:mt-8 max-w-3xl"
                         >
                             {/* Completion Ring */}
-                            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center transition-all hover:shadow-md min-w-[140px] snap-center">
-                                <MultiSegmentProgressRing
-                                    completed={dashboardStats.completed}
-                                    remaining={Math.max(0, dashboardStats.total - dashboardStats.completed)}
-                                    overdue={0}
-                                    size={80}
-                                    strokeWidth={8}
-                                />
-                                <span className="text-xs md:text-sm text-gray-400 mt-3 font-medium">Today</span>
+                            <div className="bg-white rounded-xl md:rounded-2xl p-2 md:p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center transition-all hover:shadow-md h-full">
+                                <div className="scale-75 md:scale-100 transform origin-center">
+                                    <MultiSegmentProgressRing
+                                        completed={dashboardStats.completed}
+                                        remaining={Math.max(0, dashboardStats.total - dashboardStats.completed)}
+                                        overdue={0}
+                                        size={80}
+                                        strokeWidth={8}
+                                    />
+                                </div>
+                                <span className="text-[10px] md:text-sm text-gray-400 mt-1 md:mt-3 font-medium">Today</span>
                             </div>
 
                             {/* Streak Card */}
-                            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center transition-all hover:shadow-md min-w-[140px] snap-center">
-                                <div className="flex items-center gap-2">
-                                    <Flame className="w-6 h-6 text-orange-500" />
-                                    <span className="text-3xl font-black text-gray-800">
+                            <div className="bg-white rounded-xl md:rounded-2xl p-2 md:p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center transition-all hover:shadow-md h-full">
+                                <div className="flex items-center gap-1 md:gap-2">
+                                    <Flame className="w-4 h-4 md:w-6 md:h-6 text-orange-500" />
+                                    <span className="text-xl md:text-3xl font-black text-gray-800">
                                         {dashboardStats.longestStreak.streak || 0}
                                     </span>
                                 </div>
-                                <span className="text-xs md:text-sm text-gray-400 mt-2 font-medium">Day Streak</span>
+                                <span className="text-[10px] md:text-sm text-gray-400 mt-1 md:mt-2 font-medium">Streak</span>
                             </div>
 
                             {/* Completion Rate Card */}
-                            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center transition-all hover:shadow-md min-w-[140px] snap-center">
-                                <div className="flex items-center gap-2">
-                                    <TrendingUp className="w-6 h-6 text-green-500" />
-                                    <span className="text-3xl font-black text-gray-800">
+                            <div className="bg-white rounded-xl md:rounded-2xl p-2 md:p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center transition-all hover:shadow-md h-full">
+                                <div className="flex items-center gap-1 md:gap-2">
+                                    <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-green-500" />
+                                    <span className="text-xl md:text-3xl font-black text-gray-800">
                                         {dashboardStats.completionRate}%
                                     </span>
                                 </div>
-                                <span className="text-xs md:text-sm text-gray-400 mt-2 font-medium">This Week</span>
+                                <span className="text-[10px] md:text-sm text-gray-400 mt-1 md:mt-2 font-medium">Rate</span>
                             </div>
                         </motion.div>
                     )}
@@ -291,7 +293,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                         </motion.button>
                     </motion.div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-5">
                         {activeHabits.map((habit, index) => (
                             <motion.div
                                 key={habit.id}

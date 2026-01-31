@@ -246,34 +246,36 @@ export const InsightsScreen: React.FC = () => {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col items-center justify-center"
+                        className="bg-white rounded-3xl p-5 lg:p-8 shadow-sm border border-gray-100 flex flex-col items-center justify-center"
                     >
-                        <h3 className="text-gray-500 font-bold uppercase tracking-wider mb-6 self-start text-sm">Monthly Completion</h3>
-                        <CompletionRing
-                            percentage={ringData.percentage}
-                            completedDays={ringData.perfectDays}
-                            totalDays={ringData.totalDays}
-                            size={240}
-                        />
+                        <h3 className="text-gray-500 font-bold uppercase tracking-wider mb-4 lg:mb-6 self-start text-xs lg:text-sm">Monthly Completion</h3>
+                        <div className="transform scale-75 lg:scale-100 -my-4 lg:my-0">
+                            <CompletionRing
+                                percentage={ringData.percentage}
+                                completedDays={ringData.perfectDays}
+                                totalDays={ringData.totalDays}
+                                size={240}
+                            />
+                        </div>
                     </motion.div>
 
                     {/* Right: Summary Stats Grid */}
-                    <div className="flex lg:grid lg:grid-cols-2 gap-4 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 snap-x lg:snap-none -mx-4 px-4 lg:mx-0 lg:px-0 scrollbar-hide">
+                    <div className="grid grid-cols-2 gap-3 lg:gap-4 h-full">
                         {/* Total Check-ins */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between min-w-[160px] snap-center"
+                            className="bg-white rounded-2xl lg:rounded-3xl p-4 lg:p-6 shadow-sm border border-gray-100 flex flex-col justify-between"
                         >
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
                                     <Zap className="w-4 h-4 text-yellow-500" />
-                                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Check-ins</div>
+                                    <div className="text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-wider">Check-ins</div>
                                 </div>
-                                <div className="text-4xl font-black text-gray-800">{summaryStats.totalCheckIns}</div>
+                                <div className="text-2xl lg:text-4xl font-black text-gray-800">{summaryStats.totalCheckIns}</div>
                             </div>
-                            <div className="text-xs text-gray-400 mt-2">this month</div>
+                            <div className="text-[10px] lg:text-xs text-gray-400 mt-2">this month</div>
                         </motion.div>
 
                         {/* Best Streak */}
@@ -281,19 +283,19 @@ export const InsightsScreen: React.FC = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.15 }}
-                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between min-w-[160px] snap-center"
+                            className="bg-white rounded-2xl lg:rounded-3xl p-4 lg:p-6 shadow-sm border border-gray-100 flex flex-col justify-between"
                         >
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
                                     <Flame className="w-4 h-4 text-orange-500" />
-                                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Best Streak</div>
+                                    <div className="text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-wider">Best Streak</div>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    <span className="text-4xl font-black text-gray-800">{summaryStats.longestStreak.streak}</span>
-                                    <span className="text-lg text-gray-400 font-bold">days</span>
+                                    <span className="text-2xl lg:text-4xl font-black text-gray-800">{summaryStats.longestStreak.streak}</span>
+                                    <span className="text-sm lg:text-lg text-gray-400 font-bold">days</span>
                                 </div>
                             </div>
-                            <div className="text-xs text-gray-400 mt-2 truncate">
+                            <div className="text-[10px] lg:text-xs text-gray-400 mt-2 truncate">
                                 {summaryStats.longestStreak.habitName || 'Keep going!'}
                             </div>
                         </motion.div>
@@ -303,16 +305,16 @@ export const InsightsScreen: React.FC = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2 }}
-                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between min-w-[160px] snap-center"
+                            className="bg-white rounded-2xl lg:rounded-3xl p-4 lg:p-6 shadow-sm border border-gray-100 flex flex-col justify-between"
                         >
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
                                     <Calendar className="w-4 h-4 text-blue-500" />
-                                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Best Day</div>
+                                    <div className="text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-wider">Best Day</div>
                                 </div>
-                                <div className="text-4xl font-black text-gray-800">{summaryStats.bestDay.count || '-'}</div>
+                                <div className="text-2xl lg:text-4xl font-black text-gray-800">{summaryStats.bestDay.count || '-'}</div>
                             </div>
-                            <div className="text-xs text-gray-400 mt-2">
+                            <div className="text-[10px] lg:text-xs text-gray-400 mt-2">
                                 {summaryStats.bestDay.date ? format(new Date(summaryStats.bestDay.date), 'MMM d') : 'habits'}
                             </div>
                         </motion.div>
@@ -322,16 +324,16 @@ export const InsightsScreen: React.FC = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.25 }}
-                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between min-w-[160px] snap-center"
+                            className="bg-white rounded-2xl lg:rounded-3xl p-4 lg:p-6 shadow-sm border border-gray-100 flex flex-col justify-between"
                         >
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
                                     <TrendingUp className="w-4 h-4 text-green-500" />
-                                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Rate</div>
+                                    <div className="text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-wider">Rate</div>
                                 </div>
-                                <div className="text-4xl font-black text-gray-800">{Math.round(ringData.percentage)}%</div>
+                                <div className="text-2xl lg:text-4xl font-black text-gray-800">{Math.round(ringData.percentage)}%</div>
                             </div>
-                            <div className="text-xs text-gray-400 mt-2">completion</div>
+                            <div className="text-[10px] lg:text-xs text-gray-400 mt-2">completion</div>
                         </motion.div>
                     </div>
                 </div>
