@@ -55,7 +55,10 @@ export const FocusTrackerScreen: React.FC = () => {
     };
 
     // Circular progress calculation
-    const radius = 120;
+    // Radius reduced to 100 to account for stroke width (12px) fit within 240px SVG
+    // 100 radius + 6px stroke (half) = 106px extent from center. 
+    // Center is 120. 120 +/- 106 = [14, 226]. Fits comfortably directly in 240.
+    const radius = 100;
     const circumference = 2 * Math.PI * radius;
     const progress = calculateProgress();
     const strokeDashoffset = circumference - (progress / 100) * circumference;
@@ -138,10 +141,15 @@ export const FocusTrackerScreen: React.FC = () => {
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                            className="relative mb-6 lg:mb-12"
+                            className="relative mb-6 lg:mb-12 pt-4"
                         >
                             {/* Progress Ring */}
-                            <svg width="240" height="240" className="transform -rotate-90 lg:w-[360px] lg:h-[360px]">
+                            <svg
+                                width="240"
+                                height="240"
+                                viewBox="0 0 240 240"
+                                className="transform -rotate-90 lg:w-[360px] lg:h-[360px] overflow-visible"
+                            >
                                 <defs>
                                     <linearGradient id={`timerGradient-${mode}`} x1="0%" y1="0%" x2="100%" y2="0%">
                                         <stop offset="0%" stopColor={colors.primary} />

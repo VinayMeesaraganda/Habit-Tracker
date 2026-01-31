@@ -203,81 +203,77 @@ export const InsightsScreen: React.FC = () => {
         <div className="min-h-screen bg-[#FFF8E7]">
             {/* Main Layout */}
             <div className="max-w-6xl mx-auto w-full px-4 pt-4 lg:pt-8 lg:px-8">
-                {/* Header & Month Nav - Desktop Row */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+                {/* Header & Month Nav - Compact Row */}
+                <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Insights</h1>
-                        <p className="text-gray-500 font-medium">Your progress at a glance</p>
+                        <h1 className="text-2xl lg:text-3xl font-black text-gray-900 tracking-tight">Insights</h1>
+                        <p className="text-xs lg:text-base text-gray-500 font-medium">Your progress</p>
                     </div>
 
-                    {/* Month Navigation */}
-                    <div className="flex items-center justify-center bg-white rounded-2xl p-2 shadow-sm border border-gray-100 self-start lg:self-auto">
+                    {/* Month Navigation - Compact */}
+                    <div className="flex items-center bg-white rounded-xl p-1 shadow-sm border border-gray-100">
                         <button
                             onClick={handlePreviousMonth}
                             disabled={!canGoBack}
-                            className={`p-3 rounded-xl transition-all active:scale-95 ${canGoBack
+                            className={`p-2 rounded-lg transition-all active:scale-95 ${canGoBack
                                 ? 'hover:bg-gray-50 text-gray-600'
                                 : 'text-gray-300 cursor-not-allowed'
                                 }`}
                         >
-                            <ChevronLeft className="w-5 h-5" />
+                            <ChevronLeft className="w-4 h-4 lg:w-5 lg:h-5" />
                         </button>
-                        <div className="px-6 py-2 min-w-[160px] text-center">
-                            <span className="text-lg font-bold text-gray-800">
+                        <div className="px-3 py-1 min-w-[100px] lg:min-w-[140px] text-center">
+                            <span className="text-sm lg:text-lg font-bold text-gray-800">
                                 {format(selectedMonth, 'MMMM yyyy')}
                             </span>
                         </div>
                         <button
                             onClick={handleNextMonth}
                             disabled={!canGoForward}
-                            className={`p-3 rounded-xl transition-all active:scale-95 ${canGoForward
+                            className={`p-2 rounded-lg transition-all active:scale-95 ${canGoForward
                                 ? 'hover:bg-gray-50 text-gray-600'
                                 : 'text-gray-300 cursor-not-allowed'
                                 }`}
                         >
-                            <ChevronRight className="w-5 h-5" />
+                            <ChevronRight className="w-4 h-4 lg:w-5 lg:h-5" />
                         </button>
                     </div>
                 </div>
 
                 {/* Top Grid: Ring & Stats */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    {/* Left: Completion Ring Card */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-8">
+                    {/* Left: Monthly Completion Card - Redesigned */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-3xl p-4 lg:p-8 shadow-sm border border-gray-100 flex flex-row lg:flex-col items-center justify-between lg:justify-center gap-4"
+                        className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 relative overflow-hidden"
                     >
-                        <div className="flex flex-col lg:items-center">
-                            <h3 className="text-gray-500 font-bold uppercase tracking-wider mb-1 lg:mb-6 text-xs lg:text-sm">Monthly Completion</h3>
-                            <div className="lg:hidden text-3xl font-black text-gray-800">
-                                {Math.round(ringData.percentage)}%
+                        <div className="flex items-center justify-between relative z-10">
+                            <div className="flex flex-col">
+                                <h3 className="text-gray-400 font-bold uppercase tracking-wider text-[10px] lg:text-xs mb-1">Monthly Goal</h3>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-4xl lg:text-5xl font-black text-gray-900 tracking-tight">
+                                        {Math.round(ringData.percentage)}%
+                                    </span>
+                                    <span className="text-sm text-gray-500 font-medium">completed</span>
+                                </div>
+                                <div className="mt-2 inline-flex items-center gap-1.5 bg-green-50 px-3 py-1.5 rounded-full self-start">
+                                    <TrendingUp className="w-3 h-3 text-green-600" />
+                                    <span className="text-xs font-bold text-green-700">
+                                        {ringData.perfectDays} perfect days
+                                    </span>
+                                </div>
                             </div>
-                            <div className="lg:hidden text-xs text-gray-400 font-medium mt-1">
-                                {ringData.perfectDays}/{ringData.totalDays} perfect days
-                            </div>
-                        </div>
 
-                        {/* Mobile: Small Ring, Desktop: Large Ring */}
-                        <div className="hidden lg:block transform scale-100">
-                            <CompletionRing
-                                percentage={ringData.percentage}
-                                completedDays={ringData.perfectDays}
-                                totalDays={ringData.totalDays}
-                                size={240}
-                            />
-                        </div>
-                        {/* Mobile View: Smaller Ring representation or just a simplified view if needed. 
-                             But user asked to reduce space. The simplest 'compact' view is text on left, small ring right.
-                             Let's use a scale down trick for mobile or render a smaller ring. 
-                          */}
-                        <div className="block lg:hidden transform scale-50 origin-right -mr-6">
-                            <CompletionRing
-                                percentage={ringData.percentage}
-                                completedDays={ringData.perfectDays}
-                                totalDays={ringData.totalDays}
-                                size={120}
-                            />
+                            {/* Ring Container */}
+                            <div className="transform scale-90 lg:scale-100 origin-right">
+                                <CompletionRing
+                                    percentage={ringData.percentage}
+                                    completedDays={ringData.perfectDays}
+                                    totalDays={ringData.totalDays}
+                                    size={110}
+                                />
+                            </div>
                         </div>
                     </motion.div>
 
