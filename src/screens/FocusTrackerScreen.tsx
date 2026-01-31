@@ -138,10 +138,10 @@ export const FocusTrackerScreen: React.FC = () => {
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                            className="relative mb-8 lg:mb-12"
+                            className="relative mb-6 lg:mb-12"
                         >
                             {/* Progress Ring */}
-                            <svg width="280" height="280" className="transform -rotate-90 lg:w-[360px] lg:h-[360px]">
+                            <svg width="240" height="240" className="transform -rotate-90 lg:w-[360px] lg:h-[360px]">
                                 <defs>
                                     <linearGradient id={`timerGradient-${mode}`} x1="0%" y1="0%" x2="100%" y2="0%">
                                         <stop offset="0%" stopColor={colors.primary} />

@@ -258,13 +258,13 @@ export const InsightsScreen: React.FC = () => {
                     </motion.div>
 
                     {/* Right: Summary Stats Grid */}
-                    <div className="grid grid-cols-2 gap-4 h-full">
+                    <div className="flex lg:grid lg:grid-cols-2 gap-4 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 snap-x lg:snap-none -mx-4 px-4 lg:mx-0 lg:px-0 scrollbar-hide">
                         {/* Total Check-ins */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between"
+                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between min-w-[160px] snap-center"
                         >
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
@@ -281,7 +281,7 @@ export const InsightsScreen: React.FC = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.15 }}
-                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between"
+                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between min-w-[160px] snap-center"
                         >
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
@@ -303,7 +303,7 @@ export const InsightsScreen: React.FC = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2 }}
-                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between"
+                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between min-w-[160px] snap-center"
                         >
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
@@ -322,7 +322,7 @@ export const InsightsScreen: React.FC = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.25 }}
-                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between"
+                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between min-w-[160px] snap-center"
                         >
                             <div>
                                 <div className="flex items-center gap-2 mb-2">

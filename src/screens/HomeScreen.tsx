@@ -201,10 +201,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 max-w-3xl"
+                            className="flex md:grid md:grid-cols-3 gap-4 mt-8 max-w-3xl overflow-x-auto md:overflow-visible pb-4 md:pb-0 snap-x md:snap-none -mx-6 px-6 md:mx-0 md:px-0 scrollbar-hide"
                         >
                             {/* Completion Ring */}
-                            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center transition-all hover:shadow-md">
+                            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center transition-all hover:shadow-md min-w-[140px] snap-center">
                                 <MultiSegmentProgressRing
                                     completed={dashboardStats.completed}
                                     remaining={Math.max(0, dashboardStats.total - dashboardStats.completed)}
@@ -216,7 +216,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                             </div>
 
                             {/* Streak Card */}
-                            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center transition-all hover:shadow-md">
+                            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center transition-all hover:shadow-md min-w-[140px] snap-center">
                                 <div className="flex items-center gap-2">
                                     <Flame className="w-6 h-6 text-orange-500" />
                                     <span className="text-3xl font-black text-gray-800">
@@ -227,7 +227,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                             </div>
 
                             {/* Completion Rate Card */}
-                            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center transition-all hover:shadow-md">
+                            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center transition-all hover:shadow-md min-w-[140px] snap-center">
                                 <div className="flex items-center gap-2">
                                     <TrendingUp className="w-6 h-6 text-green-500" />
                                     <span className="text-3xl font-black text-gray-800">

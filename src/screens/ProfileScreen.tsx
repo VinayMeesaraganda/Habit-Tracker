@@ -75,7 +75,7 @@ export const ProfileScreen: React.FC = () => {
                     <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Profile</h1>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
                     {/* Left Column: Profile Card & Sign Out */}
                     <div className="lg:col-span-1 space-y-6">
                         {/* Profile Card */}
