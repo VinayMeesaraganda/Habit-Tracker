@@ -159,7 +159,7 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.8 }}
                         onClick={handleSkip}
-                        className="absolute bottom-3 right-3 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold"
+                        className="absolute bottom-3 right-3 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold max-w-[45%]"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         style={{
@@ -181,7 +181,7 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
                         onClick={handleTimer}
-                        className="absolute bottom-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold shadow-lg z-20"
+                        className="absolute bottom-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold shadow-lg z-20 max-w-[45%]"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         style={{
@@ -189,8 +189,8 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
                             color: '#F97316',
                         }}
                     >
-                        <Timer className="w-3 h-3" />
-                        <span>Start {timerMinutes}m</span>
+                        <Timer className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{timerMinutes}m</span>
                     </motion.button>
                 )}
             </AnimatePresence>
