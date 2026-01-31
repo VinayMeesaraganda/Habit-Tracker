@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback, useState } from 'react';
-import { format, startOfDay, isAfter, isToday, getHours } from 'date-fns';
+import { format, startOfDay, isAfter, isToday, getHours, subDays, isBefore } from 'date-fns';
 import { useHabits } from '../context/HabitContext';
 import { ColorfulHabitCard, QuantifiableHabitCard, MultiSegmentProgressRing, SectionDivider } from '../components/ui';
 import { DatePickerModal } from '../components/DatePickerModal';
@@ -28,7 +28,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     isEditMode: controlledEditMode,
     onToggleEditMode
 }) => {
-    const { habits, getHabitLogs, toggleLog, toggleSkipDay, isSkipped, addLogWithValue, updateLogValue, getHabitLogsForDate } = useHabits();
+    const { habits, logs, getHabitLogs, toggleLog, toggleSkipDay, isSkipped, addLogWithValue, updateLogValue, getHabitLogsForDate } = useHabits();
     const [showDatePicker, setShowDatePicker] = useState(false);
 
     const [internalEditMode, setInternalEditMode] = useState(false);
@@ -77,6 +77,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     const dashboardStats = useMemo(() => {
         let completedToday = 0;
 
+        // Daily Stats
         activeHabits.forEach(habit => {
             const log = selectedDateLogs.find(l => l.habit_id === habit.id);
             if (!log) return;
@@ -91,16 +92,50 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         });
 
         const totalHabits = activeHabits.length;
-        const completionRate = totalHabits > 0 ? Math.round((completedToday / totalHabits) * 100) : 0;
-        const longestStreak = getLongestStreak(activeHabits, selectedDateLogs);
+
+        // Weekly Rate Calculation
+        let weeklyScheduled = 0;
+        let weeklyCompleted = 0;
+        const today = startOfDay(new Date());
+
+        for (let i = 0; i < 7; i++) {
+            const date = subDays(today, i);
+            const dateStr = format(date, DATE_FORMATS.ISO_DATE);
+
+            activeHabits.forEach(habit => {
+                // Check creation date
+                if (habit.created_at && isBefore(date, startOfDay(new Date(habit.created_at)))) return;
+
+                // Check if scheduled
+                if (!isHabitScheduledForDate(habit, date)) return;
+
+                // Check if skipped - skipped days don't count towards denominator
+                if (isSkipped(habit.id, dateStr)) return;
+
+                weeklyScheduled++;
+
+                // Check completion
+                const log = logs.find(l => l.habit_id === habit.id && l.date === dateStr);
+                if (log) {
+                    if (habit.is_quantifiable && habit.target_value) {
+                        if ((log.value || 0) >= habit.target_value) weeklyCompleted++;
+                    } else {
+                        weeklyCompleted++;
+                    }
+                }
+            });
+        }
+
+        const weeklyRate = weeklyScheduled > 0 ? Math.round((weeklyCompleted / weeklyScheduled) * 100) : 0;
+        const longestStreak = getLongestStreak(activeHabits, logs);
 
         return {
             completed: completedToday,
             total: totalHabits,
-            completionRate,
+            weeklyRate,
             longestStreak
         };
-    }, [activeHabits, selectedDateLogs]);
+    }, [activeHabits, selectedDateLogs, logs, isSkipped]);
 
     // Check if habit is completed on selected date
     const isCompleted = useCallback((habitId: string) => {
@@ -228,15 +263,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                                 <span className="text-[10px] md:text-sm text-gray-400 mt-1 md:mt-2 font-medium">Streak</span>
                             </div>
 
-                            {/* Completion Rate Card */}
+                            {/* Weekly Rate Card */}
                             <div className="bg-white rounded-xl md:rounded-2xl p-2 md:p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center transition-all hover:shadow-md h-full">
                                 <div className="flex items-center gap-1 md:gap-2">
                                     <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-green-500" />
                                     <span className="text-xl md:text-3xl font-black text-gray-800">
-                                        {dashboardStats.completionRate}%
+                                        {dashboardStats.weeklyRate}%
                                     </span>
                                 </div>
-                                <span className="text-[10px] md:text-sm text-gray-400 mt-1 md:mt-2 font-medium">Rate</span>
+                                <span className="text-[10px] md:text-sm text-gray-400 mt-1 md:mt-2 font-medium">Weekly Rate</span>
                             </div>
                         </motion.div>
                     )}
