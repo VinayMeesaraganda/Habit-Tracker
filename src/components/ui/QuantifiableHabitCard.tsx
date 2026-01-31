@@ -143,10 +143,10 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
                 )}
             </div>
 
-            <h3 className="font-bold text-white text-base mb-1" style={{ textDecoration: isSkippedState ? 'line-through' : 'none' }}>{habit.name}</h3>
+            <h3 className="font-bold text-white text-base mb-1 pr-10" style={{ textDecoration: isSkippedState ? 'line-through' : 'none' }}>{habit.name}</h3>
 
             {/* Progress Text with Edit Icon */}
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-2">
                 <p className="text-white/80 text-xs">
                     {isSkippedState ? 'Skipped' : `${currentValue} / ${targetValue} ${habit.unit}`}
                 </p>
@@ -168,7 +168,7 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
             </div>
 
             {/* Progress Bar */}
-            <div className="h-2 bg-white/20 rounded-full mb-3 overflow-hidden">
+            <div className="h-1.5 bg-white/20 rounded-full mb-2 overflow-hidden">
                 <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
@@ -191,13 +191,13 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
                                 onKeyDown={handleInputKeyDown}
                                 placeholder={isEditing ? 'Total' : (habit.unit || 'Amount')}
                                 autoFocus
-                                className="flex-1 px-3 py-3 rounded-xl text-sm font-medium bg-white text-gray-800 placeholder-gray-400 border-2 border-white focus:outline-none"
+                                className="flex-1 px-3 py-2 rounded-xl text-sm font-medium bg-white text-gray-800 placeholder-gray-400 border-2 border-white focus:outline-none"
                                 style={{ minWidth: '80px' }}
                             />
                             <button
                                 type="button"
                                 onClick={() => handleSubmit()}
-                                className="px-4 py-3 rounded-xl font-bold text-sm transition-all active:scale-95 whitespace-nowrap"
+                                className="px-4 py-2 rounded-xl font-bold text-sm transition-all active:scale-95 whitespace-nowrap"
                                 style={{
                                     background: 'white',
                                     color: '#374151',
@@ -211,14 +211,14 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
                             <button
                                 type="button"
                                 onClick={handleAddClick}
-                                className="w-full py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all active:scale-95"
+                                className="w-full py-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
                                 style={{
                                     background: 'white',
                                     color: '#374151',
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                                 }}
                             >
-                                <Plus className="w-5 h-5" strokeWidth={2.5} />
+                                <Plus className="w-4 h-4" strokeWidth={2.5} />
                                 Add {habit.unit}
                             </button>
                         )

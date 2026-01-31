@@ -1,21 +1,16 @@
 import React, { useMemo, useState } from 'react';
 import { format, startOfMonth, endOfMonth, subMonths, addMonths, isSameMonth, isAfter, isBefore, eachDayOfInterval } from 'date-fns';
 import { useHabits } from '../context/HabitContext';
-import { ChevronLeft, ChevronRight, Flame, Award } from 'lucide-react';
-import { colors, categoryColorMap } from '../theme/colors';
-import { getCategoryEmoji } from '../utils/categoryEmojis';
-import { calculateStreak, getLongestStreak } from '../utils/analytics';
+import { ChevronLeft, ChevronRight, Flame, Award, TrendingUp, Calendar, Target, Zap, Trophy } from 'lucide-react';
+
+import { calculateStreak, getLongestStreak, getProgressBadges } from '../utils/analytics';
 import { isHabitScheduledForDate, getFrequencyLabel, getHabitFrequency } from '../utils/frequencyUtils';
 import { CompletionRing } from '../components/charts/CompletionRing';
-import { WeeklyHeatmap } from '../components/charts/WeeklyHeatmap';
-import { HabitDetailView } from '../components/HabitDetailView';
-import { AnimatePresence } from 'framer-motion';
-import { Habit } from '../types';
+import { motion } from 'framer-motion';
 
 export const InsightsScreen: React.FC = () => {
     const { habits, logs } = useHabits();
     const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
-    const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
 
     // Determine navigation bounds
     const dataBounds = useMemo(() => {
@@ -33,7 +28,6 @@ export const InsightsScreen: React.FC = () => {
     // Month navigation
     const monthStart = startOfMonth(selectedMonth);
     const monthEnd = endOfMonth(selectedMonth);
-    // daysInMonth not needed - ring uses totalDays from calculation
     const isCurrentMonth = isSameMonth(selectedMonth, new Date());
     const isFutureMonth = isAfter(monthStart, new Date());
 
@@ -74,19 +68,15 @@ export const InsightsScreen: React.FC = () => {
     );
 
     // Calculate overall completion for the ring
-    // Percentage = Average daily completion rate across all days
-    // completedDays = "Perfect Days" — days where 100% of scheduled habits were completed
-    // totalDays = Number of calendar days elapsed in month
     const ringData = useMemo(() => {
         if (isFutureMonth || habitsForMonth.length === 0) {
             return { percentage: 0, perfectDays: 0, totalDays: 0 };
         }
 
         const today = new Date();
-        today.setHours(23, 59, 59, 999); // End of today
+        today.setHours(23, 59, 59, 999);
         const effectiveEnd = isCurrentMonth ? today : monthEnd;
 
-        // Build array of days to check
         const daysToCheck = eachDayOfInterval({ start: monthStart, end: effectiveEnd });
         const totalCalendarDays = daysToCheck.length;
 
@@ -102,16 +92,13 @@ export const InsightsScreen: React.FC = () => {
                 const habitCreatedDate = new Date(habit.created_at);
                 habitCreatedDate.setHours(0, 0, 0, 0);
 
-                // Check if habit existed on this day
                 if (habitCreatedDate > day) return;
 
-                // Check if habit was archived before this day
                 if (habit.archived_at) {
                     const archiveDate = new Date(habit.archived_at);
                     if (archiveDate < day) return;
                 }
 
-                // Check if habit is scheduled for this day
                 if (!isHabitScheduledForDate(habit, day)) return;
 
                 dayPossible++;
@@ -125,20 +112,16 @@ export const InsightsScreen: React.FC = () => {
                 }
             });
 
-            // Calculate this day's completion rate
             if (dayPossible > 0) {
                 const dayRate = dayCompleted / dayPossible;
                 dailyScoreSum += dayRate;
 
-                // Perfect Day = 100% completion (dayCompleted === dayPossible)
-                // For quantifiable habits, we already normalized to max 1 per habit
                 if (dayCompleted >= dayPossible) {
                     perfectDaysCount++;
                 }
             }
         });
 
-        // Average completion percentage across all days
         const percentage = totalCalendarDays > 0 ? (dailyScoreSum / totalCalendarDays) * 100 : 0;
 
         return {
@@ -169,6 +152,11 @@ export const InsightsScreen: React.FC = () => {
 
         return { totalCheckIns, longestStreak, bestDay };
     }, [logs, monthStart, monthEnd, activeHabits]);
+
+    // Achievement badges
+    const badges = useMemo(() => getProgressBadges(habits, logs), [habits, logs]);
+    const earnedBadges = badges.filter(b => b.earned);
+    const progressBadges = badges.filter(b => !b.earned && b.progress !== undefined && b.progress > 0);
 
     // Habit performance for leaderboard
     const habitPerformance = useMemo(() => {
@@ -211,180 +199,303 @@ export const InsightsScreen: React.FC = () => {
         }).sort((a, b) => b.streak - a.streak || b.rate - a.rate);
     }, [habitsForMonth, logs, monthStart, monthEnd]);
 
-    // Trend icons available if needed for future use
-
     return (
-        <div className="min-h-screen pb-24 bg-[#FFF8E7]">
-            {/* Header */}
-            <div className="px-4 pt-8 pb-4 safe-area-top">
-                <div className="flex items-center justify-between mb-4">
+        <div className="min-h-screen bg-[#FFF8E7]">
+            {/* Main Layout */}
+            <div className="max-w-6xl mx-auto w-full px-4 pt-4 lg:pt-8 lg:px-8">
+                {/* Header & Month Nav - Desktop Row */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
                     <div>
                         <h1 className="text-3xl font-black text-gray-900 tracking-tight">Insights</h1>
                         <p className="text-gray-500 font-medium">Your progress at a glance</p>
                     </div>
+
+                    {/* Month Navigation */}
+                    <div className="flex items-center justify-center bg-white rounded-2xl p-2 shadow-sm border border-gray-100 self-start lg:self-auto">
+                        <button
+                            onClick={handlePreviousMonth}
+                            disabled={!canGoBack}
+                            className={`p-3 rounded-xl transition-all active:scale-95 ${canGoBack
+                                ? 'hover:bg-gray-50 text-gray-600'
+                                : 'text-gray-300 cursor-not-allowed'
+                                }`}
+                        >
+                            <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <div className="px-6 py-2 min-w-[160px] text-center">
+                            <span className="text-lg font-bold text-gray-800">
+                                {format(selectedMonth, 'MMMM yyyy')}
+                            </span>
+                        </div>
+                        <button
+                            onClick={handleNextMonth}
+                            disabled={!canGoForward}
+                            className={`p-3 rounded-xl transition-all active:scale-95 ${canGoForward
+                                ? 'hover:bg-gray-50 text-gray-600'
+                                : 'text-gray-300 cursor-not-allowed'
+                                }`}
+                        >
+                            <ChevronRight className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
 
-                {/* Month Navigation */}
-                <div className="flex items-center justify-center bg-white rounded-xl p-2 shadow-sm border border-gray-100">
-                    <button
-                        onClick={handlePreviousMonth}
-                        disabled={!canGoBack}
-                        className={`p-2 rounded-lg transition-all active:scale-95 ${canGoBack ? 'hover:bg-gray-50 text-gray-600' : 'text-gray-300 cursor-not-allowed'}`}
+                {/* Top Grid: Ring & Stats */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    {/* Left: Completion Ring Card */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col items-center justify-center"
                     >
-                        <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <div className="px-4 py-1 min-w-[140px] text-center">
-                        <span className="text-lg font-bold text-gray-800">
-                            {format(selectedMonth, 'MMMM yyyy')}
-                        </span>
+                        <h3 className="text-gray-500 font-bold uppercase tracking-wider mb-6 self-start text-sm">Monthly Completion</h3>
+                        <CompletionRing
+                            percentage={ringData.percentage}
+                            completedDays={ringData.perfectDays}
+                            totalDays={ringData.totalDays}
+                            size={240}
+                        />
+                    </motion.div>
+
+                    {/* Right: Summary Stats Grid */}
+                    <div className="grid grid-cols-2 gap-4 h-full">
+                        {/* Total Check-ins */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between"
+                        >
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Zap className="w-4 h-4 text-yellow-500" />
+                                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Check-ins</div>
+                                </div>
+                                <div className="text-4xl font-black text-gray-800">{summaryStats.totalCheckIns}</div>
+                            </div>
+                            <div className="text-xs text-gray-400 mt-2">this month</div>
+                        </motion.div>
+
+                        {/* Best Streak */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.15 }}
+                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between"
+                        >
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Flame className="w-4 h-4 text-orange-500" />
+                                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Best Streak</div>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <span className="text-4xl font-black text-gray-800">{summaryStats.longestStreak.streak}</span>
+                                    <span className="text-lg text-gray-400 font-bold">days</span>
+                                </div>
+                            </div>
+                            <div className="text-xs text-gray-400 mt-2 truncate">
+                                {summaryStats.longestStreak.habitName || 'Keep going!'}
+                            </div>
+                        </motion.div>
+
+                        {/* Best Day */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between"
+                        >
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Calendar className="w-4 h-4 text-blue-500" />
+                                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Best Day</div>
+                                </div>
+                                <div className="text-4xl font-black text-gray-800">{summaryStats.bestDay.count || '-'}</div>
+                            </div>
+                            <div className="text-xs text-gray-400 mt-2">
+                                {summaryStats.bestDay.date ? format(new Date(summaryStats.bestDay.date), 'MMM d') : 'habits'}
+                            </div>
+                        </motion.div>
+
+                        {/* Completion Rate */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.25 }}
+                            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between"
+                        >
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <TrendingUp className="w-4 h-4 text-green-500" />
+                                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Rate</div>
+                                </div>
+                                <div className="text-4xl font-black text-gray-800">{Math.round(ringData.percentage)}%</div>
+                            </div>
+                            <div className="text-xs text-gray-400 mt-2">completion</div>
+                        </motion.div>
                     </div>
-                    <button
-                        onClick={handleNextMonth}
-                        disabled={!canGoForward}
-                        className={`p-2 rounded-lg transition-all active:scale-95 ${canGoForward ? 'hover:bg-gray-50 text-gray-600' : 'text-gray-300 cursor-not-allowed'}`}
-                    >
-                        <ChevronRight className="w-5 h-5" />
-                    </button>
                 </div>
-            </div>
 
-            {/* Hero: Completion Ring */}
-            <div className="flex justify-center py-6">
-                <CompletionRing
-                    percentage={ringData.percentage}
-                    completedDays={ringData.perfectDays}
-                    totalDays={ringData.totalDays}
-                    size={180}
-                />
-            </div>
-
-            {/* Summary Cards */}
-            <div className="px-4 mb-6">
-                <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-                    {/* Total Check-ins */}
-                    <div className="flex-shrink-0 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 min-w-[120px]">
-                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Check-ins</div>
-                        <div className="text-3xl font-black text-gray-800">{summaryStats.totalCheckIns}</div>
-                        <div className="text-xs text-gray-400 mt-1">this month</div>
-                    </div>
-
-                    {/* Best Streak */}
-                    <div className="flex-shrink-0 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 min-w-[120px]">
-                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Best Streak</div>
-                        <div className="flex items-center gap-1">
-                            <Flame className="w-5 h-5 text-orange-500" />
-                            <span className="text-3xl font-black text-gray-800">{summaryStats.longestStreak.streak}</span>
-                        </div>
-                        <div className="text-xs text-gray-400 mt-1 truncate">{summaryStats.longestStreak.habitName || 'days'}</div>
-                    </div>
-
-                    {/* Best Day */}
-                    <div className="flex-shrink-0 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 min-w-[120px]">
-                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Best Day</div>
-                        <div className="text-3xl font-black text-gray-800">{summaryStats.bestDay.count || '-'}</div>
-                        <div className="text-xs text-gray-400 mt-1">
-                            {summaryStats.bestDay.date ? format(new Date(summaryStats.bestDay.date), 'MMM d') : 'habits'}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Weekly Activity Heatmap */}
-            <div className="px-4 mb-6">
-                <WeeklyHeatmap
-                    logs={logs}
-                    habits={activeHabits}
-                    weeks={4}
-                />
-            </div>
-
-
-
-            {/* Habit Leaderboard */}
-            <div className="px-4 mb-6">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="p-4 border-b border-gray-100">
-                        <div className="flex items-center gap-2">
-                            <Award className="w-5 h-5 text-yellow-500" />
-                            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Habit Leaderboard</h3>
-                        </div>
-                    </div>
-
-                    {habitPerformance.length === 0 ? (
-                        <div className="p-8 text-center">
-                            <p className="text-gray-400">No habits to display</p>
-                        </div>
-                    ) : (
-                        <div className="divide-y divide-gray-50">
-                            {habitPerformance.slice(0, 5).map(({ habit, rate, streak, completed, possible }, index) => {
-                                const colorKey = categoryColorMap[habit.category] || 'coral';
-                                const habitColor = colors.habitColors[colorKey].start;
-
-                                return (
-                                    <div
-                                        key={habit.id}
-                                        onClick={() => setSelectedHabit(habit)}
-                                        className="group flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors cursor-pointer active:bg-gray-100"
-                                    >
-                                        {/* Rank */}
-                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold 
-                                            ${index === 0 ? 'bg-yellow-100 text-yellow-600' :
-                                                index === 1 ? 'bg-gray-200 text-gray-600' :
-                                                    index === 2 ? 'bg-orange-100 text-orange-600' :
-                                                        'bg-gray-100 text-gray-500'}`}
-                                        >
-                                            {index + 1}
-                                        </div>
-
-                                        {/* Emoji */}
-                                        <div
-                                            className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                                            style={{ backgroundColor: `${habitColor}15` }}
-                                        >
-                                            {getCategoryEmoji(habit.category)}
-                                        </div>
-
-                                        {/* Info */}
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="font-semibold text-gray-800 truncate">{habit.name}</h4>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                <div className="flex items-center gap-1 text-orange-500 text-xs font-semibold">
-                                                    <Flame className="w-3 h-3" />
-                                                    {streak}
-                                                </div>
-                                                <span className="text-xs text-gray-400">
-                                                    {completed}/{possible}
-                                                </span>
-                                                <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">
-                                                    {getFrequencyLabel(getHabitFrequency(habit))}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Rate */}
-                                        <div className="text-right">
-                                            <div className="text-xl font-black text-gray-800">{rate}%</div>
-                                            <div className="flex items-center justify-end gap-0.5 text-[10px] text-gray-300 font-medium mt-0.5 group-hover:text-gray-500 transition-colors">
-                                                View <ChevronRight className="w-3 h-3" />
-                                            </div>
-                                        </div>
+                {/* Bottom Grid: Leaderboard & Badges */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+                    {/* Leaderboard - Takes 2 cols on Desktop */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.35 }}
+                            className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
+                        >
+                            <div className="p-6 border-b border-gray-100">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center">
+                                        <Award className="w-5 h-5 text-yellow-600" />
                                     </div>
-                                );
-                            })}
-                        </div>
-                    )}
+                                    <h3 className="text-lg font-bold text-gray-800">Habit Leaderboard</h3>
+                                </div>
+                            </div>
+
+                            {habitPerformance.length === 0 ? (
+                                <div className="p-12 text-center">
+                                    <p className="text-gray-400 font-medium">No habits measured yet</p>
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-gray-50">
+                                    {habitPerformance.slice(0, 10).map(({ habit, rate, streak, completed, possible }, index) => {
+
+                                        return (
+                                            <motion.div
+                                                key={habit.id}
+                                                whileHover={{ backgroundColor: 'rgba(249, 250, 251, 0.5)' }}
+                                                className="group flex items-center gap-4 p-4 lg:p-5 transition-colors cursor-pointer"
+                                            >
+                                                {/* Rank */}
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold 
+                                                    ${index === 0 ? 'bg-yellow-100 text-yellow-600' :
+                                                        index === 1 ? 'bg-gray-200 text-gray-600' :
+                                                            index === 2 ? 'bg-orange-100 text-orange-600' :
+                                                                'bg-gray-100 text-gray-500'}`}
+                                                >
+                                                    {index + 1}
+                                                </div>
+
+                                                {/* Info */}
+
+                                                {/* Info */}
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-bold text-gray-800 text-base truncate">{habit.name}</h4>
+                                                    <div className="flex items-center gap-3 mt-1">
+                                                        <div className="flex items-center gap-1 text-orange-500 text-xs font-bold bg-orange-50 px-2 py-0.5 rounded-full">
+                                                            <Flame className="w-3 h-3" />
+                                                            {streak} days
+                                                        </div>
+                                                        <span className="text-xs text-gray-400 font-medium">
+                                                            {completed}/{possible} checks
+                                                        </span>
+                                                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
+                                                            {getFrequencyLabel(getHabitFrequency(habit))}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Rate */}
+                                                <div className="text-right">
+                                                    <div className="text-2xl font-black text-gray-800">{rate}%</div>
+                                                    <div className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Success Rate</div>
+                                                </div>
+                                            </motion.div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </motion.div>
+                    </div>
+
+                    {/* Right Col: Badges & Progress */}
+                    <div className="space-y-6">
+                        {/* Earned Badges */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
+                        >
+                            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Trophy className="w-5 h-5 text-yellow-500" />
+                                    <h3 className="text-base font-bold text-gray-800">Trophies</h3>
+                                </div>
+                                <span className="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded-full">
+                                    {earnedBadges.length} earned
+                                </span>
+                            </div>
+
+                            {earnedBadges.length > 0 ? (
+                                <div className="p-5 grid grid-cols-3 gap-4">
+                                    {earnedBadges.slice(0, 9).map((badge) => (
+                                        <motion.div
+                                            key={badge.id}
+                                            whileHover={{ scale: 1.05 }}
+                                            className="flex flex-col items-center gap-2 text-center"
+                                        >
+                                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center text-3xl shadow-sm border border-orange-100/50">
+                                                {badge.icon}
+                                            </div>
+                                            <div className="text-[10px] font-bold text-gray-600 leading-tight">{badge.name}</div>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="p-8 text-center text-gray-400 text-sm">
+                                    Keep tracking to earn trophies!
+                                </div>
+                            )}
+                        </motion.div>
+
+                        {/* In Progress */}
+                        {progressBadges.length > 0 && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                                className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
+                            >
+                                <div className="p-5 border-b border-gray-100">
+                                    <div className="flex items-center gap-2">
+                                        <Target className="w-5 h-5 text-blue-500" />
+                                        <h3 className="text-base font-bold text-gray-800">Next Goals</h3>
+                                    </div>
+                                </div>
+                                <div className="p-5 space-y-5">
+                                    {progressBadges.slice(0, 3).map((badge) => (
+                                        <div key={badge.id} className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-xl grayscale opacity-50">
+                                                {badge.icon}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between mb-1.5">
+                                                    <span className="text-sm font-bold text-gray-700 truncate pr-2">{badge.name}</span>
+                                                    <span className="text-xs font-bold text-gray-500">{badge.progress}%</span>
+                                                </div>
+                                                <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${badge.progress}%` }}
+                                                        transition={{ duration: 1, delay: 0.5 }}
+                                                        className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        )}
+                    </div>
                 </div>
+
+                {/* Bottom padding */}
+                <div className="h-12 lg:hidden" />
             </div>
-            {/* Habit Detail View Overlay */}
-            <AnimatePresence>
-                {selectedHabit && (
-                    <HabitDetailView
-                        habit={selectedHabit}
-                        logs={logs}
-                        onClose={() => setSelectedHabit(null)}
-                    />
-                )}
-            </AnimatePresence>
         </div>
     );
 };

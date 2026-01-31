@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { useHabits } from '../context/HabitContext';
 import { AddHabitModal } from './AddHabitModal';
 import { Sidebar, TabType } from './Sidebar';
-import { TrackScreen, InsightsScreen, TasksScreen } from '../screens';
+import { HomeScreen, InsightsScreen, TasksScreen, FocusTrackerScreen } from '../screens';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { Habit } from '../types';
 
 export function DesktopDashboard() {
     const { user } = useHabits();
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [activeTab, setActiveTab] = useState<TabType>('track');
+    const [activeTab, setActiveTab] = useState<TabType>('home');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -17,10 +17,11 @@ export function DesktopDashboard() {
     // Update document title based on active tab
     useEffect(() => {
         const titles: Record<TabType, string> = {
-            track: 'Track',
+            home: 'Home',
             stats: 'Stats',
             tasks: 'Tasks',
             profile: 'Profile',
+            focus: 'Focus',
         };
         document.title = `${titles[activeTab]} | Habit Tracker`;
     }, [activeTab]);
@@ -60,8 +61,8 @@ export function DesktopDashboard() {
 
             {/* Main Content */}
             <div className="flex-1 overflow-y-auto">
-                {activeTab === 'track' && (
-                    <TrackScreen
+                {activeTab === 'home' && (
+                    <HomeScreen
                         selectedDate={selectedDate}
                         onDateChange={handleDateChange}
                         onEditHabit={handleEditHabit}
@@ -72,6 +73,9 @@ export function DesktopDashboard() {
                 )}
                 {activeTab === 'stats' && (
                     <InsightsScreen />
+                )}
+                {activeTab === 'focus' && (
+                    <FocusTrackerScreen />
                 )}
                 {activeTab === 'tasks' && (
                     <TasksScreen />

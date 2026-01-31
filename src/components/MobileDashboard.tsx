@@ -1,17 +1,15 @@
 import { useState } from 'react';
 import { BottomNav, TabType } from './BottomNav';
 import { AddHabitModal } from './AddHabitModal';
-import { TrackScreen } from '../screens/TrackScreen';
-import { InsightsScreen } from '../screens/InsightsScreen';
+import { HomeScreen, InsightsScreen, TasksScreen, FocusTrackerScreen } from '../screens';
 import { ProfileScreen } from '../screens/ProfileScreen';
-import { TasksScreen } from '../screens/TasksScreen';
 import { Habit } from '../types';
 
 import { useHabits } from '../context/HabitContext';
 
 export function MobileDashboard() {
     const { setCurrentMonth } = useHabits();
-    const [activeTab, setActiveTab] = useState<TabType>('track');
+    const [activeTab, setActiveTab] = useState<TabType>('home');
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [isAddHabitModalOpen, setIsAddHabitModalOpen] = useState(false);
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
@@ -38,8 +36,7 @@ export function MobileDashboard() {
     };
 
     const handleTabChange = (tab: TabType) => {
-        // If clicking 'Track' tab while already active, or switching tabs, text edit mode
-        if ((tab === 'track' && activeTab === 'track') || tab !== activeTab) {
+        if ((tab === 'home' && activeTab === 'home') || tab !== activeTab) {
             setIsEditMode(false);
         }
         setActiveTab(tab);
@@ -49,8 +46,8 @@ export function MobileDashboard() {
         <div className="min-h-screen" style={{ background: '#FFF8E7' }}>
             {/* Main Content - Constrained for iPad */}
             <div className="max-w-lg mx-auto pb-safe">
-                {activeTab === 'track' && (
-                    <TrackScreen
+                {activeTab === 'home' && (
+                    <HomeScreen
                         selectedDate={selectedDate}
                         onDateChange={handleDateChange}
                         onEditHabit={handleEditHabit}
@@ -61,6 +58,9 @@ export function MobileDashboard() {
                 )}
                 {activeTab === 'stats' && (
                     <InsightsScreen />
+                )}
+                {activeTab === 'focus' && (
+                    <FocusTrackerScreen />
                 )}
                 {activeTab === 'tasks' && (
                     <TasksScreen />

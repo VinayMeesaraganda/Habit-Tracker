@@ -1,5 +1,6 @@
 import { useState, Suspense, lazy, useEffect } from 'react';
 import { HabitProvider, useHabits } from './context/HabitContext';
+import { FocusProvider } from './context/FocusContext';
 import { TaskProvider } from './context/TaskContext';
 import { Auth } from './components/Auth';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -76,11 +77,13 @@ function AppContent() {
 export default function App() {
     return (
         <HabitProvider>
-            <TaskProvider>
-                <ErrorBoundary>
-                    <AppContent />
-                </ErrorBoundary>
-            </TaskProvider>
+            <FocusProvider>
+                <TaskProvider>
+                    <ErrorBoundary>
+                        <AppContent />
+                    </ErrorBoundary>
+                </TaskProvider>
+            </FocusProvider>
         </HabitProvider>
     );
 }
