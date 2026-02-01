@@ -9,16 +9,17 @@ export const colors = {
     surface: '#FFFFFF',
     elevated: '#FFFCF2',
 
-    // Habit gradient colors - Sophisticated, muted tones for elegance and readability
+    // Habit gradient colors - Unique combinations
+    // Habit gradient colors - Deep, vibrant, high-contrast for white text
     habitColors: {
-        coral: { start: '#D87A65', end: '#E5907D' }, // Muted Terracotta
-        sky: { start: '#5B7C99', end: '#7A9CB8' }, // Steel Blue
-        lavender: { start: '#8E7CC3', end: '#A594D1' }, // Dusty Purple
-        peach: { start: '#D9886C', end: '#EBA086' }, // Clay / Warm Sand
-        mint: { start: '#5D9B7B', end: '#78B295' }, // Deep Sage
-        rose: { start: '#C76D7E', end: '#D98998' }, // Antique Rose
-        amber: { start: '#D4AF37', end: '#E5C158' }, // Metallic Gold / Ochre
-        teal: { start: '#4B8B84', end: '#68A69F' }, // Muted Spruce
+        coral: { start: '#FF6B6B', end: '#EE5253' }, // Vibrant Red-Coral
+        sky: { start: '#48dbfb', end: '#2e86de' }, // Deep Blue
+        lavender: { start: '#a29bfe', end: '#6c5ce7' }, // Royal Purple
+        peach: { start: '#ff9f43', end: '#ee5253' }, // Deep Orange (Sunset)
+        mint: { start: '#1dd1a1', end: '#10ac84' }, // Jungle Green
+        rose: { start: '#ff9ff3', end: '#f368e0' }, // Deep Rose
+        amber: { start: '#feca57', end: '#ff9f43' }, // Warm Orange-Yellow
+        teal: { start: '#00d2d3', end: '#01a3a4' }, // Cyan-Teal
     },
 
     // Text - Slightly different grays
