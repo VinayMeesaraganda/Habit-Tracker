@@ -304,25 +304,23 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                                     <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                                         Category
                                     </label>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {HABIT_CATEGORIES.map((cat) => {
-                                            const icon = cat.substring(cat.lastIndexOf(' ') + 1);
-                                            const label = cat.substring(0, cat.lastIndexOf(' '));
-                                            return (
-                                                <button
-                                                    key={cat}
-                                                    type="button"
-                                                    onClick={() => setCategory(cat)}
-                                                    className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl text-xs font-medium transition-all border ${category === cat
-                                                        ? 'bg-orange-50 border-orange-200 text-orange-700 ring-1 ring-orange-200'
-                                                        : 'bg-white border-gray-100 text-gray-600 hover:bg-gray-50'
-                                                        }`}
-                                                >
-                                                    <span className="text-lg">{icon}</span>
-                                                    <span>{label}</span>
-                                                </button>
-                                            );
-                                        })}
+                                    <div className="relative">
+                                        <select
+                                            value={category}
+                                            onChange={(e) => setCategory(e.target.value as HabitCategory)}
+                                            className="w-full pl-4 pr-10 py-3 rounded-xl appearance-none bg-gray-50 border border-gray-200 text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-orange-100 transition-shadow"
+                                        >
+                                            {HABIT_CATEGORIES.map((cat) => (
+                                                <option key={cat} value={cat}>
+                                                    {cat}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="m6 9 6 6 6-6" />
+                                            </svg>
+                                        </div>
                                     </div>
                                 </div>
 

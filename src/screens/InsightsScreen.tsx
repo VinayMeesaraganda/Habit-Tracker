@@ -8,28 +8,62 @@ import { isHabitScheduledForDate, getFrequencyLabel, getHabitFrequency } from '.
 import { CompletionRing } from '../components/charts/CompletionRing';
 import { motion } from 'framer-motion';
 
+import { colors, categoryColorMap } from '../theme/colors';
+
 export const InsightsScreen: React.FC = () => {
     const { habits, logs } = useHabits();
     const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
-
-    // Determine navigation bounds
-    const dataBounds = useMemo(() => {
-        const today = new Date();
-        const activeHabits = habits.filter(h => !h.archived_at);
-        let earliest = subMonths(today, 12);
-        if (activeHabits.length > 0) {
-            const earliestHabit = new Date(Math.min(...activeHabits.map(h => new Date(h.created_at).getTime())));
-            earliest = startOfMonth(earliestHabit) < earliest ? startOfMonth(earliestHabit) : earliest;
-        }
-        const latest = addMonths(today, 3);
-        return { earliest: startOfMonth(earliest), latest: startOfMonth(latest) };
-    }, [habits]);
 
     // Month navigation
     const monthStart = startOfMonth(selectedMonth);
     const monthEnd = endOfMonth(selectedMonth);
     const isCurrentMonth = isSameMonth(selectedMonth, new Date());
     const isFutureMonth = isAfter(monthStart, new Date());
+
+    // Get habits that were active during selected month
+    const habitsForMonth = useMemo(() => {
+        return habits.filter(h => {
+            const createdDate = startOfMonth(new Date(h.created_at));
+            if (isAfter(createdDate, monthEnd)) return false;
+            if (h.archived_at) {
+                const archivedDate = new Date(h.archived_at);
+                if (isBefore(archivedDate, monthStart)) return false;
+            }
+            return true;
+        }).sort((a, b) => (a.priority || 0) - (b.priority || 0));
+    }, [habits, monthStart, monthEnd]);
+
+    // Calculate Habit Counts by Category (for the graph)
+    const categoryDist = useMemo(() => {
+        const counts: Record<string, number> = {};
+        // Use habitsForMonth to correspond with selected month
+        habitsForMonth.forEach(h => {
+            counts[h.category] = (counts[h.category] || 0) + 1;
+        });
+
+        return Object.entries(counts)
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count); // Sort by count descending
+    }, [habitsForMonth]);
+
+    // Active habits (non-archived)
+    const activeHabits = useMemo(() =>
+        habits.filter(h => !h.archived_at).sort((a, b) => (a.priority || 0) - (b.priority || 0)),
+        [habits]
+    );
+
+    // Determine navigation bounds
+    const dataBounds = useMemo(() => {
+        const today = new Date();
+        const allActive = habits.filter(h => !h.archived_at);
+        let earliest = subMonths(today, 12);
+        if (allActive.length > 0) {
+            const earliestHabit = new Date(Math.min(...allActive.map(h => new Date(h.created_at).getTime())));
+            earliest = startOfMonth(earliestHabit) < earliest ? startOfMonth(earliestHabit) : earliest;
+        }
+        const latest = addMonths(today, 3);
+        return { earliest: startOfMonth(earliest), latest: startOfMonth(latest) };
+    }, [habits]);
 
     const handlePreviousMonth = () => {
         const prevMonth = subMonths(selectedMonth, 1);
@@ -47,25 +81,6 @@ export const InsightsScreen: React.FC = () => {
 
     const canGoBack = !isBefore(startOfMonth(subMonths(selectedMonth, 1)), dataBounds.earliest);
     const canGoForward = !isAfter(startOfMonth(addMonths(selectedMonth, 1)), dataBounds.latest);
-
-    // Get habits that were active during selected month
-    const habitsForMonth = useMemo(() => {
-        return habits.filter(h => {
-            const createdDate = startOfMonth(new Date(h.created_at));
-            if (isAfter(createdDate, monthEnd)) return false;
-            if (h.archived_at) {
-                const archivedDate = new Date(h.archived_at);
-                if (isBefore(archivedDate, monthStart)) return false;
-            }
-            return true;
-        }).sort((a, b) => (a.priority || 0) - (b.priority || 0));
-    }, [habits, monthStart, monthEnd]);
-
-    // Active habits (non-archived)
-    const activeHabits = useMemo(() =>
-        habits.filter(h => !h.archived_at).sort((a, b) => (a.priority || 0) - (b.priority || 0)),
-        [habits]
-    );
 
     // Calculate overall completion for the ring
     const ringData = useMemo(() => {
@@ -248,6 +263,7 @@ export const InsightsScreen: React.FC = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 relative overflow-hidden"
                     >
+                        {/* ... (existing completion card content) ... */}
                         <div className="flex items-center justify-between relative z-10">
                             <div className="flex flex-col">
                                 <h3 className="text-gray-400 font-bold uppercase tracking-wider text-[10px] lg:text-xs mb-1">Monthly Goal</h3>
@@ -355,6 +371,48 @@ export const InsightsScreen: React.FC = () => {
                         </motion.div>
                     </div>
                 </div>
+
+                {/* Habits by Category Chart - Custom Implementation for better layout */}
+                {categoryDist.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mb-8"
+                    >
+                        <h3 className="text-lg font-bold text-gray-800 mb-6">Habits by Category</h3>
+                        <div className="space-y-5">
+                            {categoryDist.map((dist, index) => {
+                                // Get color logic
+                                const colorKey = categoryColorMap[dist.name] || 'coral';
+                                const colorStart = colors.habitColors[colorKey as keyof typeof colors.habitColors]?.start || '#FF7A6B';
+                                const colorEnd = colors.habitColors[colorKey as keyof typeof colors.habitColors]?.end || '#FFA094';
+
+                                // Calculate max for width percentage
+                                const maxCount = Math.max(...categoryDist.map(d => d.count));
+                                const widthPercent = Math.max((dist.count / maxCount) * 100, 5); // Min 5% width
+
+                                return (
+                                    <div key={dist.name}>
+                                        <div className="flex justify-between items-end mb-1.5">
+                                            <span className="text-sm font-bold text-gray-700">{dist.name}</span>
+                                            <span className="text-xs font-bold text-gray-400">{dist.count} {dist.count === 1 ? 'habit' : 'habits'}</span>
+                                        </div>
+                                        <div className="h-4 w-full bg-gray-50 rounded-full overflow-hidden">
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${widthPercent}%` }}
+                                                transition={{ duration: 1, delay: 0.4 + (index * 0.1) }}
+                                                className="h-full rounded-full"
+                                                style={{ background: `linear-gradient(90deg, ${colorStart}, ${colorEnd})` }}
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </motion.div>
+                )}
 
                 {/* Bottom Grid: Leaderboard & Badges */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">

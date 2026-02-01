@@ -345,10 +345,10 @@ export const FocusTrackerScreen: React.FC = () => {
                                 initial={{ scale: 0.9, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 exit={{ scale: 0.9, opacity: 0 }}
-                                className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+                                className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                                <div className="flex items-center justify-between p-4 border-b border-gray-100 flex-shrink-0">
                                     <h2 className="text-lg font-bold text-gray-800">Timer Presets</h2>
                                     <button
                                         onClick={() => setShowSettings(false)}
@@ -357,23 +357,23 @@ export const FocusTrackerScreen: React.FC = () => {
                                         <X className="w-5 h-5 text-gray-500" />
                                     </button>
                                 </div>
-                                <div className="p-4 space-y-3">
+                                <div className="p-4 space-y-2 overflow-y-auto">
                                     {PRESETS.map((preset) => (
                                         <button
                                             key={preset.name}
                                             onClick={() => handlePresetChange(preset)}
-                                            className={`w-full p-4 rounded-xl border-2 text-left transition-all ${selectedPreset.name === preset.name
+                                            className={`w-full p-3 rounded-xl border-2 text-left transition-all ${selectedPreset.name === preset.name
                                                 ? 'border-orange-500 bg-orange-50'
                                                 : 'border-gray-100 hover:border-gray-200'
                                                 }`}
                                         >
                                             <div className="flex items-center justify-between mb-1">
-                                                <span className="font-bold text-gray-800">{preset.name}</span>
+                                                <span className="font-bold text-gray-800 text-sm">{preset.name}</span>
                                                 {selectedPreset.name === preset.name && (
-                                                    <CheckCircle className="w-5 h-5 text-orange-500" />
+                                                    <CheckCircle className="w-4 h-4 text-orange-500" />
                                                 )}
                                             </div>
-                                            <div className="flex gap-4 text-sm text-gray-500">
+                                            <div className="flex gap-4 text-xs text-gray-500">
                                                 <span>🎯 {preset.focus}m</span>
                                                 <span>☕ {preset.shortBreak}m</span>
                                                 <span>😌 {preset.longBreak}m</span>
@@ -382,8 +382,8 @@ export const FocusTrackerScreen: React.FC = () => {
                                     ))}
 
                                     {/* Custom Time Input */}
-                                    <div className="pt-4 mt-4 border-t border-gray-100">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <div className="pt-4 mt-2 border-t border-gray-100 pb-2">
+                                        <label className="block text-xs font-medium text-gray-700 mb-2">
                                             Custom Duration (minutes)
                                         </label>
                                         <div className="flex gap-2">
@@ -392,12 +392,12 @@ export const FocusTrackerScreen: React.FC = () => {
                                                 value={customTime}
                                                 onChange={(e) => setCustomTime(e.target.value)}
                                                 placeholder="e.g. 50"
-                                                className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                                className="flex-1 px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                                             />
                                             <button
                                                 onClick={handleCustomTimeSubmit}
                                                 disabled={!customTime}
-                                                className="px-6 py-3 rounded-xl bg-gray-900 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="px-4 py-2 rounded-xl bg-gray-900 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                                             >
                                                 Set
                                             </button>

@@ -416,8 +416,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 onClick={onAddHabit}
                 className="fixed bottom-24 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-xl z-40"
                 style={{
-                    background: 'linear-gradient(135deg, #FF7A6B 0%, #FFA094 100%)',
-                    boxShadow: '0 4px 20px rgba(255, 122, 107, 0.4)',
+                    background: '#1F1F1F', // High contrast formatting - Dark Grey/Black
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
                 }}
             >
                 <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BottomNav, TabType } from './BottomNav';
 import { AddHabitModal } from './AddHabitModal';
 import { HomeScreen, InsightsScreen, TasksScreen, FocusTrackerScreen } from '../screens';
@@ -41,6 +41,11 @@ export function MobileDashboard() {
         }
         setActiveTab(tab);
     };
+
+    // Scroll to top when tab changes
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [activeTab]);
 
     return (
         <div className="min-h-screen" style={{ background: '#FFF8E7' }}>

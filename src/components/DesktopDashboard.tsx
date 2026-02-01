@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useHabits } from '../context/HabitContext';
 import { AddHabitModal } from './AddHabitModal';
 import { Sidebar, TabType } from './Sidebar';
@@ -49,6 +49,15 @@ export function DesktopDashboard() {
         setSelectedDate(date);
     };
 
+    const mainContentRef = useRef<HTMLDivElement>(null);
+
+    // Scroll to top on tab change
+    useEffect(() => {
+        if (mainContentRef.current) {
+            mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }, [activeTab]);
+
     return (
         <div className="flex min-h-screen" style={{ background: '#FFF8E7' }}>
             {/* Sidebar */}
@@ -60,7 +69,7 @@ export function DesktopDashboard() {
             />
 
             {/* Main Content */}
-            <div className="flex-1 overflow-y-auto">
+            <div ref={mainContentRef} className="flex-1 overflow-y-auto">
                 {activeTab === 'home' && (
                     <HomeScreen
                         selectedDate={selectedDate}
