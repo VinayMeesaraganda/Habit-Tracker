@@ -45,12 +45,28 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     // Timer state
     const [timerHabit, setTimerHabit] = useState<Habit | null>(null);
 
+    // Get logs for selected date
+    const selectedDateLogs = useMemo(() =>
+        getHabitLogs(selectedDate),
+        [selectedDate, getHabitLogs]
+    );
+
     // Get active and archived habits
     const { activeHabits, archivedHabits } = useMemo(() => {
         const selectedDayStart = startOfDay(selectedDate);
 
         const active = habits.filter(h => !h.archived_at);
         const archived = habits.filter(h => h.archived_at);
+
+        // Helper to check completion status
+        const isCompleted = (habit: Habit) => {
+            const log = selectedDateLogs.find(l => l.habit_id === habit.id);
+            if (!log) return false;
+            if (habit.is_quantifiable && habit.target_value) {
+                return (log.value || 0) >= habit.target_value;
+            }
+            return true;
+        };
 
         const visibleActive = isEditMode
             ? active.sort((a, b) => (a.priority || 0) - (b.priority || 0))
@@ -59,19 +75,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 if (isAfter(habitStartDate, selectedDayStart)) return false;
                 if (!isHabitScheduledForDate(h, selectedDate)) return false;
                 return true;
-            }).sort((a, b) => (a.priority || 0) - (b.priority || 0));
+            }).sort((a, b) => {
+                // Primary Sort: Completion Status (Pending first, Completed last)
+                const aCompleted = isCompleted(a);
+                const bCompleted = isCompleted(b);
+
+                if (aCompleted !== bCompleted) {
+                    return aCompleted ? 1 : -1;
+                }
+
+                // Secondary Sort: Priority
+                return (a.priority || 0) - (b.priority || 0);
+            });
 
         return {
             activeHabits: visibleActive,
             archivedHabits: archived
         };
-    }, [habits, selectedDate, isEditMode, selectedDate]);
-
-    // Get logs for selected date
-    const selectedDateLogs = useMemo(() =>
-        getHabitLogs(selectedDate),
-        [selectedDate, getHabitLogs]
-    );
+    }, [habits, selectedDate, isEditMode, selectedDateLogs]);
 
     // Calculate dashboard stats
     const dashboardStats = useMemo(() => {
