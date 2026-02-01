@@ -9,16 +9,16 @@ export const colors = {
     surface: '#FFFFFF',
     elevated: '#FFFCF2',
 
-    // Habit gradient colors - Deep, rich tones for white text contrast
+    // Habit gradient colors - Sophisticated, muted tones for elegance and readability
     habitColors: {
-        coral: { start: '#E64A19', end: '#FA5F2E' }, // Deep Coral
-        sky: { start: '#1565C0', end: '#1E88E5' }, // Strong Blue
-        lavender: { start: '#5E35B1', end: '#7E57C2' }, // Deep Purple
-        peach: { start: '#D84315', end: '#F4511E' }, // Burnt Orange
-        mint: { start: '#2E7D32', end: '#43A047' }, // Forest Green
-        rose: { start: '#C2185B', end: '#D81B60' }, // Dark Pink
-        amber: { start: '#F9A825', end: '#FBC02D' }, // Dark Gold (Readable with white)
-        teal: { start: '#00695C', end: '#00897B' }, // Deep Teal
+        coral: { start: '#D87A65', end: '#E5907D' }, // Muted Terracotta
+        sky: { start: '#5B7C99', end: '#7A9CB8' }, // Steel Blue
+        lavender: { start: '#8E7CC3', end: '#A594D1' }, // Dusty Purple
+        peach: { start: '#D9886C', end: '#EBA086' }, // Clay / Warm Sand
+        mint: { start: '#5D9B7B', end: '#78B295' }, // Deep Sage
+        rose: { start: '#C76D7E', end: '#D98998' }, // Antique Rose
+        amber: { start: '#D4AF37', end: '#E5C158' }, // Metallic Gold / Ochre
+        teal: { start: '#4B8B84', end: '#68A69F' }, // Muted Spruce
     },
 
     // Text - Slightly different grays
