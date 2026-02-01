@@ -51,14 +51,13 @@ export const colors = {
 
 // Category to color mapping - Unique combinations
 export const categoryColorMap: Record<string, keyof typeof colors.habitColors> = {
-    'Health': 'coral',
-    'Fitness': 'sky',
-    'Learning': 'lavender',
-    'Productivity': 'peach',
-    'Mindfulness': 'mint',
-    'Social': 'rose',
-    'Finance': 'teal',
-    'Creativity': 'amber',
+    'Health & Fitness 💪': 'sky',
+    'Growth 📚': 'amber',
+    'Productivity 🎯': 'peach',
+    'Mindfulness 🧘': 'mint',
+    'Social 👥': 'rose',
+    'Finance 💰': 'teal',
+    'Other 📌': 'lavender',
 };
 
 export type HabitColor = keyof typeof colors.habitColors;

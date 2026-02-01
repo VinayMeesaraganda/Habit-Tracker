@@ -306,7 +306,8 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                                     </label>
                                     <div className="grid grid-cols-3 gap-2">
                                         {HABIT_CATEGORIES.map((cat) => {
-                                            const [label, icon] = cat.split(' ');
+                                            const icon = cat.substring(cat.lastIndexOf(' ') + 1);
+                                            const label = cat.substring(0, cat.lastIndexOf(' '));
                                             return (
                                                 <button
                                                     key={cat}

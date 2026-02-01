@@ -113,14 +113,12 @@ export interface ChartDataRow {
 
 // Predefined categories with emojis
 export const HABIT_CATEGORIES = [
-    'Health ❤️‍🩹',
-    'Fitness 💪',
+    'Health & Fitness 💪',
     'Mindfulness 🧘',
-    'Learning 📚',
+    'Growth 📚', // Merged Learning & Creativity
     'Productivity 🎯',
     'Social 👥',
     'Finance 💰',
-    'Creativity 🎨',
     'Other 📌',
 ] as const;
 

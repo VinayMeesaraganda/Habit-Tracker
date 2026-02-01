@@ -7,6 +7,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Check, X } from 'lucide-react';
 import { Habit } from '../types';
 import { colors, categoryColorMap, HabitColor } from '../theme/colors';
+import { SoundManager } from '../utils/soundUtils';
+
 
 interface FocusTimerProps {
     habit: Habit;
@@ -26,7 +28,6 @@ export const FocusTimer: React.FC<FocusTimerProps> = ({
     const [isRunning, setIsRunning] = useState(false);
     const [isCompleted, setIsCompleted] = useState(false);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     // Reset timer when habit changes or modal opens
     useEffect(() => {
@@ -47,10 +48,8 @@ export const FocusTimer: React.FC<FocusTimerProps> = ({
                         setIsRunning(false);
                         setIsCompleted(true);
                         // Play notification sound
-                        try {
-                            audioRef.current = new Audio('/timer-complete.mp3');
-                            audioRef.current.play().catch(() => { });
-                        } catch { }
+                        SoundManager.playCompletion();
+
                         // Vibrate on mobile
                         if (navigator.vibrate) {
                             navigator.vibrate([200, 100, 200]);
