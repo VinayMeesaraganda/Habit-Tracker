@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, LogOut, User as UserIcon, Mail, Check, ChevronRight, ChevronLeft } from 'lucide-react';
-import { useHabits } from '../context/HabitContext';
+import { useAuth } from '../context/AuthContext';
 
 interface ProfileModalProps {
     isOpen: boolean;
@@ -8,7 +8,7 @@ interface ProfileModalProps {
 }
 
 export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
-    const { user, signOut, updateProfile, updatePassword, updateEmail, verifyPassword } = useHabits();
+    const { user, signOut, updateProfile, updatePassword, updateEmail, verifyPassword } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [name, setName] = useState(user?.full_name || '');
     const [email, setEmail] = useState(user?.email || '');

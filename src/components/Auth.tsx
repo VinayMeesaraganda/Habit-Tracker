@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useHabits } from '../context/HabitContext';
+import { useAuth } from '../context/AuthContext';
 import {
     Loader2, Check, Flame, Trophy, TrendingUp, ChevronRight, Target,
     BarChart3, Award, X, ArrowRight, Sparkles, LineChart, Mail, User, Lock
@@ -54,7 +54,7 @@ export function Auth() {
     const [animationPhase, setAnimationPhase] = useState(0);
 
     const featuresRef = useRef<HTMLDivElement>(null);
-    const { signIn, signUp, resetPassword } = useHabits();
+    const { signIn, signUp, resetPassword } = useAuth();
 
     // Initial animations
     useEffect(() => {

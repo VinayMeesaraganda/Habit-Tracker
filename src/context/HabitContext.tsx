@@ -1,38 +1,21 @@
 /**
  * HabitContext - Global state management with Supabase integration
- * Manages habits, logs, authentication, and real-time sync
+ * Manages habits, logs, and real-time sync. Authentication is delegated to AuthContext.
  */
 
 import { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { Habit, HabitLog, User } from '../types';
+import { Habit, HabitLog } from '../types';
 import { startOfMonth, format } from 'date-fns';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { useAuth } from './AuthContext';
 
 interface HabitContextType {
-    // Auth state
-    user: User | null;
-    loading: boolean;
-
     // Data state
     habits: Habit[];
     logs: HabitLog[];
     currentMonth: Date;
 
-    // Auth actions
-    signUp: (email: string, password: string) => Promise<void>;
-    signIn: (email: string, password: string) => Promise<void>;
-    signOut: () => Promise<void>;
-    deleteAccount: () => Promise<void>;
-
-    resetPassword: (email: string) => Promise<void>;
-    verifyPassword: (password: string) => Promise<void>;
-
-    updateProfile: (updates: { full_name?: string; gender?: string }) => Promise<void>;
-    updateEmail: (email: string) => Promise<void>;
-    updatePassword: (password: string) => Promise<void>;
-
-    // Data actions
     // Data actions
     addHabit: (habit: Omit<Habit, 'id' | 'user_id' | 'updated_at'> & { created_at?: string }) => Promise<void>;
     updateHabit: (id: string, updates: Partial<Habit>) => Promise<void>;
@@ -54,8 +37,7 @@ interface HabitContextType {
 const HabitContext = createContext<HabitContextType | undefined>(undefined);
 
 export function HabitProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { user } = useAuth();
     const [habits, setHabits] = useState<Habit[]>([]);
     const [logs, setLogs] = useState<HabitLog[]>([]);
     const [currentMonth, setCurrentMonth] = useState<Date>(startOfMonth(new Date()));
@@ -63,30 +45,6 @@ export function HabitProvider({ children }: { children: ReactNode }) {
     // Race condition prevention: Track if a local operation is in-flight
     const operationInFlightRef = useRef(false);
     const refreshDebounceRef = useRef<NodeJS.Timeout | null>(null);
-
-    // Initialize auth state
-    useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ? {
-                id: session.user.id,
-                email: session.user.email!,
-                full_name: session.user.user_metadata?.full_name,
-                gender: session.user.user_metadata?.gender
-            } : null);
-            setLoading(false);
-        });
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ? {
-                id: session.user.id,
-                email: session.user.email!,
-                full_name: session.user.user_metadata?.full_name,
-                gender: session.user.user_metadata?.gender
-            } : null);
-        });
-
-        return () => subscription.unsubscribe();
-    }, []);
 
     // Load habits and logs when user changes
     useEffect(() => {
@@ -183,69 +141,6 @@ export function HabitProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             console.error('Error refreshing data:', error);
         }
-    };
-
-    const signUp = async (email: string, password: string) => {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-    };
-
-    const signIn = async (email: string, password: string) => {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-    };
-
-    const signOut = async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
-    };
-
-    const resetPassword = async (email: string) => {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin,
-        });
-        if (error) throw error;
-    };
-
-    const verifyPassword = async (password: string) => {
-        if (!user || !user.email) throw new Error("User email not found");
-
-        const { error } = await supabase.auth.signInWithPassword({
-            email: user.email,
-            password: password
-        });
-
-        if (error) throw error;
-    };
-
-    const updateProfile = async (updates: { full_name?: string; gender?: string }) => {
-        const { data, error } = await supabase.auth.updateUser({
-            data: updates
-        });
-        if (error) throw error;
-
-        // Manual update of local state to reflect change immediately
-        if (data.user) {
-            setUser(prev => prev ? {
-                ...prev,
-                full_name: updates.full_name || prev.full_name,
-                gender: updates.gender || prev.gender
-            } : null);
-        }
-    };
-
-    const updateEmail = async (email: string) => {
-        const { error } = await supabase.auth.updateUser({
-            email: email
-        });
-        if (error) throw error;
-    };
-
-    const updatePassword = async (password: string) => {
-        const { error } = await supabase.auth.updateUser({
-            password: password
-        });
-        if (error) throw error;
     };
 
     const normalizePriorities = async () => {
@@ -614,40 +509,10 @@ export function HabitProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const deleteAccount = async () => {
-        if (!user) throw new Error('Not authenticated');
-
-        // 1. Delete all user data
-        // Order matters if there are foreign key constraints (logs depend on habits)
-        const { error: logsError } = await supabase.from('habit_logs').delete().eq('user_id', user.id);
-        if (logsError) throw logsError;
-
-        const { error: tasksError } = await supabase.from('tasks').delete().eq('user_id', user.id);
-        // Tolerate task error if table doesn't exist yet, but log it
-        if (tasksError && tasksError.code !== '42P01') console.error('Error deleting tasks:', tasksError);
-
-        const { error: habitsError } = await supabase.from('habits').delete().eq('user_id', user.id);
-        if (habitsError) throw habitsError;
-
-        // 2. Sign Out
-        await signOut();
-    };
-
     const value: HabitContextType = useMemo(() => ({
-        user,
-        loading,
         habits,
         logs,
         currentMonth,
-        signUp,
-        signIn,
-        signOut,
-        deleteAccount,
-        resetPassword,
-        verifyPassword,
-        updateProfile,
-        updateEmail,
-        updatePassword,
         addHabit,
         updateHabit,
         deleteHabit,
@@ -661,7 +526,7 @@ export function HabitProvider({ children }: { children: ReactNode }) {
         isSkipped,
         setCurrentMonth,
         refreshData,
-    }), [user, loading, habits, logs, currentMonth, getHabitLogs, getHabitLogsForDate, isSkipped]);
+    }), [habits, logs, currentMonth, getHabitLogs, getHabitLogsForDate, isSkipped]);
 
     return <HabitContext.Provider value={value}>{children}</HabitContext.Provider>;
 }

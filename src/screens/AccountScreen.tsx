@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useHabits } from '../context/HabitContext';
+import { useAuth } from '../context/AuthContext';
 import { User, Mail, Lock, ChevronLeft, Save, Loader, Trash2, Users } from 'lucide-react';
 
 interface AccountScreenProps {
@@ -7,7 +7,7 @@ interface AccountScreenProps {
 }
 
 export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack }) => {
-    const { user, updateProfile, updateEmail, updatePassword, deleteAccount, verifyPassword } = useHabits();
+    const { user, updateProfile, updateEmail, updatePassword, deleteAccount, verifyPassword } = useAuth();
 
     const [fullName, setFullName] = useState('');
     const [gender, setGender] = useState('');
@@ -99,8 +99,8 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack }) => {
             {/* Message Toast */}
             {message && (
                 <div className={`mx-4 mb-4 p-3 rounded-xl text-sm font-medium ${message.type === 'success'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-red-100 text-red-700'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-red-100 text-red-700'
                     }`}>
                     {message.text}
                 </div>

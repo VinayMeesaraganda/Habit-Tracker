@@ -1,5 +1,6 @@
 import { useState, Suspense, lazy, useEffect } from 'react';
 import { HabitProvider, useHabits } from './context/HabitContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { FocusProvider } from './context/FocusContext';
 import { TaskProvider } from './context/TaskContext';
 import { Auth } from './components/Auth';
@@ -29,7 +30,8 @@ import { useNotificationScheduler } from './hooks/useNotificationScheduler';
 // ...
 
 function AppContent() {
-    const { user, loading, habits } = useHabits();
+    const { user, loading } = useAuth();
+    const { habits } = useHabits();
     const isMobile = useIsMobile();
     const [showOnboarding, setShowOnboarding] = useState(false);
 
@@ -76,14 +78,16 @@ function AppContent() {
 
 export default function App() {
     return (
-        <HabitProvider>
-            <FocusProvider>
-                <TaskProvider>
-                    <ErrorBoundary>
-                        <AppContent />
-                    </ErrorBoundary>
-                </TaskProvider>
-            </FocusProvider>
-        </HabitProvider>
+        <AuthProvider>
+            <HabitProvider>
+                <FocusProvider>
+                    <TaskProvider>
+                        <ErrorBoundary>
+                            <AppContent />
+                        </ErrorBoundary>
+                    </TaskProvider>
+                </FocusProvider>
+            </HabitProvider>
+        </AuthProvider>
     );
 }

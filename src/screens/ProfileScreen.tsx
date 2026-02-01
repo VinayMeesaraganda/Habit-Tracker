@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useHabits } from '../context/HabitContext';
+import { useAuth } from '../context/AuthContext';
 import { User, Bell, Download, Shield, FileText, Mail, LogOut, ChevronRight } from 'lucide-react';
 import { generateCSV, downloadCSV } from '../utils/export';
 import { format } from 'date-fns';
@@ -12,7 +13,8 @@ import { NotificationsScreen } from './NotificationsScreen';
 type ProfileView = 'main' | 'privacy' | 'terms' | 'account' | 'notifications';
 
 export const ProfileScreen: React.FC = () => {
-    const { user, signOut, habits, logs } = useHabits();
+    const { user, signOut } = useAuth();
+    const { habits, logs } = useHabits();
     const [view, setView] = useState<ProfileView>('main');
     const [exportMessage, setExportMessage] = useState<string | null>(null);
 

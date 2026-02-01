@@ -5,7 +5,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { Task } from '../types';
-import { useHabits } from './HabitContext';
+import { useAuth } from './AuthContext';
 
 interface TaskContextType {
     tasks: Task[];
@@ -20,7 +20,7 @@ interface TaskContextType {
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export function TaskProvider({ children }: { children: ReactNode }) {
-    const { user } = useHabits();
+    const { user } = useAuth();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
 

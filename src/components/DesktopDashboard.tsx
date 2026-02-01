@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useHabits } from '../context/HabitContext';
+import { useAuth } from '../context/AuthContext';
 import { AddHabitModal } from './AddHabitModal';
 import { Sidebar, TabType } from './Sidebar';
 import { HomeScreen, InsightsScreen, TasksScreen, FocusTrackerScreen } from '../screens';
@@ -7,7 +7,7 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { Habit } from '../types';
 
 export function DesktopDashboard() {
-    const { user } = useHabits();
+    const { user } = useAuth();
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [activeTab, setActiveTab] = useState<TabType>('home');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);

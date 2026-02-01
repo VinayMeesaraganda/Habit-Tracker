@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { format, startOfMonth, endOfMonth, subMonths, addMonths, isSameMonth, isAfter, isBefore, eachDayOfInterval } from 'date-fns';
 import { useHabits } from '../context/HabitContext';
-import { ChevronLeft, ChevronRight, Flame, Award, TrendingUp, Calendar, Target, Zap, Trophy } from 'lucide-react';
+import { useAnalytics } from '../hooks/useAnalytics';
+import { ChevronLeft, ChevronRight, Flame, Award, TrendingUp, Calendar, Target, Zap, Trophy, Loader2 } from 'lucide-react';
 
 import { calculateStreak, getLongestStreak, getProgressBadges } from '../utils/analytics';
 import { isHabitScheduledForDate, getFrequencyLabel, getHabitFrequency } from '../utils/frequencyUtils';
@@ -12,7 +13,18 @@ import { colors, categoryColorMap } from '../theme/colors';
 
 export const InsightsScreen: React.FC = () => {
     const { habits, logs } = useHabits();
+    const { getMonthlyStats, loading: analyticsLoading } = useAnalytics();
+    const [monthlyStats, setMonthlyStats] = useState<{ habit_id: string; completion_count: number }[]>([]);
     const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+
+    // Fetch analytics when month changes
+    useEffect(() => {
+        const fetchStats = async () => {
+            const data = await getMonthlyStats(selectedMonth);
+            setMonthlyStats(data || []);
+        };
+        fetchStats();
+    }, [selectedMonth, getMonthlyStats]);
 
     // Month navigation
     const monthStart = startOfMonth(selectedMonth);
@@ -97,6 +109,7 @@ export const InsightsScreen: React.FC = () => {
 
         let dailyScoreSum = 0;
         let perfectDaysCount = 0;
+        let totalPossible = 0;
 
         daysToCheck.forEach(day => {
             const dateStr = format(day, 'yyyy-MM-dd');
@@ -106,14 +119,8 @@ export const InsightsScreen: React.FC = () => {
             habitsForMonth.forEach(habit => {
                 const habitCreatedDate = new Date(habit.created_at);
                 habitCreatedDate.setHours(0, 0, 0, 0);
-
                 if (habitCreatedDate > day) return;
-
-                if (habit.archived_at) {
-                    const archiveDate = new Date(habit.archived_at);
-                    if (archiveDate < day) return;
-                }
-
+                if (habit.archived_at && new Date(habit.archived_at) < day) return;
                 if (!isHabitScheduledForDate(habit, day)) return;
 
                 dayPossible++;
@@ -130,12 +137,14 @@ export const InsightsScreen: React.FC = () => {
             if (dayPossible > 0) {
                 const dayRate = dayCompleted / dayPossible;
                 dailyScoreSum += dayRate;
-
-                if (dayCompleted >= dayPossible) {
-                    perfectDaysCount++;
-                }
+                if (dayCompleted >= dayPossible) perfectDaysCount++;
             }
+            totalPossible += dayPossible;
         });
+
+        // Use RPC-based percentage if possible, but we need consistency with perfect days.
+        // Actually, let's keep dailyScoreSum for percentage as it correctly weighs "days" rather than just raw counts.
+        // The RPC 'totalCompletions' is useful for the summary stat, not necessarily the daily average rate.
 
         const percentage = totalCalendarDays > 0 ? (dailyScoreSum / totalCalendarDays) * 100 : 0;
 
@@ -144,16 +153,17 @@ export const InsightsScreen: React.FC = () => {
             perfectDays: perfectDaysCount,
             totalDays: totalCalendarDays
         };
-    }, [habitsForMonth, logs, monthStart, monthEnd, isCurrentMonth, isFutureMonth]);
+    }, [habitsForMonth, logs, monthlyStats, monthStart, monthEnd, isCurrentMonth, isFutureMonth]);
 
     // Summary stats
     const summaryStats = useMemo(() => {
-        const monthLogs = logs.filter(l => l.date >= format(monthStart, 'yyyy-MM-dd') && l.date <= format(monthEnd, 'yyyy-MM-dd'));
-        const totalCheckIns = monthLogs.length;
+        // Use RPC data for total check-ins (O(1) vs O(N))
+        const totalCheckIns = monthlyStats.reduce((acc, curr) => acc + curr.completion_count, 0);
 
         const longestStreak = getLongestStreak(activeHabits, logs);
 
-        // Find best day
+        // Find best day (Requires daily data, still using logs)
+        const monthLogs = logs.filter(l => l.date >= format(monthStart, 'yyyy-MM-dd') && l.date <= format(monthEnd, 'yyyy-MM-dd'));
         const dayCounts: Record<string, number> = {};
         monthLogs.forEach(log => {
             dayCounts[log.date] = (dayCounts[log.date] || 0) + 1;
@@ -166,7 +176,7 @@ export const InsightsScreen: React.FC = () => {
         });
 
         return { totalCheckIns, longestStreak, bestDay };
-    }, [logs, monthStart, monthEnd, activeHabits]);
+    }, [logs, monthlyStats, monthStart, monthEnd, activeHabits]);
 
     // Achievement badges
     const badges = useMemo(() => getProgressBadges(habits, logs), [habits, logs]);
@@ -176,10 +186,13 @@ export const InsightsScreen: React.FC = () => {
     // Habit performance for leaderboard
     const habitPerformance = useMemo(() => {
         return habitsForMonth.map(habit => {
+            // Use RPC stat if available
+            const stat = monthlyStats.find(s => s.habit_id === habit.id);
+            const completed = stat ? stat.completion_count : 0;
+
             const habitCreatedDate = new Date(habit.created_at);
             habitCreatedDate.setHours(0, 0, 0, 0);
 
-            let completed = 0;
             let possible = 0;
 
             const effectiveStart = habitCreatedDate > monthStart ? habitCreatedDate : monthStart;
@@ -194,15 +207,6 @@ export const InsightsScreen: React.FC = () => {
                 days.forEach(day => {
                     if (isHabitScheduledForDate(habit, day)) {
                         possible++;
-                        const dateStr = format(day, 'yyyy-MM-dd');
-                        const log = logs.find(l => l.habit_id === habit.id && l.date === dateStr);
-                        if (log) {
-                            if (habit.is_quantifiable) {
-                                completed += Math.min((log.value || 0) / (habit.target_value || 1), 1);
-                            } else {
-                                completed++;
-                            }
-                        }
                     }
                 });
             }
@@ -211,8 +215,8 @@ export const InsightsScreen: React.FC = () => {
             const streak = calculateStreak(habit, logs);
 
             return { habit, rate, streak, completed: Math.round(completed), possible };
-        }).sort((a, b) => b.streak - a.streak || b.rate - a.rate);
-    }, [habitsForMonth, logs, monthStart, monthEnd]);
+        }).sort((a, b) => b.rate - a.rate || b.streak - a.streak);
+    }, [habitsForMonth, monthlyStats, logs, monthStart, monthEnd]);
 
     return (
         <div className="min-h-screen bg-[#FFF8E7]">
@@ -221,7 +225,10 @@ export const InsightsScreen: React.FC = () => {
                 {/* Header & Month Nav - Compact Row */}
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h1 className="text-2xl lg:text-3xl font-black text-gray-900 tracking-tight">Insights</h1>
+                        <h1 className="text-2xl lg:text-3xl font-black text-gray-900 tracking-tight">
+                            Insights
+                            {analyticsLoading && <Loader2 className="inline ml-3 w-5 h-5 animate-spin text-orange-500" />}
+                        </h1>
                         <p className="text-xs lg:text-base text-gray-500 font-medium">Your progress</p>
                     </div>
 

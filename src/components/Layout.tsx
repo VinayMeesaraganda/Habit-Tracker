@@ -4,7 +4,7 @@
 
 import { ReactNode } from 'react';
 import { Home, LogOut, Target } from 'lucide-react';
-import { useHabits } from '../context/HabitContext';
+import { useAuth } from '../context/AuthContext';
 
 interface LayoutProps {
     children: ReactNode;
@@ -13,7 +13,7 @@ interface LayoutProps {
 }
 
 export function Layout({ children, currentView, onViewChange }: LayoutProps) {
-    const { user, signOut } = useHabits();
+    const { user, signOut } = useAuth();
 
     const navItems = [
         { id: 'today' as const, label: 'Dashboard', icon: Home },
