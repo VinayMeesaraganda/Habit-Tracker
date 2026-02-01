@@ -9,16 +9,16 @@ export const colors = {
     surface: '#FFFFFF',
     elevated: '#FFFCF2',
 
-    // Habit gradient colors - Unique combinations
+    // Habit gradient colors - Deep, rich tones for white text contrast
     habitColors: {
-        coral: { start: '#FF7A6B', end: '#FFA094' }, // Coral-red
-        sky: { start: '#5BA3F5', end: '#7DB8F7' }, // Sky blue
-        lavender: { start: '#9B6CF9', end: '#B88FFA' }, // Lavender purple
-        peach: { start: '#FFB077', end: '#FFC599' }, // Peach orange
-        mint: { start: '#6EDFA6', end: '#8FE8B8' }, // Mint green
-        rose: { start: '#FF8BA7', end: '#FFB3C1' }, // Rose pink
-        amber: { start: '#FFD97D', end: '#FFE5A3' }, // Amber yellow
-        teal: { start: '#5ECFB8', end: '#7FDCC9' }, // Teal
+        coral: { start: '#E64A19', end: '#FA5F2E' }, // Deep Coral
+        sky: { start: '#1565C0', end: '#1E88E5' }, // Strong Blue
+        lavender: { start: '#5E35B1', end: '#7E57C2' }, // Deep Purple
+        peach: { start: '#D84315', end: '#F4511E' }, // Burnt Orange
+        mint: { start: '#2E7D32', end: '#43A047' }, // Forest Green
+        rose: { start: '#C2185B', end: '#D81B60' }, // Dark Pink
+        amber: { start: '#F9A825', end: '#FBC02D' }, // Dark Gold (Readable with white)
+        teal: { start: '#00695C', end: '#00897B' }, // Deep Teal
     },
 
     // Text - Slightly different grays
