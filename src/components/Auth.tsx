@@ -9,6 +9,8 @@ import {
     Loader2, Check, Flame, Trophy, TrendingUp, ChevronRight, Target,
     BarChart3, Award, X, ArrowRight, Sparkles, LineChart, Mail, User, Lock
 } from 'lucide-react';
+import { PrivacyPolicyScreen } from '../screens/PrivacyPolicyScreen';
+import { TermsOfUseScreen } from '../screens/TermsOfUseScreen';
 
 // Feature card data
 const FEATURES = [
@@ -39,6 +41,7 @@ const FEATURES = [
 ];
 
 export function Auth() {
+    const [view, setView] = useState<'landing' | 'privacy' | 'terms'>('landing');
     const [authView, setAuthView] = useState<'signin' | 'signup' | 'forgot'>('signin');
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [email, setEmail] = useState('');
@@ -115,10 +118,19 @@ export function Auth() {
         }
     };
 
+
+    if (view === 'privacy') {
+        return <PrivacyPolicyScreen onBack={() => setView('landing')} />;
+    }
+
+    if (view === 'terms') {
+        return <TermsOfUseScreen onBack={() => setView('landing')} />;
+    }
+
     return (
         <div className="min-h-screen bg-[#FFF8E7] text-[#1F1F1F] overflow-x-hidden font-sans">
             {/* ===== NAVIGATION ===== */}
-            <nav className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-4 bg-[#FFF8E7]/80 backdrop-blur-lg border-b border-orange-100/50">
+            <nav className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-4 bg-[#FFF8E7]/80 backdrop-blur-xl border-b border-orange-100/50 supports-[backdrop-filter]:bg-[#FFF8E7]/60">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF7A6B] to-[#FFA094] flex items-center justify-center shadow-sm">
@@ -158,7 +170,7 @@ export function Auth() {
                                 <span>Your personal growth companion</span>
                             </div>
 
-                            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight mb-6 text-gray-900">
+                            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tighter mb-6 text-gray-900">
                                 Build better<br />
                                 <span className="bg-gradient-to-r from-[#FF7A6B] to-[#FFD97D] bg-clip-text text-transparent">
                                     habits together
@@ -357,7 +369,7 @@ export function Auth() {
             {/* ===== CTA SECTION ===== */}
             <section className="py-24 px-4 sm:px-6 bg-[#FFF8E7]">
                 <div className="max-w-4xl mx-auto text-center">
-                    <div className="bg-gradient-to-br from-orange-400 to-pink-500 rounded-[2.5rem] p-12 sm:p-20 text-white shadow-2xl shadow-orange-500/20 relative overflow-hidden">
+                    <div className="bg-gradient-to-br from-orange-400 to-pink-500 rounded-[2.5rem] p-12 sm:p-20 text-white shadow-2xl shadow-orange-500/20 relative overflow-hidden backdrop-blur-sm">
                         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                         <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
@@ -381,15 +393,34 @@ export function Auth() {
             </section>
 
             {/* ===== FOOTER ===== */}
-            <footer className="py-12 px-4 sm:px-6 border-t border-orange-100 bg-white">
-                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+            <footer className="py-12 px-4 sm:px-6 border-t border-orange-100 bg-white/50 backdrop-blur-sm">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF7A6B] to-[#FFA094] flex items-center justify-center shadow-sm">
                             <Target className="w-6 h-6 text-white" />
                         </div>
-                        <span className="text-lg font-bold text-gray-900">Habit Tracker</span>
+                        <span className="text-lg font-bold text-gray-900 tracking-tight">Habit Tracker</span>
                     </div>
-                    <p className="text-sm text-gray-500 font-medium">© 2026 Habit Tracker. All rights reserved.</p>
+
+                    <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8">
+                        <button
+                            onClick={() => setView('privacy')}
+                            className="text-sm text-gray-500 hover:text-orange-600 font-medium transition-colors"
+                        >
+                            Privacy Policy
+                        </button>
+                        <button
+                            onClick={() => setView('terms')}
+                            className="text-sm text-gray-500 hover:text-orange-600 font-medium transition-colors"
+                        >
+                            Terms of Service
+                        </button>
+                        <a href="mailto:Vinaykiran.018@gmail.com" className="text-sm text-gray-500 hover:text-orange-600 font-medium transition-colors">
+                            Contact
+                        </a>
+                    </div>
+
+                    <p className="text-sm text-gray-400 font-medium">© 2026 Habit Tracker</p>
                 </div>
             </footer>
 
@@ -535,7 +566,20 @@ export function Auth() {
                         </form>
 
                         <p className="mt-8 text-xs text-gray-400 text-center leading-relaxed">
-                            By continuing, you agree to our Terms of Service & Privacy Policy.
+                            By continuing, you agree to our{' '}
+                            <button
+                                onClick={() => { setIsAuthModalOpen(false); setView('terms'); }}
+                                className="text-gray-600 hover:text-orange-600 font-medium underline decoration-gray-300 underline-offset-2 transition-colors"
+                            >
+                                Terms of Service
+                            </button>
+                            {' '}&{' '}
+                            <button
+                                onClick={() => { setIsAuthModalOpen(false); setView('privacy'); }}
+                                className="text-gray-600 hover:text-orange-600 font-medium underline decoration-gray-300 underline-offset-2 transition-colors"
+                            >
+                                Privacy Policy
+                            </button>.
                         </p>
                     </div>
                 </div>
