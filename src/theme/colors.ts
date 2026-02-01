@@ -10,16 +10,16 @@ export const colors = {
     elevated: '#FFFCF2',
 
     // Habit gradient colors - Unique combinations
-    // Habit gradient colors - Deep, vibrant, high-contrast for white text
+    // Habit gradient colors - Sophisticated, muted tones (High legibility for white text)
     habitColors: {
-        coral: { start: '#FF6B6B', end: '#EE5253' }, // Vibrant Red-Coral
-        sky: { start: '#48dbfb', end: '#2e86de' }, // Deep Blue
-        lavender: { start: '#a29bfe', end: '#6c5ce7' }, // Royal Purple
-        peach: { start: '#ff9f43', end: '#ee5253' }, // Deep Orange (Sunset)
-        mint: { start: '#1dd1a1', end: '#10ac84' }, // Jungle Green
-        rose: { start: '#ff9ff3', end: '#f368e0' }, // Deep Rose
-        amber: { start: '#feca57', end: '#ff9f43' }, // Warm Orange-Yellow
-        teal: { start: '#00d2d3', end: '#01a3a4' }, // Cyan-Teal
+        coral: { start: '#c0392b', end: '#e74c3c' }, // Pomegranate -> Alizarin (Deep Red)
+        sky: { start: '#2980b9', end: '#3498db' }, // Belize Hole -> Peter River (Strong Blue)
+        lavender: { start: '#8e44ad', end: '#9b59b6' }, // Wisteria -> Amethyst (Deep Purple)
+        peach: { start: '#d35400', end: '#e67e22' }, // Pumpkin -> Carrot (Deep Orange)
+        mint: { start: '#27ae60', end: '#2ecc71' }, // Nephritis -> Emerald (Natural Green)
+        rose: { start: '#b33939', end: '#ff5252' }, // Deep Rose -> Soft Red
+        amber: { start: '#f39c12', end: '#f1c40f' }, // Orange -> Sunflower (Darkened Yellow)
+        teal: { start: '#16a085', end: '#1abc9c' }, // Green Sea -> Turquoise (Deep Teal)
     },
 
     // Text - Slightly different grays
