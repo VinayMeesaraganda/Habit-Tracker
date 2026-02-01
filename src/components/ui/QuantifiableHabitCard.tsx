@@ -3,7 +3,7 @@ import { Habit, HabitLog } from '../../types';
 import { colors, categoryColorMap, HabitColor } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { shadows } from '../../theme/shadows';
-import { Plus, Check, Edit2, Bell } from 'lucide-react';
+import { Plus, Check, Edit2 } from 'lucide-react';
 
 interface QuantifiableHabitCardProps {
     habit: Habit;
@@ -28,7 +28,7 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
     onClick,
     className = '',
     disabled = false,
-    reminderTime,
+    // reminderTime, // Not used in UI anymore
 }) => {
     const [showInput, setShowInput] = useState(false);
     const [inputValue, setInputValue] = useState('');
@@ -153,7 +153,6 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
                 {habit.name}
             </h3>
 
-            {/* Progress Text with Edit Icon */}
             <div className="flex items-center gap-2 mb-2">
                 <p className="text-xs" style={{ color: isSkippedState ? '#6B7280' : gradient.text, opacity: 0.8 }}>
                     {isSkippedState ? 'Skipped' : `${currentValue} / ${targetValue} ${habit.unit}`}
@@ -166,15 +165,6 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
                     >
                         <Edit2 className="w-3 h-3" />
                     </button>
-                )}
-                {reminderTime && !isComplete && !isSkippedState && (
-                    <span
-                        className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
-                        style={{ backgroundColor: 'rgba(0,0,0,0.05)', color: gradient.text }}
-                    >
-                        <Bell className="w-3 h-3" />
-                        {reminderTime}
-                    </span>
                 )}
             </div>
 

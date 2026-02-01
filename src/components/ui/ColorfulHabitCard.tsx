@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { colors, categoryColorMap, HabitColor } from '../../theme/colors';
-import { Timer, Bell, SkipForward } from 'lucide-react';
+import { Timer, SkipForward } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ColorfulHabitCardProps {
@@ -29,7 +29,7 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
     onSkip,
     onTimer,
     timerMinutes,
-    reminderTime,
+    // reminderTime, // Not used in UI anymore
     className = '',
     disabled = false,
     onClick,
@@ -210,37 +210,18 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
                 >
                     {name}
                 </motion.h3>
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-sm font-medium pr-8"
-                    style={{
-                        color: isSkippedState ? '#6B7280' : gradient.text,
-                        opacity: isSkippedState ? 1 : 0.8
-                    }}
-                >
-                    {isSkippedState
-                        ? '⏭ Skipped'
-                        : completed
-                            ? '✨ Complete!'
-                            : schedule
-                    }
-                </motion.p>
-
-                {/* Reminder Badge */}
-                <AnimatePresence>
-                    {reminderTime && !completed && !isSkippedState && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 10 }}
-                            className="flex items-center gap-1 mt-3 text-white/90 bg-black/10 w-fit px-2.5 py-1 rounded-full"
-                        >
-                            <Bell className="w-3 h-3" />
-                            <span className="text-xs font-medium">{reminderTime}</span>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                {/* Schedule/Category Info */}
+                <div className="flex items-center gap-2 mb-3">
+                    <p
+                        className="text-xs font-medium"
+                        style={{
+                            color: isSkippedState ? '#6B7280' : gradient.text,
+                            opacity: isSkippedState ? 1 : 0.8
+                        }}
+                    >
+                        {schedule} • {category}
+                    </p>
+                </div>
             </div>
 
             {/* Completion Celebration Effect */}
@@ -257,6 +238,6 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
                     />
                 )}
             </AnimatePresence>
-        </motion.div>
+        </motion.div >
     );
 };

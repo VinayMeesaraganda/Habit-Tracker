@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useHabits } from '../context/HabitContext';
 import { format } from 'date-fns';
+import { playNotificationSound } from '../utils/audio';
 
 export function useNotificationScheduler() {
     const { habits } = useHabits();
@@ -31,11 +32,17 @@ export function useNotificationScheduler() {
             );
 
             habitsToRemind.forEach(habit => {
+                // Check Global Switch
+                const isMuted = localStorage.getItem('notifications_muted') === 'true';
+                if (isMuted) return;
+
                 if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                    // Play sound
+                    playNotificationSound();
+
                     new Notification(`Time for ${habit.name}! ⏰`, {
-                        body: `Don't forget your daily goal: ${habit.month_goal} check-ins!`,
-                        icon: '/pwa-192x192.png', // Ensure this path is correct
-                        badge: '/pwa-192x192.png',
+                        body: `Don't forget your daily goal!`,
+                        icon: '/pwa-192x192.png',
                         tag: `reminder-${habit.id}-${currentTime}` // Prevent duplicates
                     });
                 }

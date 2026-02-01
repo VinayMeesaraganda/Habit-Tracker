@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { X, LogOut, User as UserIcon, Mail, Check, ChevronRight, ChevronLeft } from 'lucide-react';
+import { X, LogOut, User as UserIcon, Mail, Check, ChevronRight, ChevronLeft, Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { playNotificationSound } from '../utils/audio';
 
 interface ProfileModalProps {
     isOpen: boolean;
@@ -16,6 +17,11 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
     const [newPassword, setNewPassword] = useState('');
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [loading, setLoading] = useState(false);
+
+    // Notifications State
+    const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+        return localStorage.getItem('notifications_muted') !== 'true';
+    });
 
     if (!isOpen) return null;
 
@@ -155,6 +161,41 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                                 <LogOut className="w-5 h-5" />
                                 Sign Out
                             </button>
+
+                            {/* Notification Test Section */}
+                            <div className="pt-4 mt-6 border-t border-white/10">
+                                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">System</h4>
+                                <button
+                                    onClick={() => {
+                                        const newState = !notificationsEnabled;
+                                        setNotificationsEnabled(newState);
+                                        localStorage.setItem('notifications_muted', (!newState).toString());
+
+                                        if (newState) {
+                                            if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+                                                Notification.requestPermission();
+                                            }
+                                            playNotificationSound(); // Optional confirmation sound
+                                        }
+                                    }}
+                                    className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors group border border-white/10"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-lg transition-colors ${notificationsEnabled ? 'bg-green-500/10' : 'bg-gray-500/10'}`}>
+                                            <Bell className={`w-5 h-5 ${notificationsEnabled ? 'text-green-400' : 'text-gray-400'}`} />
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="font-semibold text-white">Allow Notifications</p>
+                                            <p className="text-xs text-gray-500">Enable or disable all alerts</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Toggle Switch UI */}
+                                    <div className={`w-11 h-6 rounded-full transition-colors relative ${notificationsEnabled ? 'bg-green-500' : 'bg-gray-600'}`}>
+                                        <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${notificationsEnabled ? 'left-6' : 'left-1'}`} />
+                                    </div>
+                                </button>
+                            </div>
                         </div>
                     </>
                 ) : (

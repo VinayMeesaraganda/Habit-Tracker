@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useHabits } from '../context/HabitContext.tsx';
 import { HABIT_CATEGORIES, HabitCategory, Habit, HabitFrequency, FrequencyType } from '../types.ts';
-import { X, Trash2, Archive, RotateCcw, Save, Loader, Bell, Calendar, Target, Clock } from 'lucide-react';
+import { X, Trash2, Archive, RotateCcw, Save, Loader, Calendar, Target, Clock } from 'lucide-react';
 import { SegmentedControl } from './ui/SegmentedControl';
 
 interface AddHabitModalProps {
@@ -156,7 +156,7 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                     unit: isQuantifiable ? unit : undefined,
                     timer_minutes: hasTimer ? timerMinutes : undefined,
                     auto_complete: hasTimer ? autoComplete : undefined,
-                    reminder_time: hasReminder ? reminderTime : undefined,
+                    reminder_time: hasReminder ? reminderTime : null,
                 });
             } else {
                 // Build frequency object
@@ -176,7 +176,7 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                     unit: isQuantifiable ? unit : undefined,
                     timer_minutes: hasTimer ? timerMinutes : undefined,
                     auto_complete: hasTimer ? autoComplete : undefined,
-                    reminder_time: hasReminder ? reminderTime : undefined,
+                    reminder_time: hasReminder ? reminderTime : null,
                 });
             }
             onClose();
@@ -555,53 +555,56 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                                     </div>
                                 </div>
 
-                                {/* Reminder Toggle */}
-                                <div className="space-y-3">
-                                    <div
-                                        onClick={() => {
-                                            if (!hasReminder && typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
-                                                Notification.requestPermission();
-                                            }
-                                            setHasReminder(!hasReminder);
-                                        }}
-                                        className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${hasReminder ? 'bg-orange-50 border-orange-100' : 'bg-white border-gray-200 hover:border-gray-300'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-full ${hasReminder ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-400'}`}>
-                                                <Bell className="w-5 h-5" />
-                                            </div>
-                                            <div>
-                                                <span className={`font-semibold block ${hasReminder ? 'text-gray-900' : 'text-gray-600'}`}>Daily Notification</span>
-                                                <span className="text-xs text-gray-400">Get a friendly nudge</span>
-                                            </div>
-                                        </div>
-                                        <div className={`w-12 h-6 rounded-full transition-colors relative ${hasReminder ? 'bg-orange-500' : 'bg-gray-200'}`}>
-                                            <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${hasReminder ? 'left-7' : 'left-1'}`} />
-                                        </div>
+                                {/* Smart Reminder Input */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-sm font-semibold text-gray-700">
+                                            Reminder Time
+                                        </label>
                                     </div>
 
-                                    {hasReminder && (
-                                        <div className="space-y-2 animate-fadeIn pl-2">
-                                            <div className="flex gap-2">
-                                                {[
-                                                    { label: 'Morning', time: '09:00' },
-                                                    { label: 'Noon', time: '12:00' },
-                                                    { label: 'Evening', time: '20:00' },
-                                                ].map((preset) => (
-                                                    <button
-                                                        key={preset.time}
-                                                        type="button"
-                                                        onClick={() => setReminderTime(preset.time)}
-                                                        className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition-all ${reminderTime === preset.time
-                                                            ? 'bg-orange-500 border-orange-600 text-white'
-                                                            : 'bg-white border-gray-200 text-gray-600'
-                                                            }`}
-                                                    >
-                                                        {preset.label}
-                                                    </button>
-                                                ))}
-                                            </div>
+                                    <div className="animate-fadeIn space-y-3">
+                                        <div className="flex gap-2">
+                                            {[
+                                                { label: 'Morning', time: '09:00' },
+                                                { label: 'Noon', time: '12:00' },
+                                                { label: 'Evening', time: '20:00' },
+                                            ].map((preset) => (
+                                                <button
+                                                    key={preset.time}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setHasReminder(true);
+                                                        setReminderTime(preset.time);
+                                                        // Request permission if needed
+                                                        if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+                                                            Notification.requestPermission();
+                                                        }
+                                                    }}
+                                                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition-all ${hasReminder && reminderTime === preset.time
+                                                        ? 'bg-orange-500 border-orange-600 text-white'
+                                                        : 'bg-white border-gray-200 text-gray-600'
+                                                        }`}
+                                                >
+                                                    {preset.label}
+                                                </button>
+                                            ))}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setHasReminder(false);
+                                                    setReminderTime('');
+                                                }}
+                                                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition-all ${!hasReminder
+                                                    ? 'bg-gray-200 border-gray-300 text-gray-700'
+                                                    : 'bg-white border-gray-200 text-gray-600'
+                                                    }`}
+                                            >
+                                                No Reminder
+                                            </button>
+                                        </div>
+                                        <div className="relative">
+                                            <Clock className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                             <input
                                                 type="time"
                                                 value={reminderTime}
@@ -609,7 +612,7 @@ export function AddHabitModal({ isOpen, onClose, initialHabit }: AddHabitModalPr
                                                 className="w-full px-4 py-3 rounded-xl font-medium text-center text-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-100"
                                             />
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
 
                                 {/* Danger Zone */}
