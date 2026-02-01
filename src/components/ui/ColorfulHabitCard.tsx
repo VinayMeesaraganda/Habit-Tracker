@@ -113,11 +113,10 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
                     height: '36px',
                     borderRadius: '50%',
                     backgroundColor: completed
-                        ? 'rgba(255, 255, 255, 0.3)'
-                        : 'rgba(255, 255, 255, 0.2)',
-                    backdropFilter: 'blur(8px)',
-                    border: completed ? 'none' : '2px solid rgba(255,255,255,0.5)',
-                    boxShadow: completed ? 'none' : '0 2px 8px rgba(0,0,0,0.1)'
+                        ? gradient.icon
+                        : 'rgba(255, 255, 255, 0.6)',
+                    border: completed ? 'none' : `2px solid ${gradient.text}40`, // 40 hex = 25% opacity
+                    boxShadow: completed ? 'none' : '0 2px 8px rgba(0,0,0,0.05)'
                 }}
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
             >
@@ -145,7 +144,7 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             exit={{ scale: 0 }}
-                            className="w-4 h-4 rounded-full bg-white/50"
+                            className="w-4 h-4 rounded-full opacity-0"
                         />
                     )}
                 </AnimatePresence>
@@ -163,8 +162,8 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         style={{
-                            background: isSkippedState ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.2)',
-                            color: 'white',
+                            background: isSkippedState ? '#9CA3AF' : 'rgba(255,255,255,0.6)',
+                            color: isSkippedState ? 'white' : gradient.text,
                         }}
                     >
                         <SkipForward className="w-3 h-3" />
@@ -181,12 +180,12 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
                         onClick={handleTimer}
-                        className="absolute bottom-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold shadow-lg z-20 max-w-[45%]"
+                        className="absolute bottom-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold shadow-sm z-20 max-w-[45%]"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         style={{
                             background: 'white',
-                            color: '#F97316',
+                            color: gradient.icon,
                         }}
                     >
                         <Timer className="w-3 h-3 flex-shrink-0" />
@@ -200,12 +199,13 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
                 <motion.h3
                     animate={{
                         textDecoration: isSkippedState ? 'line-through' : 'none',
-                        opacity: isSkippedState ? 0.7 : 1
+                        opacity: isSkippedState ? 0.6 : 1
                     }}
-                    className="font-bold text-white mb-1 pr-10"
+                    className="font-bold mb-1 pr-10"
                     style={{
                         fontSize: '17px',
                         lineHeight: '1.3',
+                        color: isSkippedState ? '#4B5563' : gradient.text // Gray if skipped, else theme text
                     }}
                 >
                     {name}
@@ -213,7 +213,11 @@ export const ColorfulHabitCard: React.FC<ColorfulHabitCardProps> = ({
                 <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-white/90 text-sm font-medium pr-8"
+                    className="text-sm font-medium pr-8"
+                    style={{
+                        color: isSkippedState ? '#6B7280' : gradient.text,
+                        opacity: isSkippedState ? 1 : 0.8
+                    }}
                 >
                     {isSkippedState
                         ? '⏭ Skipped'

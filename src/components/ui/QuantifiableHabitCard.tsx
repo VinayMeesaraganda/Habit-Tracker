@@ -118,7 +118,8 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
                             width: '28px',
                             height: '28px',
                             borderRadius: '50%',
-                            backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                            backgroundColor: gradient.icon,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
                         }}
                     >
                         <Check className="w-4 h-4 text-white" strokeWidth={3} />
@@ -132,9 +133,8 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
                             }}
                             className="px-3 py-1.5 rounded-full text-xs font-bold transition-all hover:scale-105"
                             style={{
-                                background: isSkippedState ? 'rgba(255,255,255,0.4)' : 'rgba(255, 255, 255, 0.2)',
-                                color: 'white',
-                                backdropFilter: 'blur(10px)',
+                                background: isSkippedState ? '#9CA3AF' : 'rgba(255,255,255,0.6)',
+                                color: isSkippedState ? 'white' : gradient.text,
                             }}
                         >
                             {isSkippedState ? 'Unskip' : 'Skip'}
@@ -143,24 +143,35 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
                 )}
             </div>
 
-            <h3 className="font-bold text-white text-base mb-1 pr-10" style={{ textDecoration: isSkippedState ? 'line-through' : 'none' }}>{habit.name}</h3>
+            <h3
+                className="font-bold text-base mb-1 pr-10"
+                style={{
+                    textDecoration: isSkippedState ? 'line-through' : 'none',
+                    color: isSkippedState ? '#4B5563' : gradient.text
+                }}
+            >
+                {habit.name}
+            </h3>
 
             {/* Progress Text with Edit Icon */}
             <div className="flex items-center gap-2 mb-2">
-                <p className="text-white/80 text-xs">
+                <p className="text-xs" style={{ color: isSkippedState ? '#6B7280' : gradient.text, opacity: 0.8 }}>
                     {isSkippedState ? 'Skipped' : `${currentValue} / ${targetValue} ${habit.unit}`}
                 </p>
                 {!disabled && onUpdateValue && (
                     <button
                         onClick={handleEditClick}
-                        className="p-1 rounded-full hover:bg-white/20 transition-colors"
-                        style={{ color: 'rgba(255,255,255,0.7)' }}
+                        className="p-1 rounded-full hover:bg-black/5 transition-colors"
+                        style={{ color: isSkippedState ? '#6B7280' : gradient.text, opacity: 0.7 }}
                     >
                         <Edit2 className="w-3 h-3" />
                     </button>
                 )}
                 {reminderTime && !isComplete && !isSkippedState && (
-                    <span className="flex items-center gap-1 text-xs font-medium text-white/80 bg-white/20 px-2 py-0.5 rounded-full">
+                    <span
+                        className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
+                        style={{ backgroundColor: 'rgba(0,0,0,0.05)', color: gradient.text }}
+                    >
                         <Bell className="w-3 h-3" />
                         {reminderTime}
                     </span>
@@ -168,12 +179,12 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
             </div>
 
             {/* Progress Bar */}
-            <div className="h-1.5 bg-white/20 rounded-full mb-2 overflow-hidden">
+            <div className="h-1.5 rounded-full mb-2 overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
                 <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
                         width: `${percentage}%`,
-                        background: 'rgba(255,255,255,0.8)',
+                        background: gradient.icon,
                     }}
                 />
             </div>
@@ -191,8 +202,12 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
                                 onKeyDown={handleInputKeyDown}
                                 placeholder={isEditing ? 'Total' : (habit.unit || 'Amount')}
                                 autoFocus
-                                className="flex-1 px-3 py-2 rounded-xl text-sm font-medium bg-white text-gray-800 placeholder-gray-400 border-2 border-white focus:outline-none"
-                                style={{ minWidth: '80px' }}
+                                className="flex-1 px-3 py-2 rounded-xl text-sm font-medium bg-white placeholder-gray-400 focus:outline-none focus:ring-2"
+                                style={{
+                                    color: gradient.text,
+                                    borderColor: 'rgba(0,0,0,0.1)',
+                                    '--tw-ring-color': gradient.text + '40'
+                                } as React.CSSProperties}
                             />
                             <button
                                 type="button"
@@ -200,7 +215,8 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
                                 className="px-4 py-2 rounded-xl font-bold text-sm transition-all active:scale-95 whitespace-nowrap"
                                 style={{
                                     background: 'white',
-                                    color: '#374151',
+                                    color: gradient.text,
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
                                 }}
                             >
                                 {isEditing ? 'Save' : 'Add'}
@@ -211,11 +227,11 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
                             <button
                                 type="button"
                                 onClick={handleAddClick}
-                                className="w-full py-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
+                                className="w-full py-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 hover:bg-white/80"
                                 style={{
-                                    background: 'white',
-                                    color: '#374151',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                    background: 'rgba(255,255,255,0.7)',
+                                    color: gradient.text,
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                                 }}
                             >
                                 <Plus className="w-4 h-4" strokeWidth={2.5} />
@@ -228,7 +244,10 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
 
             {/* Completed Message */}
             {isComplete && !showInput && (
-                <div className="text-center text-white/90 text-sm font-medium mt-3">
+                <div
+                    className="text-center text-sm font-bold mt-3"
+                    style={{ color: gradient.text }}
+                >
                     🎉 Complete!
                 </div>
             )}

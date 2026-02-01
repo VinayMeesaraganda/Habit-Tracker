@@ -10,16 +10,17 @@ export const colors = {
     elevated: '#FFFCF2',
 
     // Habit gradient colors - Unique combinations
-    // Habit gradient colors - Deep, vibrant, high-contrast for white text (Adjusted -5% contrast)
+    // Habit gradient colors - Soft Pastel Theme (Orise-inspired)
+    // High-legibility dark text on light, airy backgrounds
     habitColors: {
-        coral: { start: '#FF7676', end: '#F06162' }, // Vibrant Red-Coral (Softer)
-        sky: { start: '#5EDFFF', end: '#4592E6' }, // Deep Blue (Softer)
-        lavender: { start: '#B0A9FF', end: '#7A6BF0' }, // Royal Purple (Softer)
-        peach: { start: '#FFAB58', end: '#F06162' }, // Deep Orange (Softer)
-        mint: { start: '#34DDB5', end: '#22B890' }, // Jungle Green (Softer)
-        rose: { start: '#FFA9F7', end: '#F578E5' }, // Deep Rose (Softer)
-        amber: { start: '#FFD168', end: '#FFAB58' }, // Warm Orange-Yellow (Softer)
-        teal: { start: '#19DCDC', end: '#16B2B3' }, // Cyan-Teal (Softer)
+        coral: { start: '#fee2e2', end: '#fecaca', text: '#991b1b', icon: '#ef4444' }, // Light Red/Pink
+        sky: { start: '#e0f2fe', end: '#bae6fd', text: '#075985', icon: '#0ea5e9' }, // Light Blue
+        lavender: { start: '#f3e8ff', end: '#e9d5ff', text: '#6b21a8', icon: '#a855f7' }, // Light Purple
+        peach: { start: '#ffedd5', end: '#fed7aa', text: '#9a3412', icon: '#f97316' }, // Light Orange
+        mint: { start: '#dcfce7', end: '#bbf7d0', text: '#166534', icon: '#22c55e' }, // Light Green
+        rose: { start: '#fce7f3', end: '#fbcfe8', text: '#9d174d', icon: '#ec4899' }, // Light Pink
+        amber: { start: '#fef3c7', end: '#fde68a', text: '#92400e', icon: '#f59e0b' }, // Light Yellow
+        teal: { start: '#ccfbf1', end: '#99f6e4', text: '#115e59', icon: '#14b8a6' }, // Light Teal
     },
 
     // Text - Slightly different grays
