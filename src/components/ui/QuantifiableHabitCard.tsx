@@ -192,7 +192,7 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
                                 onKeyDown={handleInputKeyDown}
                                 placeholder={isEditing ? 'Total' : (habit.unit || 'Amount')}
                                 autoFocus
-                                className="flex-1 px-3 py-2 rounded-xl text-sm font-medium bg-white placeholder-gray-400 focus:outline-none focus:ring-2"
+                                className="flex-1 min-w-0 px-3 py-2 rounded-xl text-sm font-medium bg-white placeholder-gray-400 focus:outline-none focus:ring-2"
                                 style={{
                                     color: gradient.text,
                                     borderColor: 'rgba(0,0,0,0.1)',
@@ -202,7 +202,7 @@ export const QuantifiableHabitCard: React.FC<QuantifiableHabitCardProps> = ({
                             <button
                                 type="button"
                                 onClick={() => handleSubmit()}
-                                className="px-4 py-2 rounded-xl font-bold text-sm transition-all active:scale-95 whitespace-nowrap"
+                                className="px-4 py-2 rounded-xl font-bold text-sm transition-all active:scale-95 whitespace-nowrap flex-shrink-0"
                                 style={{
                                     background: 'white',
                                     color: gradient.text,

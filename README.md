@@ -1,113 +1,37 @@
-# Professional Habit Tracker
+# Habit Tracker
 
-A modern, mobile-first habit tracking application built with **React**, **TypeScript**, **Vite**, and **Supabase**. This application is designed to be a complete replacement for Excel-based habit trackers, offering robust analytics, secure cloud sync, and a premium user experience.
+A comprehensive, mobile-first habit tracking application built with React, TypeScript, and Supabase. Designed to help you build and maintain positive habits through tracking, analytics, and focus tools.
 
-## ✨ Features
+## Features
 
--   **Mobile-First Design**: Fully responsive interface with a dense, app-like feel on mobile devices.
--   **Cross-Platform**: Works seamlessly on Desktop (Matrix View) and Mobile (Card View).
--   **Authentication**: Secure Sign-up, Sign-in, and Password Management via Supabase Auth.
--   **Real-time Sync**: Habits and logs are synced instantly across all your devices.
--   **Analytics**:
-    -   Combined Weekly/Monthly performance cards.
-    -   Interactive charts (Completion consistency, Category breakdown).
-    -   Visual progress rings.
--   **Offline Capable**: (PWA ready architecture).
+### 🎯 Core Habit Tracking
+- **Flexible Habit Management:** Create and customize habits with specific frequencies (daily, weekly, specific days).
+- **Quantifiable Habits:** Track habits with numerical goals (e.g., "Drink 2000ml water").
+- **Smart Scheduling:** Set specific reminder times and handle skip dates without breaking streaks.
+- **Detailed History:** View detailed logs and notes for each habit entry.
 
----
+### ⏱️ Focus & Productivity
+- **Focus Timer:** Built-in Pomodoro-style timer to stay focused on your tasks.
+- **Task Management:** Integrated to-do list to manage daily tasks alongside your habits.
+- **Focus Analytics:** Track your focus sessions and productivity trends over time.
 
-## 🛠 Tech Stack
+### 📊 Analytics & Insights
+- **Interactive Dashboards:** Visual overview of your progress with daily, weekly, and monthly views.
+- **Advanced Charts:**
+    - **Heatmaps:** Visualize your consistency over the year.
+    - **Category Breakdown:** See where you spend your time and effort.
+    - **Trend Analysis:** Monitor completion rates and streak data.
+- **Gamification:** Earn streaks and badges to stay motivated.
 
--   **Frontend**: React 18, TypeScript, Vite
--   **Styling**: Tailwind CSS (Custom Design System, no external UI component libraries)
--   **Icons**: Lucide React
--   **Charts**: Recharts
--   ** Backend**: Supabase (PostgreSQL, Auth, Realtime)
+### 📱 Mobile & User Experience
+- **Mobile-First Design:** Optimized for mobile devices with a responsive interface and bottom navigation.
+- **Native Capabilities:**
+    - **Haptic Feedback:** Tactile response for interactions (powered by Capacitor).
+    - **Local Notifications:** Get reminded even when the app is closed.
+- **Dark Mode:** Sleek, battery-saving dark interface.
 
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-1.  **Node.js**: v16 or higher (`node -v` to check).
-2.  **Supabase Account**: Create a free project at [supabase.com](https://supabase.com).
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/VinayMeesaraganda/Habit-Tracker.git
-cd Habit-Tracker
-```
-
-### 2. Install Dependencies
-
-```bash
-npm install
-```
-
-### 3. Environment Setup
-
-Create a `.env` file in the root directory. You can use the example file:
-
-```bash
-cp .env.example .env
-```
-
-Open `.env` and paste your Supabase keys (Found in Project Settings -> API):
-
-```env
-VITE_SUPABASE_URL=https://your-project-id.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key-here
-```
-
-### 4. Database Setup
-
-1.  Go to your **Supabase Dashboard** -> **SQL Editor**.
-2.  Copy the content of [supabase_security_schema.sql](./supabase_security_schema.sql).
-3.  Run the query. This one-click script will:
-    -   Create the `habits` and `habit_logs` tables (if they don't exist).
-    -   Enable **Row Level Security (RLS)**.
-    -   Create policies ensuring users can only access their own data.
-
-### 5. Running Locally
-
-Start the development server:
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:5173](http://localhost:5173) in your browser.
-
----
-
-## 📦 Building for Production
-
-To create an optimized production build:
-
-```bash
-npm run build
-```
-
-The output will be in the `dist/` directory, ready to be deployed to Vercel, Netlify, or any static host.
-
-### Deployment Checklist
-
-Refer to [PRODUCTION_checklist.md](./production_checklist.md) found in the docs (artifacts) for a detailed pre-flight check.
-
----
-
-## 🤝 Contributing
-
-1.  Fork the repo
-2.  Create your feature branch (`git checkout -b feature/amazing-feature`)
-3.  Commit your changes (`git commit -m 'Add some amazing feature'`)
-4.  Push to the branch (`git push origin feature/amazing-feature`)
-5.  Open a Pull Request
-
----
-
-## 📄 License
-
-Distributed under the MIT License.
+### 🛠️ Technical Stack
+- **Frontend:** React, TypeScript, Vite, Tailwind CSS.
+- **Backend:** Supabase (Authentication, Database, Real-time updates).
+- **Mobile:** Capacitor (iOS/Android support).
+- **State Management & UI:** Framer Motion (Animations), Recharts (Data Visualization).

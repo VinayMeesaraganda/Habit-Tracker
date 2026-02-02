@@ -97,18 +97,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     // Calculate dashboard stats
     const dashboardStats = useMemo(() => {
         let completedToday = 0;
+        let proportionalProgress = 0; // Tracks partial progress for quantifiable habits
 
         // Daily Stats
         activeHabits.forEach(habit => {
             const log = selectedDateLogs.find(l => l.habit_id === habit.id);
-            if (!log) return;
 
             if (habit.is_quantifiable && habit.target_value) {
-                if ((log.value || 0) >= habit.target_value) {
+                const currentValue = log ? (log.value || 0) : 0;
+                // Proportional contribution (capped at 1.0)
+                proportionalProgress += Math.min(currentValue / habit.target_value, 1);
+                // Only count as completed if fully met
+                if (currentValue >= habit.target_value) {
                     completedToday++;
                 }
-            } else {
+            } else if (log) {
                 completedToday++;
+                proportionalProgress += 1;
             }
         });
 
@@ -152,6 +157,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         return {
             completed: completedToday,
+            proportionalProgress, // New: for progress ring
             total: totalHabits,
             weeklyRate,
             longestStreak
@@ -263,8 +269,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                             <div className="bg-white rounded-xl md:rounded-2xl p-2 md:p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center transition-all hover:shadow-md h-full">
                                 <div className="scale-75 md:scale-100 transform origin-center">
                                     <MultiSegmentProgressRing
-                                        completed={dashboardStats.completed}
-                                        remaining={Math.max(0, dashboardStats.total - dashboardStats.completed)}
+                                        completed={dashboardStats.proportionalProgress}
+                                        remaining={Math.max(0, dashboardStats.total - dashboardStats.proportionalProgress)}
                                         overdue={0}
                                         size={80}
                                         strokeWidth={8}
